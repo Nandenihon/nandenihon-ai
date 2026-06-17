@@ -1,0 +1,11 @@
+{
+    "name": "@repo/config",
+    "version": "0.0.0",
+    "private": true,
+    "exports": {
+        "./eslint": "./eslint.config.mjs",
+        "./typescript/base": "./tsconfig.base.json",
+        "./typescript/nextjs": "./tsconfig.nextjs.json",
+        "./postcss": "./postcss.config.mjs"
+    }
+}

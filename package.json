@@ -1,0 +1,25 @@
+{
+  "name": "nandenihon",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@10.9.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "dev:landing": "turbo dev --filter=landing",
+    "dev:student": "turbo dev --filter=student-portal",
+    "dev:admin": "turbo dev --filter=admin-portal"
+  },
+  "devDependencies": {
+    "turbo": "^2"
+  },
+  "dependencies": {
+    "@next/swc-win32-x64-msvc": "^16.2.4"
+  }
+}

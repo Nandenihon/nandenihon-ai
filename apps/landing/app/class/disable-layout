@@ -1,0 +1,21 @@
+import React from "react";
+
+export default function ClassLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="w-full h-full flex justify-center py-24"
+      style={{
+        backgroundColor: "#ffffff",
+        backgroundImage: "url('/images/vector-nandenihon.png')",
+        backgroundRepeat: "repeat",
+        backgroundSize: "contain",
+      }}
+    >
+      <div className="w-full px-4 pt-24 max-w-6xl">{children}</div>
+    </div>
+  );
+}

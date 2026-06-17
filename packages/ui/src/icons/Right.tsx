@@ -1,0 +1,14 @@
+import { IconProps } from "./types";
+import React from "react";
+
+
+
+export const Right = ({ colorMode = "blue", ...props }: IconProps) => {
+  const fillColor = colorMode === "blue" ? "#2563EB" : colorMode === "white" ? "#F9F9F9" : "currentColor";
+  return (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"   {...props}>
+    <path d="M9 5L15 12L9 19" stroke={fillColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+
+  );
+};
