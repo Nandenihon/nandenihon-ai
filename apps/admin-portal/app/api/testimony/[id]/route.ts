@@ -6,6 +6,23 @@ interface RouteParams {
     params: Promise<{ id: string }>;
 }
 
+function optionalText(value: unknown): string {
+    return typeof value === "string" ? value.trim() : "";
+}
+
+function parseAge(value: unknown): number | null {
+    if (value === undefined || value === null || value === "") {
+        return 0;
+    }
+
+    const age = Number(value);
+    if (!Number.isInteger(age) || age < 0 || age > 150) {
+        return null;
+    }
+
+    return age;
+}
+
 /**
  * GET /api/testimony/:id
  * Get single testimony by ID
@@ -65,6 +82,21 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         }
 
         const body: UpdateTestimonyInput = await request.json();
+        const parsedAge = body.age !== undefined ? parseAge(body.age) : undefined;
+
+        if (body.testimonial_text !== undefined && !optionalText(body.testimonial_text)) {
+            return NextResponse.json(
+                { error: "Testimonial text is required" },
+                { status: 400 }
+            );
+        }
+
+        if (parsedAge === null) {
+            return NextResponse.json(
+                { error: "Age must be a valid number between 0 and 150" },
+                { status: 400 }
+            );
+        }
 
         // Build dynamic update query based on provided fields
         const updateFields: string[] = [];
@@ -72,23 +104,23 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
         if (body.photo !== undefined) {
             updateFields.push("photo = ?");
-            updateValues.push(body.photo || null);
+            updateValues.push(optionalText(body.photo));
         }
         if (body.nickname !== undefined) {
             updateFields.push("nickname = ?");
-            updateValues.push(body.nickname || null);
+            updateValues.push(optionalText(body.nickname));
         }
         if (body.email !== undefined) {
             updateFields.push("email = ?");
-            updateValues.push(body.email || null);
+            updateValues.push(optionalText(body.email));
         }
-        if (body.age !== undefined) {
+        if (parsedAge !== undefined) {
             updateFields.push("age = ?");
-            updateValues.push(body.age || null);
+            updateValues.push(parsedAge);
         }
         if (body.testimonial_text !== undefined) {
             updateFields.push("testimonial_text = ?");
-            updateValues.push(body.testimonial_text || null);
+            updateValues.push(optionalText(body.testimonial_text));
         }
 
         if (updateFields.length === 0) {

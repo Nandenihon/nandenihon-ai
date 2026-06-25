@@ -1,14 +1,35 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import LoginForm from "./components/LoginForm";
+
 export default function HomePage() {
-    return (
-        <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white">
-            <div className="text-center">
-                <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                    Admin Portal
-                </h1>
-                <p className="text-gray-600">
-                    Welcome to the Nande Nihon Admin Portal. Coming soon!
-                </p>
-            </div>
-        </main>
-    );
+    const router = useRouter();
+    const [loginError, setLoginError] = useState("");
+
+    const handleLogin = async (email: string, password: string) => {
+        setLoginError("");
+        try {
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setLoginError(data.error || "Login gagal. Periksa email dan password Anda.");
+                return;
+            }
+
+            router.push("/dashboard");
+            router.refresh();
+        } catch {
+            setLoginError("Terjadi kesalahan jaringan. Coba lagi.");
+        }
+    };
+
+    return <LoginForm onLogin={handleLogin} externalError={loginError} />;
 }

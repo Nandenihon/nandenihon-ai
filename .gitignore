@@ -1,1 +1,18 @@
+# dependencies
 node_modules
+
+# Next.js
+.next/
+**/.next/
+
+# Turbo
+.turbo/
+**/.turbo/
+
+# build output
+dist/
+build/
+*.tsbuildinfo
+
+# local env files
+.env*.local

@@ -1,7 +1,15 @@
-import { Webinar } from "@/data/webinar";
 import React from "react";
 
-const WebinarItem = (props: Webinar) => {
+export type WebinarItemProps = {
+  id: number;
+  title: string;
+  type: string;
+  image: string;
+  date: string;
+  time: string;
+};
+
+const WebinarItem = (props: WebinarItemProps) => {
   return (
     <div className="bg-white p-5 shadow-[0px_0px_20px_2px_#0000001A] rounded-2xl ">
       <div className="relative h-52.5 w-auto">

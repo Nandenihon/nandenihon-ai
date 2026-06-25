@@ -1,6 +1,7 @@
 {
     "extends": "@repo/config/typescript/nextjs",
     "compilerOptions": {
+        "baseUrl": ".",
         "paths": {
             "@/*": [
                 "./*"

@@ -1,7 +1,16 @@
-import { Class } from "@/data/class";
 import React from "react";
 
-const ClassItem = (props: Class) => {
+export type ClassItemProps = {
+  id: number;
+  title: string;
+  type: string;
+  image: string;
+  price: string;
+  description: string;
+  slot: boolean;
+};
+
+const ClassItem = (props: ClassItemProps) => {
   return (
     <div className="bg-white p-5 shadow-[0px_0px_20px_2px_#0000001A] rounded-2xl ">
       <div className="relative h-52.5 w-auto">

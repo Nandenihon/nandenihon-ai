@@ -1,29 +1,36 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
+import { queryMySQL, type RowDataPacket } from "@repo/database";
 import type { Testimony } from "@repo/types";
 
-function TestimonialSection() {
-  const [testimonies, setTestimonies] = useState<Testimony[]>([]);
-  const [loading, setLoading] = useState(true);
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://192.168.187.21:3002";
 
-  useEffect(() => {
-    async function fetchTestimonies() {
-      try {
-        const res = await fetch("/api/testimony");
-        const json = await res.json();
-        if (json.data && Array.isArray(json.data)) {
-          setTestimonies(json.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch testimonies:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
+async function getTestimonies(): Promise<Testimony[]> {
+  try {
+    const rows = await queryMySQL<RowDataPacket[]>(
+      "SELECT id, photo, nickname, email, age, testimonial_text FROM testimony ORDER BY id DESC LIMIT 10"
+    );
 
-    fetchTestimonies();
-  }, []);
+    return rows as Testimony[];
+  } catch (error) {
+    console.error("Failed to fetch testimonies:", error);
+    return [];
+  }
+}
+
+function resolvePhotoUrl(photo: string | null, fallbackId: number, index: number): string {
+  if (!photo) {
+    return `https://i.pravatar.cc/300?u=${fallbackId || index}`;
+  }
+
+  if (photo.startsWith("http://") || photo.startsWith("https://")) {
+    return photo;
+  }
+
+  return `${BACKEND_URL}${photo}`;
+}
+
+async function TestimonialSection() {
+  const testimonies = await getTestimonies();
 
   // Duplicate items for seamless infinite scroll effect
   const displayItems =
@@ -53,10 +60,7 @@ function TestimonialSection() {
                   {item.testimonial_text || ""}
                 </p>
                 <img
-                  src={
-                    //item.photo || //jika mau mengaktifkan foto dari databse langsung dinyalain aja
-                    `https://i.pravatar.cc/300?u=${item.id || id}`
-                  }
+                  src={resolvePhotoUrl(item.photo, item.id, id)}
                   className="size-25 object-cover rounded-full border-8 border-white absolute right-5 bottom-4"
                   alt={item.nickname || "Testimonial"}
                 />

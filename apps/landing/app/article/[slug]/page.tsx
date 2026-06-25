@@ -123,7 +123,7 @@ const socialIcons = [
 ];
 
 export default async function ArticleDetailPage(props: {
-  params: Promise<{ slug: string }> | { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
   const params = await props.params;
   const slug = params.slug;

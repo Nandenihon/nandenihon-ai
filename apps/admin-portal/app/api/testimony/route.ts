@@ -4,6 +4,23 @@ import type { Testimony, CreateTestimonyInput, TestimonyListResponse } from "@re
 
 const DEFAULT_PAGE_SIZE = 10;
 
+function optionalText(value: unknown): string {
+    return typeof value === "string" ? value.trim() : "";
+}
+
+function parseAge(value: unknown): number | null {
+    if (value === undefined || value === null || value === "") {
+        return 0;
+    }
+
+    const age = Number(value);
+    if (!Number.isInteger(age) || age < 0 || age > 150) {
+        return null;
+    }
+
+    return age;
+}
+
 /**
  * GET /api/testimony
  * List all testimonies with pagination
@@ -57,11 +74,33 @@ export async function POST(request: NextRequest) {
         const body: CreateTestimonyInput = await request.json();
 
         const { photo, nickname, email, age, testimonial_text } = body;
+        const normalizedAge = parseAge(age);
+        const normalizedText = optionalText(testimonial_text);
+
+        if (!normalizedText) {
+            return NextResponse.json(
+                { error: "Testimonial text is required" },
+                { status: 400 }
+            );
+        }
+
+        if (normalizedAge === null) {
+            return NextResponse.json(
+                { error: "Age must be a valid number between 0 and 150" },
+                { status: 400 }
+            );
+        }
 
         const result = await queryMySQL<ResultSetHeader>(
             `INSERT INTO testimony (photo, nickname, email, age, testimonial_text) 
              VALUES (?, ?, ?, ?, ?)`,
-            [photo || null, nickname || null, email || null, age || null, testimonial_text || null]
+            [
+                optionalText(photo),
+                optionalText(nickname),
+                optionalText(email),
+                normalizedAge,
+                normalizedText,
+            ]
         );
 
         const insertedId = result.insertId;

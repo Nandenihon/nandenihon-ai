@@ -1,6 +1,4 @@
-import Image from "next/image";
 import React from "react";
-import { CardNews, CategoryTag, Chips } from "@repo/ui";
 
 const publications = Array(6).fill({
   title: "Lima Destinasi yang Wajib Anda Kunjungi di Jepang",

@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@repo/ui", "@repo/database", "@repo/types", "@repo/utils"],
+  serverExternalPackages: ["ssh2", "mysql2", "mongoose"],
   images: {
     remotePatterns: [
       {
@@ -19,4 +20,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-

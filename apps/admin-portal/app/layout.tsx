@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
     title: "Admin Portal - Nande Nihon",
-    description: "Admin portal for managing Nande Nihon",
+    description: "Admin portal for managing Nande Nihon Japanese learning platform",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en">
-            <body>{children}</body>
+            <body className="bg-neutral-10 min-h-screen">{children}</body>
         </html>
     );
 }

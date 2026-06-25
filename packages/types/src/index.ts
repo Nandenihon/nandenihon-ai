@@ -19,6 +19,19 @@ export {
 
 // Admin portal types
 export {
+    type UserRole,
+    type User,
+    type UserSession,
+    type CreateUserInput,
+    type UpdateUserInput,
+    type UserListResponse,
+    type UserResponse,
+    type LoginInput,
+    type LoginResponse,
+} from "./user";
+
+
+export {
     type Testimony,
     type CreateTestimonyInput,
     type UpdateTestimonyInput,

@@ -6,6 +6,8 @@ import PublicationSection from "@/components/home/PublicationSection";
 import TestimonialSection from "@/components/home/TestimonialSection";
 import Image from "next/image";
 
+export const dynamic = "force-dynamic";
+
 const BackgroundPattern = () => (
   <>
     <div className="absolute top-0 w-328 -mt-50 z-0 hidden lg:block">

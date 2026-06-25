@@ -14,17 +14,27 @@ export async function GET(request: NextRequest) {
         const page = parseInt(searchParams.get("page") || "1", 10);
         const limit = parseInt(searchParams.get("limit") || String(DEFAULT_PAGE_SIZE), 10);
         const offset = (page - 1) * limit;
+        const search = searchParams.get("search") || "";
+        const params: unknown[] = [];
 
         // Get total count
-        const countResult = await queryMySQL<RowDataPacket[]>(
-            "SELECT COUNT(*) as total FROM `class`"
-        );
+        let countSql = "SELECT COUNT(*) as total FROM `class`";
+        let dataSql = "SELECT * FROM `class`";
+
+        if (search) {
+            countSql += " WHERE class_name LIKE ? OR level LIKE ? OR status LIKE ? OR description LIKE ?";
+            dataSql += " WHERE class_name LIKE ? OR level LIKE ? OR status LIKE ? OR description LIKE ?";
+            params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+        }
+
+        const countResult = await queryMySQL<RowDataPacket[]>(countSql, params);
         const total = countResult[0]?.total || 0;
 
         // Get paginated classes
+        dataSql += " ORDER BY id DESC LIMIT ? OFFSET ?";
         const classes = await queryMySQL<RowDataPacket[]>(
-            "SELECT * FROM `class` ORDER BY id DESC LIMIT ? OFFSET ?",
-            [limit, offset]
+            dataSql,
+            [...params, limit, offset]
         );
 
         const response: ClassListResponse = {

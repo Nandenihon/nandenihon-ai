@@ -26,6 +26,12 @@ interface MySQLCache {
     localPort: number | null;
 }
 
+interface ConnectionError {
+    code?: string;
+    message?: string;
+    fatal?: boolean;
+}
+
 declare global {
     var mysqlCache: MySQLCache | undefined;
 }
@@ -39,6 +45,40 @@ const cached: MySQLCache = global.mysqlCache || {
 
 if (!global.mysqlCache) {
     global.mysqlCache = cached;
+}
+
+function markConnectionClosed(client?: Client, server?: net.Server): void {
+    const pool = cached.pool;
+    cached.pool = null;
+    cached.localPort = null;
+
+    if (!client || cached.sshClient === client) {
+        cached.sshClient = null;
+    }
+
+    if (!server || cached.server === server) {
+        cached.server = null;
+    }
+
+    if (pool) {
+        void pool.end().catch(() => undefined);
+    }
+}
+
+function isRetryableConnectionError(error: unknown): boolean {
+    const connectionError = error as ConnectionError;
+    const message = connectionError.message || "";
+
+    return Boolean(
+        connectionError.fatal ||
+            connectionError.code === "PROTOCOL_CONNECTION_LOST" ||
+            connectionError.code === "ECONNRESET" ||
+            connectionError.code === "ECONNREFUSED" ||
+            connectionError.code === "ETIMEDOUT" ||
+            message.includes("Connection lost") ||
+            message.includes("Not connected") ||
+            message.includes("connect ETIMEDOUT")
+    );
 }
 
 function getConfig(): MySQLConfig {
@@ -97,30 +137,43 @@ function getConfig(): MySQLConfig {
 async function createSSHTunnel(config: MySQLConfig): Promise<{ client: Client; server: net.Server; localPort: number }> {
     return new Promise((resolve, reject) => {
         const sshClient = new Client();
+        let server: net.Server | null = null;
+        let isReady = false;
 
         sshClient.on("ready", () => {
+            isReady = true;
             // Create a local TCP server that forwards connections through SSH
-            const server = net.createServer((socket) => {
-                sshClient.forwardOut(
-                    "127.0.0.1",
-                    0,
-                    config.mysql.host,
-                    config.mysql.port,
-                    (err, stream) => {
-                        if (err) {
-                            socket.end();
-                            return;
+            server = net.createServer((socket) => {
+                if (!isReady) {
+                    socket.end();
+                    return;
+                }
+
+                try {
+                    sshClient.forwardOut(
+                        "127.0.0.1",
+                        0,
+                        config.mysql.host,
+                        config.mysql.port,
+                        (err, stream) => {
+                            if (err) {
+                                socket.end();
+                                return;
+                            }
+                            socket.pipe(stream).pipe(socket);
                         }
-                        socket.pipe(stream).pipe(socket);
-                    }
-                );
+                    );
+                } catch {
+                    socket.end();
+                }
             });
 
             // Listen on a random available port
             server.listen(0, "127.0.0.1", () => {
-                const address = server.address();
-                if (address && typeof address === "object") {
-                    resolve({ client: sshClient, server, localPort: address.port });
+                const activeServer = server;
+                const address = activeServer?.address();
+                if (activeServer && address && typeof address === "object") {
+                    resolve({ client: sshClient, server: activeServer, localPort: address.port });
                 } else {
                     reject(new Error("Failed to get server address"));
                 }
@@ -132,7 +185,15 @@ async function createSSHTunnel(config: MySQLConfig): Promise<{ client: Client; s
             });
         });
 
+        sshClient.on("close", () => {
+            isReady = false;
+            if (server) {
+                markConnectionClosed(sshClient, server);
+            }
+        });
+
         sshClient.on("error", (err: Error) => {
+            isReady = false;
             reject(err);
         });
 
@@ -204,17 +265,38 @@ export async function queryMySQL<T extends RowDataPacket[] | ResultSetHeader>(
     sql: string,
     params?: unknown[]
 ): Promise<T> {
-    const pool = await connectMySQL();
-    const [results] = await pool.query<T>(sql, params);
-    return results;
+    try {
+        const pool = await connectMySQL();
+        const [results] = await pool.query<T>(sql, params);
+        return results;
+    } catch (error) {
+        if (!isRetryableConnectionError(error)) {
+            throw error;
+        }
+
+        await closeMySQLConnection();
+        const pool = await connectMySQL();
+        const [results] = await pool.query<T>(sql, params);
+        return results;
+    }
 }
 
 /**
  * Get a single connection from the pool (for transactions)
  */
 export async function getConnection(): Promise<PoolConnection> {
-    const pool = await connectMySQL();
-    return pool.getConnection();
+    try {
+        const pool = await connectMySQL();
+        return pool.getConnection();
+    } catch (error) {
+        if (!isRetryableConnectionError(error)) {
+            throw error;
+        }
+
+        await closeMySQLConnection();
+        const pool = await connectMySQL();
+        return pool.getConnection();
+    }
 }
 
 /**
@@ -222,17 +304,25 @@ export async function getConnection(): Promise<PoolConnection> {
  */
 export async function closeMySQLConnection(): Promise<void> {
     if (cached.pool) {
-        await cached.pool.end();
+        await cached.pool.end().catch(() => undefined);
         cached.pool = null;
     }
 
     if (cached.server) {
-        cached.server.close();
+        try {
+            cached.server.close();
+        } catch {
+            // Server may already be closed after an SSH disconnect.
+        }
         cached.server = null;
     }
 
     if (cached.sshClient) {
-        cached.sshClient.end();
+        try {
+            cached.sshClient.end();
+        } catch {
+            // SSH client may already be disconnected.
+        }
         cached.sshClient = null;
     }
 
