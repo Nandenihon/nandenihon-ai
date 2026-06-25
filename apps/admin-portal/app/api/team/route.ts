@@ -3,6 +3,24 @@ import { queryMySQL, type RowDataPacket, type ResultSetHeader } from "@repo/data
 import type { Team, CreateTeamInput, TeamListResponse } from "@repo/types";
 
 const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_DATE = "1970-01-01";
+
+function toOptionalText(value: unknown): string | null {
+    if (typeof value !== "string") return value == null ? null : String(value);
+    const trimmed = value.trim();
+    return trimmed || null;
+}
+
+function toRequiredText(value: unknown): string {
+    if (typeof value !== "string") return value == null ? "" : String(value);
+    return value.trim();
+}
+
+function toRequiredDate(value: unknown, fallback = DEFAULT_DATE): string {
+    if (typeof value !== "string") return fallback;
+    const trimmed = value.trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : fallback;
+}
 
 /**
  * GET /api/team
@@ -83,23 +101,23 @@ export async function POST(request: NextRequest) {
                 join_date, last_date
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                photo || null,
-                full_name || null,
-                nickname || null,
-                place_of_birth || null,
-                birth_date || null,
-                email || null,
-                phone_number || null,
-                team_group || null,
-                division || null,
-                jlpt_level || null,
-                domicile || null,
-                instagram || null,
-                motto || null,
-                fun_fact || null,
-                favorites || null,
-                join_date || null,
-                last_date || null,
+                toOptionalText(photo),
+                toRequiredText(full_name),
+                toRequiredText(nickname),
+                toOptionalText(place_of_birth),
+                toRequiredDate(birth_date),
+                toRequiredText(email),
+                toRequiredText(phone_number),
+                toOptionalText(team_group),
+                toOptionalText(division),
+                toOptionalText(jlpt_level),
+                toOptionalText(domicile),
+                toOptionalText(instagram),
+                toOptionalText(motto),
+                toOptionalText(fun_fact),
+                toOptionalText(favorites),
+                toRequiredDate(join_date, new Date().toISOString().slice(0, 10)),
+                toRequiredDate(last_date, new Date().toISOString().slice(0, 10)),
             ]
         );
 

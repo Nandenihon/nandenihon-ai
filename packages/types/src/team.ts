@@ -11,7 +11,7 @@ export interface Team {
     place_of_birth: string | null;
     birth_date: Date | string | null;
     email: string | null;
-    phone_number: number | null;
+    phone_number: string | null;
     team_group: string | null;
     division: string | null;
     jlpt_level: string | null;
@@ -31,7 +31,7 @@ export interface CreateTeamInput {
     place_of_birth?: string;
     birth_date?: string; // ISO date string
     email?: string;
-    phone_number?: number;
+    phone_number?: string;
     team_group?: string;
     division?: string;
     jlpt_level?: string;
@@ -51,7 +51,7 @@ export interface UpdateTeamInput {
     place_of_birth?: string;
     birth_date?: string;
     email?: string;
-    phone_number?: number;
+    phone_number?: string;
     team_group?: string;
     division?: string;
     jlpt_level?: string;

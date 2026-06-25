@@ -27,7 +27,7 @@ export default function TeamModal({ isOpen, mode, member, onClose, onSave }: Tea
                 full_name: member.full_name || "",
                 nickname: member.nickname || "",
                 email: member.email || "",
-                phone_number: member.phone_number || undefined,
+                phone_number: member.phone_number || "",
                 team_group: member.team_group || "",
                 division: member.division || "",
                 jlpt_level: member.jlpt_level || "",
@@ -60,7 +60,7 @@ export default function TeamModal({ isOpen, mode, member, onClose, onSave }: Tea
         }
     };
 
-    const set = (key: keyof CreateTeamInput, value: string | number) =>
+    const set = (key: keyof CreateTeamInput, value: string) =>
         setForm((prev) => ({ ...prev, [key]: value }));
 
     if (!isOpen) return null;
@@ -106,7 +106,7 @@ export default function TeamModal({ isOpen, mode, member, onClose, onSave }: Tea
                         </div>
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-semibold text-neutral-70">No. Handphone</label>
-                            <input type="tel" value={form.phone_number || ""} onChange={(e) => set("phone_number", Number(e.target.value))}
+                            <input type="tel" value={form.phone_number || ""} onChange={(e) => set("phone_number", e.target.value)}
                                 placeholder="08xxxxxxxxxx"
                                 className="w-full bg-neutral-0 border border-neutral-20 rounded-xl py-2.5 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all" />
                         </div>

@@ -1,47 +1,51 @@
 import React from "react";
 import Image from "next/image";
+import { queryMySQL, type RowDataPacket } from "@repo/database";
 import { TeamCard } from "@/components/shared/TeamCard";
+
+export const dynamic = "force-dynamic";
 
 interface TeamMember {
   id: number;
-  full_name: string;
-  division: string;
-  motto: string;
-  photo: string;
+  full_name: string | null;
+  division: string | null;
+  motto: string | null;
+  photo: string | null;
+  instagram: string | null;
+}
+
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://192.168.187.21:3002";
+
+function resolveImageUrl(photo: string | null): string {
+  if (!photo) return "/images/Rectangle 6.png";
+  if (photo.startsWith("http://") || photo.startsWith("https://")) return photo;
+  return `${BACKEND_URL}${photo.startsWith("/") ? photo : `/${photo}`}`;
 }
 
 async function getTeamData(): Promise<TeamMember[]> {
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://192.168.187.21:3002";
-
   try {
-    const res = await fetch(`${API_URL}/api/team`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) return [];
-
-    const result = await res.json();
-    return result.data || [];
+    const rows = await queryMySQL<RowDataPacket[]>(
+      `SELECT id, photo, full_name, division, motto, instagram
+       FROM team
+       ORDER BY id DESC`,
+    );
+    return rows as TeamMember[];
   } catch (error) {
-    console.error("Gagal fetch:", error);
+    console.error("Gagal mengambil data team:", error);
     return [];
   }
 }
 
 export default async function AboutPage() {
   const teamMembers = await getTeamData();
-  const BACKEND_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://192.168.187.21:3002";
 
   const founders = teamMembers.filter(
-    (member: TeamMember) => member.division?.toLowerCase().includes("founder"),
-    // kalo mau jalanin API dummy di bawah ini
-    // member.division?.toLowerCase().includes("engineering"),
+    (member) => member.division?.toLowerCase().includes("founder"),
   );
 
   const adminData = teamMembers.filter(
-    (member: TeamMember) =>
+    (member) =>
       member.division?.toLowerCase().includes("admin") ||
       member.division?.toLowerCase().includes("data"),
   );
@@ -135,11 +139,8 @@ export default async function AboutPage() {
                   name={member.full_name || "Nama"}
                   role={member.division || "Founder"}
                   description={member.motto || "Motto belum diisi."}
-                  imageSrc={
-                    member.photo
-                      ? `${BACKEND_URL}${member.photo}`
-                      : "/images/Rectangle 6.png"
-                  }
+                  imageSrc={resolveImageUrl(member.photo)}
+                  instagramUrl={member.instagram || "#"}
                 />
               ))
             ) : (
@@ -162,11 +163,8 @@ export default async function AboutPage() {
                   name={member.full_name || "Nama"}
                   role={member.division || "Admin"}
                   description={member.motto || "Motto belum diisi."}
-                  imageSrc={
-                    member.photo
-                      ? `${BACKEND_URL}${member.photo}`
-                      : "/images/Rectangle 6.png"
-                  }
+                  imageSrc={resolveImageUrl(member.photo)}
+                  instagramUrl={member.instagram || "#"}
                 />
               ))
             ) : (

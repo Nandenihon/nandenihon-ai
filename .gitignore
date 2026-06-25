@@ -14,5 +14,8 @@ dist/
 build/
 *.tsbuildinfo
 
+# runtime uploads
+apps/*/public/uploads/
+
 # local env files
 .env*.local

@@ -6,6 +6,53 @@ interface RouteParams {
     params: Promise<{ id: string }>;
 }
 
+const DEFAULT_DATE = "1970-01-01";
+
+function toOptionalText(value: unknown): string | null {
+    if (typeof value !== "string") return value == null ? null : String(value);
+    const trimmed = value.trim();
+    return trimmed || null;
+}
+
+function toRequiredText(value: unknown): string {
+    if (typeof value !== "string") return value == null ? "" : String(value);
+    return value.trim();
+}
+
+function toRequiredDate(value: unknown, fallback = DEFAULT_DATE): string {
+    if (typeof value !== "string") return fallback;
+    const trimmed = value.trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : fallback;
+}
+
+function normalizeTeamValue(key: keyof UpdateTeamInput, value: unknown): string | number | null {
+    switch (key) {
+        case "full_name":
+        case "nickname":
+        case "email":
+        case "phone_number":
+            return toRequiredText(value);
+        case "birth_date":
+            return toRequiredDate(value);
+        case "join_date":
+        case "last_date":
+            return toRequiredDate(value, new Date().toISOString().slice(0, 10));
+        case "photo":
+        case "place_of_birth":
+        case "team_group":
+        case "division":
+        case "jlpt_level":
+        case "domicile":
+        case "instagram":
+        case "motto":
+        case "fun_fact":
+        case "favorites":
+            return toOptionalText(value);
+        default:
+            return null;
+    }
+}
+
 /**
  * GET /api/team/:id
  * Get single team member by ID
@@ -93,7 +140,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         for (const mapping of fieldMappings) {
             if (body[mapping.key] !== undefined) {
                 updateFields.push(`${mapping.column} = ?`);
-                updateValues.push(body[mapping.key] ?? null);
+                updateValues.push(normalizeTeamValue(mapping.key, body[mapping.key]));
             }
         }
 
