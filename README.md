@@ -171,6 +171,9 @@ cp .env.example apps/admin-portal/.env.local
 | `SSH_PORT` | 22 | SSH port |
 | `SSH_USERNAME` | - | SSH username |
 | `SSH_PASSWORD` | - | SSH password (or use SSH_PRIVATE_KEY) |
+| `UPLOAD_DIR` | /var/www/nandenihon-ai/uploads | VPS directory for uploaded images |
+| `UPLOAD_PUBLIC_PATH` | /uploads | Public URL prefix served by admin portal |
+| `NEXT_PUBLIC_UPLOAD_BASE_URL` | https://nandenihon.com | Public base URL for uploaded images |
 
 
 ## 🔧 Backend API Documentation

@@ -1,10 +1,13 @@
 import type { NextConfig } from "next";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-const apiImagePattern = apiUrl
-  ? (() => {
+const uploadUrl = process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || "https://nandenihon.com";
+
+function createUploadImagePattern(value: string | undefined) {
+  return value
+    ? (() => {
       try {
-        const url = new URL(apiUrl);
+        const url = new URL(value);
         return {
           protocol: url.protocol.replace(":", "") as "http" | "https",
           hostname: url.hostname,
@@ -15,7 +18,13 @@ const apiImagePattern = apiUrl
         return null;
       }
     })()
-  : null;
+    : null;
+}
+
+const uploadImagePatterns = [
+  createUploadImagePattern(apiUrl),
+  createUploadImagePattern(uploadUrl),
+].filter((pattern): pattern is NonNullable<typeof pattern> => Boolean(pattern));
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@repo/ui", "@repo/database", "@repo/types", "@repo/utils"],
@@ -26,13 +35,7 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
-      {
-        protocol: "http",
-        hostname: "192.168.187.21",
-        port: "3002",
-        pathname: "/uploads/**",
-      },
-      ...(apiImagePattern ? [apiImagePattern] : []),
+      ...uploadImagePatterns,
     ],
   },
 };

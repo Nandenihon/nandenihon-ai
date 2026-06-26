@@ -14,13 +14,15 @@ interface TeamMember {
   instagram: string | null;
 }
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://192.168.187.21:3002";
+const UPLOAD_BASE_URL =
+  process.env.NEXT_PUBLIC_UPLOAD_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://nandenihon.com";
 
 function resolveImageUrl(photo: string | null): string {
   if (!photo) return "/images/Rectangle 6.png";
   if (photo.startsWith("http://") || photo.startsWith("https://")) return photo;
-  return `${BACKEND_URL}${photo.startsWith("/") ? photo : `/${photo}`}`;
+  return `${UPLOAD_BASE_URL}${photo.startsWith("/") ? photo : `/${photo}`}`;
 }
 
 async function getTeamData(): Promise<TeamMember[]> {

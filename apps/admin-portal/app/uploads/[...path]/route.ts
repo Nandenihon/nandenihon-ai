@@ -2,7 +2,13 @@ import { readFile, stat } from "fs/promises";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), "public", "uploads");
+const DEFAULT_UPLOAD_DIR = "/var/www/nandenihon-ai/uploads";
+const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || DEFAULT_UPLOAD_DIR);
+const UPLOAD_PUBLIC_BASE_URL =
+    process.env.UPLOAD_PUBLIC_BASE_URL ||
+    process.env.NEXT_PUBLIC_UPLOAD_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://nandenihon.com";
 const CONTENT_TYPES: Record<string, string> = {
     ".gif": "image/gif",
     ".jpg": "image/jpeg",
@@ -15,7 +21,7 @@ interface RouteParams {
     params: Promise<{ path: string[] }>;
 }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
     const { path: filePathParts } = await params;
     const safePath = filePathParts.join(path.sep);
     const fullPath = path.resolve(UPLOAD_DIR, safePath);
@@ -41,6 +47,15 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
             },
         });
     } catch {
+        const publicUrl = new URL(
+            `/uploads/${filePathParts.map(encodeURIComponent).join("/")}`,
+            UPLOAD_PUBLIC_BASE_URL
+        );
+
+        if (request.url !== publicUrl.toString()) {
+            return NextResponse.redirect(publicUrl, 307);
+        }
+
         return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
 }

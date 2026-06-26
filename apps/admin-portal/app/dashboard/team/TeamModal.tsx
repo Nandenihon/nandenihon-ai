@@ -12,7 +12,7 @@ interface TeamModalProps {
     onSave: (data: CreateTeamInput | UpdateTeamInput) => Promise<void>;
 }
 
-const DIVISIONS = ["Teaching", "Academic", "Creative", "Marketing", "Operations", "IT", "Finance", "HR", "Admin"];
+const DIVISIONS = ["Founder & Co Founder", "Teacher", "Research & Jurnalist", "Communication", "IT Development", "Media & Relations", "Admin & Data"];
 const JLPT_LEVELS = ["N1", "N2", "N3", "N4", "N5", "Belum JLPT"];
 
 export default function TeamModal({ isOpen, mode, member, onClose, onSave }: TeamModalProps) {

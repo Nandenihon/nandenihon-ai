@@ -1,8 +1,10 @@
 import { queryMySQL, type RowDataPacket } from "@repo/database";
 import type { Testimony } from "@repo/types";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://192.168.187.21:3002";
+const UPLOAD_BASE_URL =
+  process.env.NEXT_PUBLIC_UPLOAD_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://nandenihon.com";
 
 async function getTestimonies(): Promise<Testimony[]> {
   try {
@@ -26,7 +28,7 @@ function resolvePhotoUrl(photo: string | null, fallbackId: number, index: number
     return photo;
   }
 
-  return `${BACKEND_URL}${photo}`;
+  return `${UPLOAD_BASE_URL}${photo.startsWith("/") ? photo : `/${photo}`}`;
 }
 
 async function TestimonialSection() {

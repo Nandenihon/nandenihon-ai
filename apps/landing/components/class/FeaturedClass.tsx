@@ -3,8 +3,10 @@ import ClassItem, { type ClassItemProps } from "./ClassItem";
 import { queryMySQL, type RowDataPacket } from "@repo/database";
 import type { Class } from "@repo/types";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://192.168.187.21:3002";
+const UPLOAD_BASE_URL =
+  process.env.NEXT_PUBLIC_UPLOAD_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://nandenihon.com";
 
 function resolveImageUrl(image: string): string {
   if (!image) {
@@ -15,7 +17,7 @@ function resolveImageUrl(image: string): string {
     return image;
   }
 
-  return `${BACKEND_URL}${image}`;
+  return `${UPLOAD_BASE_URL}${image.startsWith("/") ? image : `/${image}`}`;
 }
 
 function formatCurrency(value: number | string): string {
