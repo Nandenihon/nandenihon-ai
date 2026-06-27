@@ -167,6 +167,7 @@ cp .env.example apps/admin-portal/.env.local
 | `MYSQL_USER` | - | MySQL username |
 | `MYSQL_PASSWORD` | - | MySQL password |
 | `MYSQL_DATABASE` | wp_blog_dev | MySQL database name |
+| `MYSQL_CONNECTION_MODE` | auto | Set to `ssh-stream` on Vercel/serverless deployments |
 | `SSH_HOST` | - | SSH server host for tunnel |
 | `SSH_PORT` | 22 | SSH port |
 | `SSH_USERNAME` | - | SSH username |
