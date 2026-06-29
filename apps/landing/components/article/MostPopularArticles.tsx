@@ -1,12 +1,16 @@
-import { POPULAR_ARTICLES } from "@/data/articles";
+import type { ArticleView } from "@/lib/news";
 import { Article } from "@repo/ui";
 
-export default function MostPopularArticles() {
+interface MostPopularArticlesProps {
+  articles: ArticleView[];
+}
+
+export default function MostPopularArticles({ articles }: MostPopularArticlesProps) {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="font-bold text-2xl text-neutral-90">Artikel Terpopuler</h1>
 
-      {POPULAR_ARTICLES.map((article, i) => (
+      {articles.slice(0, 4).map((article, i) => (
         <Article
           key={article.id}
           id={article.id}

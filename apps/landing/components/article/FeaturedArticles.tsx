@@ -1,15 +1,23 @@
 "use client";
 
-import { FEATURED_ARTICLES } from "@/data/articles";
+import type { ArticleView } from "@/lib/news";
 import { CategoryTag } from "@repo/ui";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-export default function FeaturedArticles() {
-  const sliderArticles = FEATURED_ARTICLES.slice(0, 4);
+interface FeaturedArticlesProps {
+  articles: ArticleView[];
+}
+
+export default function FeaturedArticles({ articles }: FeaturedArticlesProps) {
+  const sliderArticles = articles.slice(0, 4);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  if (sliderArticles.length === 0) {
+    return null;
+  }
 
   const prevSlide = () => {
     setCurrentIndex((prev) =>
@@ -34,7 +42,7 @@ export default function FeaturedArticles() {
     return () => clearInterval(timer);
   }, []);
 
-  const currentArticle = sliderArticles[currentIndex];
+  const currentArticle = sliderArticles[currentIndex] || sliderArticles[0];
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-4xl mx-auto">

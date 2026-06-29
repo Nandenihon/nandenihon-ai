@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB, Student, Question } from "@repo/database";
-import { Types } from "mongoose";
+import {
+    ensureStudentTestStarted,
+    findRandomUnansweredQuestion,
+    findStudentById,
+    isValidNumericId,
+    type QuizLevel,
+} from "@repo/database";
 import { getQuizConfig, isValidQuizLevel } from "@/lib/config/quiz";
 
 const VALID_LEVELS = ["N5", "N4"];
@@ -10,8 +15,6 @@ export async function GET(
     { params }: { params: Promise<{ level: string; studentId: string }> }
 ) {
     try {
-        await connectDB();
-
         const { level, studentId } = await params;
 
         // Validate level
@@ -23,7 +26,7 @@ export async function GET(
         }
 
         // Validate studentId format
-        if (!Types.ObjectId.isValid(studentId)) {
+        if (!isValidNumericId(studentId)) {
             return NextResponse.json(
                 { success: false, error: "Invalid student ID" },
                 { status: 400 }
@@ -39,7 +42,7 @@ export async function GET(
         }
         const config = getQuizConfig(level);
 
-        const student = await Student.findById(studentId);
+        const student = await findStudentById(studentId);
 
         if (!student) {
             return NextResponse.json(
@@ -61,21 +64,13 @@ export async function GET(
 
         // Get answered question IDs
         const answeredQuestionIds = student.answerHistory.map(
-            (a: { questionId: Types.ObjectId }) => a.questionId
+            (a) => a.questionId
         );
 
         // Get a random unanswered question for the specified level
-        const questions = await Question.aggregate([
-            {
-                $match: {
-                    _id: { $nin: answeredQuestionIds },
-                    level: level
-                }
-            },
-            { $sample: { size: 1 } },
-        ]);
+        const question = await findRandomUnansweredQuestion(level as QuizLevel, answeredQuestionIds);
 
-        if (questions.length === 0) {
+        if (!question) {
             return NextResponse.json({
                 success: true,
                 data: {
@@ -85,15 +80,8 @@ export async function GET(
             });
         }
 
-        const question = questions[0];
-
         // Ensure testStartedAt is set to prevent timer reset
-        let testStartedAt = student.testStartedAt;
-        if (!testStartedAt) {
-            testStartedAt = new Date();
-            student.testStartedAt = testStartedAt;
-            await student.save();
-        }
+        const testStartedAt = await ensureStudentTestStarted(student.id);
 
         // Calculate time remaining using config
         const startTime = new Date(testStartedAt).getTime();
@@ -105,7 +93,7 @@ export async function GET(
             success: true,
             data: {
                 question: {
-                    id: question._id.toString(),
+                    id: String(question.id),
                     text: question.text,
                     options: question.options,
                     timeLimit: question.timeLimit,

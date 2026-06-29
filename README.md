@@ -29,7 +29,7 @@ Dibangun dengan teknologi modern untuk performa dan skalabilitas maksimal:
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
 - **Build System**: [Turborepo 2.7](https://turbo.build/)
-- **Database**: [MongoDB](https://www.mongodb.com/) (via Mongoose ODM)
+- **Database**: MySQL (via mysql2 + optional SSH tunnel)
 - **Validation**: [Zod](https://zod.dev/)
 - **Linter**: [ESLint](https://eslint.org/)
 
@@ -54,7 +54,7 @@ nandenihon/
 │   └── admin-portal/      # Admin panel (testimony & team API)
 │       └── app/api/       # REST API endpoints
 ├── packages/
-│   ├── @repo/database     # MongoDB + MySQL connections
+│   ├── @repo/database     # MySQL connection and repositories
 │   ├── @repo/types        # Zod schemas + TypeScript types
 │   ├── @repo/ui           # Shared form components
 │   ├── @repo/utils        # Logger utilities
@@ -150,7 +150,11 @@ cp .env.example apps/admin-portal/.env.local
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MONGODB_URI` | - | MongoDB connection string (required for landing) |
+| `MYSQL_HOST` | 127.0.0.1 | MySQL host |
+| `MYSQL_PORT` | 3306 | MySQL port |
+| `MYSQL_USER` | - | MySQL username |
+| `MYSQL_PASSWORD` | - | MySQL password |
+| `MYSQL_DATABASE` | wp_blog_dev | MySQL database name |
 | `QUIZ_N5_TOTAL_QUESTIONS` | 25 | Total questions for N5 quiz |
 | `QUIZ_N5_PASS_THRESHOLD` | 75 | Pass threshold percentage for N5 |
 | `QUIZ_N5_TIMER_MINUTES` | 30 | Quiz timer in minutes for N5 |
@@ -158,15 +162,10 @@ cp .env.example apps/admin-portal/.env.local
 | `QUIZ_N4_PASS_THRESHOLD` | 75 | Pass threshold percentage for N4 |
 | `QUIZ_N4_TIMER_MINUTES` | 30 | Quiz timer in minutes for N4 |
 
-**Admin Portal Variables (MySQL + SSH Tunnel):**
+**Optional SSH Tunnel Variables:**
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MYSQL_HOST` | 127.0.0.1 | MySQL host (on remote server) |
-| `MYSQL_PORT` | 3306 | MySQL port |
-| `MYSQL_USER` | - | MySQL username |
-| `MYSQL_PASSWORD` | - | MySQL password |
-| `MYSQL_DATABASE` | wp_blog_dev | MySQL database name |
 | `SSH_HOST` | - | SSH server host for tunnel |
 | `SSH_PORT` | 22 | SSH port |
 | `SSH_USERNAME` | - | SSH username |
@@ -183,7 +182,7 @@ Backend API sudah selesai diimplementasikan dan siap digunakan oleh tim Frontend
 ### Tech Stack Backend
 - **Runtime:** Node.js (v18+)
 - **Framework:** Next.js 16 (App Router)
-- **Database:** MongoDB (via Mongoose ODM)
+- **Database:** MySQL (via mysql2 + optional SSH tunnel)
 - **Validation:** Zod
 
 ### Data Models
@@ -198,7 +197,7 @@ Backend API sudah selesai diimplementasikan dan siap digunakan oleh tim Frontend
   passStatus: "pending" | "passed" | "failed";
   score: number;             // 0-100
   answerHistory: Array<{
-    questionId: ObjectId;
+    questionId: number;
     selectedValue: string | null;
     isCorrect: boolean;
     answeredAt: Date;
@@ -232,7 +231,7 @@ Backend API sudah selesai diimplementasikan dan siap digunakan oleh tim Frontend
 sequenceDiagram
     participant FE as Frontend
     participant BE as Backend
-    participant DB as MongoDB
+    participant DB as MySQL
 
     FE->>BE: POST /api/register/start {name, email, level}
     BE->>DB: Find/Create Student
@@ -290,7 +289,7 @@ Check if email exists and get student status before registration.
   "data": {
     "exists": true,
     "status": "passed",
-    "studentId": "507f1f77bcf86cd799439011",
+    "studentId": "1",
     "fullName": "John Doe",
     "level": "N5"
   }
@@ -318,7 +317,7 @@ Lead capture dengan level selection.
 {
   "success": true,
   "data": {
-    "studentId": "507f1f77bcf86cd799439011",
+    "studentId": "1",
     "nextStep": "test_intro"
   }
 }
@@ -331,7 +330,7 @@ Fetch random unanswered question by level.
 
 **Path Parameters:**
 - `level`: `N5` atau `N4`
-- `studentId`: MongoDB ObjectId
+- `studentId`: MySQL student ID
 
 **Response:**
 ```json
@@ -339,7 +338,7 @@ Fetch random unanswered question by level.
   "success": true,
   "data": {
     "question": {
-      "id": "507f1f77bcf86cd799439012",
+      "id": "12",
       "text": "「おはよう」の意味は何ですか？",
       "options": ["Good morning", "Good evening", "Good night", "Goodbye"],
       "timeLimit": 30,
@@ -362,8 +361,8 @@ Submit answer for a question.
 **Request:**
 ```json
 {
-  "studentId": "507f1f77bcf86cd799439011",
-  "questionId": "507f1f77bcf86cd799439012",
+  "studentId": "1",
+  "questionId": "12",
   "selectedValue": "Good morning"
 }
 ```
@@ -387,7 +386,7 @@ Calculate score and determine pass/fail status.
 **Request:**
 ```json
 {
-  "studentId": "507f1f77bcf86cd799439011"
+  "studentId": "1"
 }
 ```
 
@@ -411,7 +410,7 @@ Upload payment proof (passed students only).
 **Content-Type:** `multipart/form-data`
 
 **Form Data:**
-- `studentId`: MongoDB ObjectId
+- `studentId`: MySQL student ID
 - `file`: Image file (jpg, png, pdf - max 5MB)
 
 **Response:**
@@ -419,7 +418,7 @@ Upload payment proof (passed students only).
 {
   "success": true,
   "data": {
-    "paymentProofUrl": "/uploads/payment/507f1f77bcf86cd799439011_1702834210123.jpg",
+    "paymentProofUrl": "/uploads/payment/john_1702834210123.jpg",
     "nextStep": "registration_form"
   }
 }
@@ -433,7 +432,7 @@ Complete registration (passed students only).
 **Request:**
 ```json
 {
-  "studentId": "507f1f77bcf86cd799439011",
+  "studentId": "1",
   "nickname": "Taro",
   "whatsapp": "081234567890",
   "age": 25,
@@ -476,7 +475,7 @@ Get student test result.
 ### Testing Backend with curl
 
 #### Prerequisites
-1. MongoDB running locally (`npm run seed` to populate questions)
+1. MySQL configured and reachable (`npm run seed` to populate questions)
 2. Dev server running (`npm run dev`)
 
 #### Happy Path Test Commands (Windows CMD)

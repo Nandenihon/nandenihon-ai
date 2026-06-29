@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB, Student } from "@repo/database";
+import { findStudentById, finishStudentTest, isValidNumericId } from "@repo/database";
 import { testFinishSchema } from "@repo/types";
-import { Types } from "mongoose";
 import { getQuizConfig, isValidQuizLevel } from "@/lib/config/quiz";
 import { logInfo, logWarn, logError } from "@repo/utils";
 
 export async function POST(request: NextRequest) {
   try {
-    await connectDB();
-
     const body = await request.json();
     const validation = testFinishSchema.safeParse(body);
 
@@ -22,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     const { studentId } = validation.data;
 
-    if (!Types.ObjectId.isValid(studentId)) {
+    if (!isValidNumericId(studentId)) {
       await logWarn("api/test/finish", "Invalid student ID", { studentId });
       return NextResponse.json(
         { success: false, error: "Invalid student ID" },
@@ -30,7 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const student = await Student.findById(studentId);
+    const student = await findStudentById(studentId);
 
     if (!student) {
       await logWarn("api/test/finish", "Student not found", { studentId });
@@ -42,6 +39,14 @@ export async function POST(request: NextRequest) {
 
     // Get level-specific quiz configuration
     const level = student.level;
+    if (!level) {
+      await logWarn("api/test/finish", "Missing student level", { studentId });
+      return NextResponse.json(
+        { success: false, error: "Invalid student level" },
+        { status: 400 }
+      );
+    }
+
     if (!isValidQuizLevel(level)) {
       await logWarn("api/test/finish", "Invalid student level", { studentId, level });
       return NextResponse.json(
@@ -74,10 +79,11 @@ export async function POST(request: NextRequest) {
 
     const passStatus = score >= config.passThreshold ? "passed" : "failed";
 
-    student.score = score;
-    student.passStatus = passStatus;
-    student.testStatus = "completed";
-    await student.save();
+    await finishStudentTest({
+      studentId: student.id,
+      score,
+      passStatus,
+    });
 
     // Log quiz completion with result
     await logInfo("api/test/finish", `Quiz completed - ${passStatus.toUpperCase()}`, {

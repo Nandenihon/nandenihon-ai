@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB, Student } from "@repo/database";
+import {
+  completeStudentRegistration,
+  findStudentById,
+  isValidNumericId,
+} from "@repo/database";
 import { registerCompleteSchema } from "@repo/types";
-import { Types } from "mongoose";
 
 export async function POST(request: NextRequest) {
   try {
-    await connectDB();
-
     const body = await request.json();
     const validation = registerCompleteSchema.safeParse(body);
 
@@ -20,14 +21,14 @@ export async function POST(request: NextRequest) {
     const { studentId, nickname, whatsapp, age, domicile, motivation, level } =
       validation.data;
 
-    if (!Types.ObjectId.isValid(studentId)) {
+    if (!isValidNumericId(studentId)) {
       return NextResponse.json(
         { success: false, error: "Invalid student ID" },
         { status: 400 }
       );
     }
 
-    const student = await Student.findById(studentId);
+    const student = await findStudentById(studentId);
 
     if (!student) {
       return NextResponse.json(
@@ -46,14 +47,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    student.nickname = nickname;
-    student.whatsapp = whatsapp;
-    student.age = age;
-    student.domicile = domicile;
-    student.motivation = motivation;
-    student.level = level;
-    student.registrationComplete = true;
-    await student.save();
+    await completeStudentRegistration({
+      id: student.id,
+      nickname,
+      whatsapp,
+      age,
+      domicile,
+      motivation,
+      level,
+    });
 
     return NextResponse.json({
       success: true,

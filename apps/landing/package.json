@@ -8,7 +8,8 @@
         "start": "next start --port 3000",
         "lint": "eslint .",
         "type-check": "tsc --noEmit",
-        "seed": "npx tsx scripts/seed.ts"
+        "seed": "npx tsx scripts/seed.ts",
+        "setup-news": "npx tsx scripts/setup-news-table.ts"
     },
     "dependencies": {
         "@repo/database": "*",
@@ -16,7 +17,6 @@
         "@repo/ui": "*",
         "@repo/utils": "*",
         "lucide-react": "^0.559.0",
-        "mongoose": "^9.0.1",
         "next": "^16.0.10",
         "react": "^19.2.3",
         "react-dom": "^19.2.3",

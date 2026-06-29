@@ -1,6 +1,6 @@
-import { getAllArticles, getArticleBySlug } from "@/data/articles";
+import { findNewsBySlug, listNews } from "@repo/database";
+import { mapNewsToArticle } from "@/lib/news";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/article/Breadcrumb";
 import ArticleSidebar from "@/components/article/ArticleSidebar";
@@ -127,20 +127,29 @@ export default async function ArticleDetailPage(props: {
 }) {
   const params = await props.params;
   const slug = params.slug;
-  const article = getArticleBySlug(slug);
+  const news = await findNewsBySlug(slug);
+  const article = news ? mapNewsToArticle(news) : null;
 
   if (!article) {
     notFound();
   }
 
+  const newsList = await listNews({ limit: 12 });
+  const allArticles = newsList.data.map(mapNewsToArticle);
+
   // Get related articles for sidebar (same category, max 3)
-  const sidebarRelatedArticles = getAllArticles()
+  const sidebarRelatedArticles = allArticles
     .filter((a) => a.category === article.category && a.slug !== article.slug)
     .slice(0, 3);
 
-  const relatedArticle = getAllArticles().find(
-    (a) => a.category === article.category && a.slug !== article.slug
+  const otherRelatedArticles = allArticles.filter(
+    (a) => a.category !== article.category && a.slug !== article.slug
   );
+
+  const bottomRelatedArticles = [
+    ...sidebarRelatedArticles,
+    ...otherRelatedArticles.slice(0, Math.max(0, 3 - sidebarRelatedArticles.length)),
+  ].slice(0, 3);
 
   return (
     <article className="max-w-full">
@@ -186,148 +195,13 @@ export default async function ArticleDetailPage(props: {
           {/* Article Body */}
           <div className="text-neutral-70 leading-[1.85] space-y-7 text-base md:text-lg text-justify">
             {article.content ? (
-              <p>{article.content}</p>
+              <div
+                className="space-y-6 [&_img]:rounded-2xl [&_img]:my-8 [&_a]:text-primary-base [&_a]:underline [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-neutral-90 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-neutral-90"
+                dangerouslySetInnerHTML={{ __html: article.content }}
+              />
             ) : (
-              <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-                enim ad minim veniam, quis nostrud exercitation ullamco laboris
-                nisi ut aliquip ex ea commodo consequat.
-              </p>
+              <p>Konten belum tersedia.</p>
             )}
-
-            <div className="pt-6 space-y-8">
-              <h2
-                id="heading-1"
-                className="text-2xl md:text-3xl font-bold text-neutral-90 tracking-tight"
-              >
-                Heading 1
-              </h2>
-
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-neutral-10 group">
-                <Image
-                  src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop"
-                  alt="Section Image"
-                  fill
-                  className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                />
-              </div>
-
-              <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-                enim ad minim veniam, quis nostrud exercitation ullamco laboris
-                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
-                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
-                nulla pariatur.
-              </p>
-
-              {/* Baca Juga Callout */}
-              <div className="bg-primary-10 border-l-4 border-primary-base p-5 rounded-r-xl">
-                <p className="text-primary-100 font-medium flex flex-wrap items-center gap-2">
-                  <span className="font-bold">Baca Juga :</span>
-                  {relatedArticle ? (
-                    <Link
-                      href={`/article/${relatedArticle.slug}`}
-                      className="text-primary-base hover:text-primary-80 underline decoration-2 underline-offset-4 transition-colors"
-                    >
-                      [{relatedArticle.title}]
-                    </Link>
-                  ) : (
-                    <span className="text-primary-base underline">
-                      [Judul berita yang kategorinya sama]
-                    </span>
-                  )}
-                </p>
-              </div>
-
-              <p>
-                Sed ut perspiciatis unde omnis iste natus error sit voluptatem
-                accusantium doloremque laudantium, totam rem aperiam, eaque ipsa
-                quae ab illo inventore veritatis et quasi architecto beatae vitae
-                dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas
-                sit aspernatur aut odit aut fugit.
-              </p>
-
-              <div className="pt-4 space-y-6">
-                <h3
-                  id="heading-2"
-                  className="text-xl md:text-2xl font-bold text-neutral-90 tracking-tight"
-                >
-                  Heading 2
-                </h3>
-
-                <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-neutral-10 group">
-                  <Image
-                    src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop"
-                    alt="Section Image"
-                    fill
-                    className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                  />
-                </div>
-
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                  Ut enim ad minim veniam, quis nostrud exercitation ullamco
-                  laboris nisi ut aliquip ex ea commodo consequat. Duis aute
-                  irure dolor in reprehenderit in voluptate velit esse cillum
-                  dolore eu fugiat nulla pariatur.
-                </p>
-
-                {/* Baca Juga Callout */}
-                <div className="bg-primary-10 border-l-4 border-primary-base p-5 rounded-r-xl">
-                  <p className="text-primary-100 font-medium flex flex-wrap items-center gap-2">
-                    <span className="font-bold">Baca Juga :</span>
-                    {relatedArticle ? (
-                      <Link
-                        href={`/article/${relatedArticle.slug}`}
-                        className="text-primary-base hover:text-primary-80 underline decoration-2 underline-offset-4 transition-colors"
-                      >
-                        [{relatedArticle.title}]
-                      </Link>
-                    ) : (
-                      <span className="text-primary-base underline">
-                        [Judul berita yang kategorinya sama]
-                      </span>
-                    )}
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                    do eiusmod tempor incididunt ut labore et dolore magna
-                    aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-                    ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                  </p>
-                  <p>
-                    Duis aute irure dolor in reprehenderit in voluptate velit
-                    esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
-                    occaecat cupidatat non proident, sunt in culpa qui officia
-                    deserunt mollit anim id est laborum.
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-4 space-y-6">
-                <h4
-                  id="heading-3"
-                  className="text-lg md:text-xl font-bold text-neutral-90 tracking-tight"
-                >
-                  Heading 3
-                </h4>
-                <p>
-                  Sed ut perspiciatis unde omnis iste natus error sit voluptatem
-                  accusantium doloremque laudantium, totam rem aperiam, eaque
-                  ipsa quae ab illo inventore veritatis et quasi architecto
-                  beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem
-                  quia voluptas sit aspernatur aut odit aut fugit, sed quia
-                  consequuntur magni dolores eos qui ratione voluptatem sequi
-                  nesciunt.
-                </p>
-              </div>
-            </div>
           </div>
 
           {/* Mobile-only Social Share */}
@@ -361,10 +235,7 @@ export default async function ArticleDetailPage(props: {
       </div>
 
       {/* Related Articles Grid (Bottom) */}
-      <RelatedArticlesGrid
-        currentSlug={article.slug}
-        currentCategory={article.category}
-      />
+      <RelatedArticlesGrid articles={bottomRelatedArticles} />
 
       {/* Newsletter/CTA Banner */}
       <NewsletterBanner />

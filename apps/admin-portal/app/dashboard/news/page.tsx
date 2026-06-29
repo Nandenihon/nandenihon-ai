@@ -1,10 +1,17 @@
-export default function NewsPage() {
-    const articles = [
-        { id: 1, title: "Strategi Efektif Belajar Kanji untuk Pemula", category: "Tips Belajar", author: "Admin", date: "20 Jun 2025", views: 1240, status: "Published" },
-        { id: 2, title: "Mengenal Sistem Penulisan Jepang: Hiragana, Katakana, dan Kanji", category: "Pengetahuan", author: "Sensei Yamamoto", date: "15 Jun 2025", views: 3400, status: "Published" },
-        { id: 3, title: "JLPT N5 2025: Apa yang Perlu Dipersiapkan?", category: "JLPT", author: "Sensei Tanaka", date: "10 Jun 2025", views: 5600, status: "Published" },
-        { id: 4, title: "10 Ungkapan Bahasa Jepang yang Wajib Dikuasai", category: "Tips Belajar", author: "Admin", date: "5 Jun 2025", views: 890, status: "Draft" },
-    ];
+import { listNews } from "@repo/database";
+
+function formatDate(date: Date | null) {
+    if (!date) return "-";
+
+    return new Intl.DateTimeFormat("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    }).format(new Date(date));
+}
+
+export default async function NewsPage() {
+    const articles = (await listNews({ limit: 50 })).data;
 
     return (
         <div className="flex flex-col gap-6">
@@ -33,7 +40,6 @@ export default function NewsPage() {
                             <th className="text-left text-xs font-semibold text-neutral-50 px-6 py-3.5">Judul</th>
                             <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Kategori</th>
                             <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Penulis</th>
-                            <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Views</th>
                             <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Tanggal</th>
                             <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Status</th>
                             <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Aksi</th>
@@ -46,22 +52,29 @@ export default function NewsPage() {
                                     <p className="text-sm font-semibold text-neutral-80 max-w-xs truncate">{article.title}</p>
                                 </td>
                                 <td className="px-4 py-4">
-                                    <span className="bg-secondary-10 text-secondary-80 text-xs font-medium px-2.5 py-1 rounded-full">{article.category}</span>
+                                    <span className="bg-secondary-10 text-secondary-80 text-xs font-medium px-2.5 py-1 rounded-full">{article.categoryName || "Artikel"}</span>
                                 </td>
-                                <td className="px-4 py-4 text-sm text-neutral-60">{article.author}</td>
-                                <td className="px-4 py-4 text-sm text-neutral-60">{article.views.toLocaleString()}</td>
-                                <td className="px-4 py-4 text-sm text-neutral-60">{article.date}</td>
+                                <td className="px-4 py-4 text-sm text-neutral-60">{article.authorName || "Nande Nihon"}</td>
+                                <td className="px-4 py-4 text-sm text-neutral-60">{formatDate(article.publishedAt)}</td>
                                 <td className="px-4 py-4">
-                                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${article.status === "Published" ? "bg-success-10 text-success-base" : "bg-warning-10 text-warning-100"}`}>{article.status}</span>
+                                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-success-10 text-success-base">{article.status}</span>
                                 </td>
                                 <td className="px-4 py-4">
                                     <div className="flex items-center gap-2">
-                                        <button className="p-1.5 rounded-lg text-primary-base hover:bg-primary-10 transition-all"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg></button>
-                                        <button className="p-1.5 rounded-lg text-error-base hover:bg-error-10 transition-all"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2" /></svg></button>
+                                        <a href={article.sourceUrl || `/article/${article.slug}`} target="_blank" rel="noreferrer" className="p-1.5 rounded-lg text-primary-base hover:bg-primary-10 transition-all" title="Lihat artikel">
+                                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
                         ))}
+                        {articles.length === 0 && (
+                            <tr>
+                                <td colSpan={6} className="px-6 py-10 text-center text-sm text-neutral-50">
+                                    Belum ada data news.
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
