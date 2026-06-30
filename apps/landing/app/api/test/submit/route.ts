@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB, Student, Question } from "@repo/database";
+import {
+  addStudentAnswer,
+  findQuestionById,
+  findStudentById,
+  isValidNumericId,
+} from "@repo/database";
 import { testSubmitSchema } from "@repo/types";
-import { Types } from "mongoose";
 import { logInfo, logWarn, logError } from "@repo/utils";
 
 export async function POST(request: NextRequest) {
   try {
-    await connectDB();
-
     const body = await request.json();
     const validation = testSubmitSchema.safeParse(body);
 
@@ -20,21 +22,21 @@ export async function POST(request: NextRequest) {
 
     const { studentId, questionId, selectedValue } = validation.data;
 
-    if (!Types.ObjectId.isValid(studentId)) {
+    if (!isValidNumericId(studentId)) {
       return NextResponse.json(
         { success: false, error: "Invalid student ID" },
         { status: 400 }
       );
     }
 
-    if (!Types.ObjectId.isValid(questionId)) {
+    if (!isValidNumericId(questionId)) {
       return NextResponse.json(
         { success: false, error: "Invalid question ID" },
         { status: 400 }
       );
     }
 
-    const student = await Student.findById(studentId);
+    const student = await findStudentById(studentId);
 
     if (!student) {
       return NextResponse.json(
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     const alreadyAnswered = student.answerHistory.some(
-      (a: { questionId: Types.ObjectId }) => a.questionId.toString() === questionId
+      (a) => String(a.questionId) === questionId
     );
 
     if (alreadyAnswered) {
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const question = await Question.findById(questionId);
+    const question = await findQuestionById(questionId);
 
     if (!question) {
       return NextResponse.json(
@@ -66,24 +68,18 @@ export async function POST(request: NextRequest) {
     const isCorrect =
       selectedValue !== null && selectedValue === question.correctAnswer;
 
-    student.answerHistory.push({
-      questionId: new Types.ObjectId(questionId),
+    const answersCount = await addStudentAnswer({
+      studentId: student.id,
+      questionId: question.id,
       selectedValue,
       isCorrect,
-      answeredAt: new Date(),
     });
-
-    if (student.testStatus === "not_started") {
-      student.testStatus = "in_progress";
-    }
-
-    await student.save();
 
     // Log answer submission
     await logInfo("api/test/submit", `Answer submitted - ${isCorrect ? "CORRECT" : "INCORRECT"}`, {
       studentId,
       questionId,
-      questionNumber: student.answerHistory.length,
+      questionNumber: answersCount,
       isCorrect,
       selectedValue: selectedValue || "(timeout/skipped)"
     });
@@ -92,7 +88,7 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         recorded: true,
-        answersCount: student.answerHistory.length,
+        answersCount,
       },
     });
   } catch (error: any) {

@@ -28,12 +28,17 @@ const uploadImagePatterns = [
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@repo/ui", "@repo/database", "@repo/types", "@repo/utils"],
-  serverExternalPackages: ["ssh2", "mysql2", "mongoose"],
+  serverExternalPackages: ["ssh2", "mysql2"],
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "www.nandenihon.com",
+        pathname: "/blog/wp-content/uploads/**",
       },
       ...uploadImagePatterns,
     ],

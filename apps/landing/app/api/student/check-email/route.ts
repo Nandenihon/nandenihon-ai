@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB, Student } from "@repo/database";
+import { findStudentByEmail } from "@repo/database";
 
 /**
  * POST /api/student/check-email
@@ -8,8 +8,6 @@ import { connectDB, Student } from "@repo/database";
  */
 export async function POST(request: NextRequest) {
     try {
-        await connectDB();
-
         const body = await request.json();
         const { email, level } = body;
 
@@ -27,7 +25,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const existingStudent = await Student.findOne({ email: email.toLowerCase() });
+        const existingStudent = await findStudentByEmail(email.toLowerCase());
 
         if (!existingStudent) {
             return NextResponse.json({
@@ -45,7 +43,7 @@ export async function POST(request: NextRequest) {
                 data: {
                     exists: true,
                     status: "passed",
-                    studentId: existingStudent._id.toString(),
+                    studentId: String(existingStudent.id),
                     fullName: existingStudent.fullName,
                     level: existingStudent.level,
                 },
@@ -81,7 +79,7 @@ export async function POST(request: NextRequest) {
             data: {
                 exists: true,
                 status: "in_progress",
-                studentId: existingStudent._id.toString(),
+                studentId: String(existingStudent.id),
             },
         });
 

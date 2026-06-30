@@ -3,12 +3,18 @@ import { loadEnvConfig } from "@next/env";
 const projectDir = process.cwd();
 loadEnvConfig(projectDir);
 
-import mongoose from "mongoose";
-import { Question } from "../lib/db/models/question";
+import { replaceQuestions, type QuizLevel } from "@repo/database";
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/nandenihon";
+type SeedQuestion = {
+  text: string;
+  options: string[];
+  correctAnswer: string;
+  timeLimit: number;
+  category: string;
+  level: QuizLevel;
+};
 
-const n5Questions = [
+const n5Questions: SeedQuestion[] = [
   {
     text: "Huruf yang digunakan untuk menulis kata serapan asing dalam bahasa Jepang adalah…",
     options: ["Kanji", "Hiragana", "Katakana", "Romaji"],
@@ -211,7 +217,7 @@ const n5Questions = [
   }
 ];
 
-const n4Questions = [
+const n4Questions: SeedQuestion[] = [
   // Bagian 1: Kosakata (Vocabulary)
   {
     text: "昨日、＿＿＿で新しい靴を買いました。",
@@ -420,29 +426,18 @@ const n4Questions = [
 
 async function seed() {
   try {
-    console.log("Connecting to MongoDB...");
-    await mongoose.connect(MONGODB_URI);
-    console.log("Connected to MongoDB");
+    console.log("Connecting to MySQL...");
 
     console.log("Clearing existing questions...");
-    await Question.deleteMany({});
+    const total = await replaceQuestions([...n5Questions, ...n4Questions]);
 
-    console.log("Inserting N5 questions...");
-    const n5Result = await Question.insertMany(n5Questions);
-    console.log(`Successfully inserted ${n5Result.length} N5 questions`);
-
-    console.log("Inserting N4 questions...");
-    const n4Result = await Question.insertMany(n4Questions);
-    console.log(`Successfully inserted ${n4Result.length} N4 questions`);
-
-    console.log(`Total questions seeded: ${n5Result.length + n4Result.length}`);
+    console.log(`Successfully inserted ${n5Questions.length} N5 questions`);
+    console.log(`Successfully inserted ${n4Questions.length} N4 questions`);
+    console.log(`Total questions seeded: ${total}`);
     console.log("Seeding completed!");
   } catch (error) {
     console.error("Seeding error:", error);
     process.exit(1);
-  } finally {
-    await mongoose.disconnect();
-    console.log("Disconnected from MongoDB");
   }
 }
 

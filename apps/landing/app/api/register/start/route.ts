@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB, Student } from "@repo/database";
+import { createStudent, findStudentByEmail, resetStudentForRetry } from "@repo/database";
 import { registerStartSchema } from "@repo/types";
 import { logInfo, logWarn, logError } from "@repo/utils";
 
 export async function POST(request: NextRequest) {
   try {
-    await connectDB();
-
     const body = await request.json();
     const validation = registerStartSchema.safeParse(body);
 
@@ -22,13 +20,13 @@ export async function POST(request: NextRequest) {
 
     await logInfo("api/register/start", "Registration attempt", { email, level, japaneseLevel });
 
-    const existingStudent = await Student.findOne({ email });
+    const existingStudent = await findStudentByEmail(email);
 
     if (existingStudent) {
       if (existingStudent.passStatus === "passed") {
         await logWarn("api/register/start", "Passed student blocked", {
           email,
-          studentId: existingStudent._id.toString()
+          studentId: String(existingStudent.id)
         });
         return NextResponse.json(
           {
@@ -41,45 +39,38 @@ export async function POST(request: NextRequest) {
 
       await logInfo("api/register/start", "Returning student - quiz retry", {
         email,
-        studentId: existingStudent._id.toString(),
+        studentId: String(existingStudent.id),
         previousStatus: existingStudent.passStatus,
         level
       });
 
-      existingStudent.testStatus = "not_started";
-      existingStudent.passStatus = "pending";
-      existingStudent.score = 0;
-      existingStudent.answerHistory = [];
-      existingStudent.level = level;
-      existingStudent.japaneseLevel = japaneseLevel;
-      existingStudent.testStartedAt = new Date();
-      await existingStudent.save();
+      await resetStudentForRetry({
+        id: existingStudent.id,
+        level,
+        japaneseLevel,
+        testStartedAt: new Date(),
+      });
 
       return NextResponse.json({
         success: true,
         data: {
-          studentId: existingStudent._id.toString(),
+          studentId: String(existingStudent.id),
           nextStep: "test_intro",
         },
       });
     }
 
-    const newStudent = await Student.create({
+    const newStudent = await createStudent({
       fullName,
       email,
       level,
       japaneseLevel,
-      testStatus: "not_started",
-      passStatus: "pending",
-      score: 0,
-      answerHistory: [],
-      registrationComplete: false,
       testStartedAt: new Date(),
     });
 
     await logInfo("api/register/start", "New student registered", {
       email,
-      studentId: newStudent._id.toString(),
+      studentId: String(newStudent.id),
       fullName,
       level
     });
@@ -87,7 +78,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        studentId: newStudent._id.toString(),
+        studentId: String(newStudent.id),
         nextStep: "test_intro",
       },
     });

@@ -6,12 +6,9 @@
     "types": "./src/index.ts",
     "exports": {
         ".": "./src/index.ts",
-        "./models": "./src/models/index.ts",
-        "./connection": "./src/connection.ts",
         "./mysql": "./src/mysql-connection.ts"
     },
     "dependencies": {
-        "mongoose": "^9.0.1",
         "mysql2": "^3.11.0",
         "ssh2": "^1.16.0"
     },

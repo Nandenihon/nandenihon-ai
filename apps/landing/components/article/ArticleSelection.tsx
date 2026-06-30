@@ -1,27 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import { Search } from "lucide-react";
-import { FEATURED_ARTICLES } from "@/data/articles";
-import { CardNews, CategoryTag, Chips } from "@repo/ui";
+import type { ArticleView } from "@/lib/news";
+import { CardNews, Chips } from "@repo/ui";
 
-const CATEGORIES = [
-  "Semua Kategori",
-  "Lifestyle",
-  "Teknologi",
-  "Budaya",
-  "Makanan",
-  "Edukasi",
-  "Filosofi",
-];
+interface ArticleSelectionProps {
+  articles: ArticleView[];
+}
 
-export default function ArticleSelection() {
+export default function ArticleSelection({ articles }: ArticleSelectionProps) {
   const [selectedCategory, setSelectedCategory] = useState("Semua Kategori");
   const [searchQuery, setSearchQuery] = useState("");
+  const categories = [
+    "Semua Kategori",
+    ...Array.from(new Set(articles.map((article) => article.category).filter(Boolean))),
+  ];
 
-  const filteredArticles = FEATURED_ARTICLES.filter((article) => {
+  const filteredArticles = articles.filter((article) => {
     const matchesCategory =
       selectedCategory === "Semua Kategori" ||
       article.category === selectedCategory;
@@ -35,7 +31,7 @@ export default function ArticleSelection() {
     <div className="flex flex-col items-center justify-center gap-8 w-full max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
-          {CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <Chips
               key={category}
               label={category}

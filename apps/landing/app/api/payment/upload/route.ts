@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB, Student } from "@repo/database";
-import { Types } from "mongoose";
+import { findStudentById, isValidNumericId, updateStudentPaymentProof } from "@repo/database";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { logInfo, logWarn, logError } from "@repo/utils";
@@ -10,8 +9,6 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export async function POST(request: NextRequest) {
     try {
-        await connectDB();
-
         const formData = await request.formData();
         const studentId = formData.get("studentId") as string;
         const file = formData.get("file") as File | null;
@@ -24,7 +21,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        if (!Types.ObjectId.isValid(studentId)) {
+        if (!isValidNumericId(studentId)) {
             return NextResponse.json(
                 { success: false, error: "Invalid student ID" },
                 { status: 400 }
@@ -56,7 +53,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Find student
-        const student = await Student.findById(studentId);
+        const student = await findStudentById(studentId);
 
         if (!student) {
             return NextResponse.json(
@@ -94,8 +91,7 @@ export async function POST(request: NextRequest) {
 
         // Update student record with payment proof URL
         const paymentProofUrl = `/uploads/payment/${filename}`;
-        student.paymentProofUrl = paymentProofUrl;
-        await student.save();
+        await updateStudentPaymentProof(student.id, paymentProofUrl);
 
         await logInfo("api/payment/upload", "Payment upload success", { studentId, email: student.email, filename, paymentProofUrl });
 

@@ -14,7 +14,7 @@
         "@repo/types": "*",
         "@repo/ui": "*",
         "@repo/utils": "*",
-        "next": "^16.0.10",
+        "next": "^15.0.0",
         "react": "^19.2.3",
         "react-dom": "^19.2.3"
     },
@@ -25,7 +25,7 @@
         "@types/react": "^19",
         "@types/react-dom": "^19",
         "eslint": "^9",
-        "eslint-config-next": "^16.0.10",
+        "eslint-config-next": "^15.0.0",
         "tailwindcss": "^4",
         "typescript": "^5"
     }
