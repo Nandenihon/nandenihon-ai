@@ -3,12 +3,13 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "next dev --port 3000 --webpack",
-        "build": "next build --webpack",
+        "dev": "next dev --port 3000",
+        "build": "next build",
         "start": "next start --port 3000",
         "lint": "eslint .",
         "type-check": "tsc --noEmit",
-        "seed": "npx tsx scripts/seed.ts"
+        "seed": "npx tsx scripts/seed.ts",
+        "setup-news": "npx tsx scripts/setup-news-table.ts"
     },
     "dependencies": {
         "@repo/database": "*",
@@ -31,7 +32,7 @@
         "@types/react": "^19",
         "@types/react-dom": "^19",
         "eslint": "^9",
-        "eslint-config-next": "^16.0.10",
+        "eslint-config-next": "^15.0.0",
         "tailwindcss": "^4",
         "typescript": "^5"
     }

@@ -1,24 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB, Student } from "@repo/database";
-import { Types } from "mongoose";
+import { findStudentById, isValidNumericId } from "@repo/database";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ studentId: string }> }
 ) {
   try {
-    await connectDB();
-
     const { studentId } = await params;
 
-    if (!Types.ObjectId.isValid(studentId)) {
+    if (!isValidNumericId(studentId)) {
       return NextResponse.json(
         { success: false, error: "Invalid student ID" },
         { status: 400 }
       );
     }
 
-    const student = await Student.findById(studentId);
+    const student = await findStudentById(studentId);
 
     if (!student) {
       return NextResponse.json(

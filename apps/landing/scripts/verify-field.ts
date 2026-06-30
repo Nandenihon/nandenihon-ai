@@ -1,44 +1,30 @@
+import { createStudent, findStudentByEmail } from "@repo/database";
 
-import { Student } from "../lib/db/models/student";
-import { connectDB } from "../lib/db/connection";
-import mongoose from "mongoose";
+async function verifyField() {
+    const email = `test-${Date.now()}@example.com`;
+    const japaneseLevel = "N5";
 
-async function test() {
-    await connectDB();
-    console.log("Connected to DB");
-
-    const email = "test_japanese_level_" + Date.now() + "@example.com";
-    const fullName = "Test User Japanese Level";
-    const level = "N5";
-    const japaneseLevel = "Belum Pernah";
-
-    console.log(`Testing with email: ${email}`);
-
-    // Simulate API call logic
-    const newStudent = await Student.create({
-        fullName,
+    const newStudent = await createStudent({
+        fullName: "Test User",
         email,
-        level,
+        level: "N5",
         japaneseLevel,
-        testStatus: "not_started",
-        passStatus: "pending",
-        score: 0,
-        answerHistory: [],
-        registrationComplete: false,
+        testStartedAt: new Date(),
     });
 
     console.log("Student created:", newStudent);
 
-    const foundStudent = await Student.findOne({ email });
+    const foundStudent = await findStudentByEmail(email);
     console.log("Found student in DB:", foundStudent);
 
     if (foundStudent && foundStudent.japaneseLevel === japaneseLevel) {
-        console.log("SUCCESS: japaneseLevel saved correctly!");
+        console.log("SUCCESS: japaneseLevel field is working!");
     } else {
-        console.log("FAILURE: japaneseLevel not saved correctly!");
+        console.log("FAILED: japaneseLevel field not found or incorrect");
     }
-
-    await mongoose.connection.close();
 }
 
-test().catch(console.error);
+verifyField().catch((error) => {
+    console.error("Verification failed:", error);
+    process.exit(1);
+});

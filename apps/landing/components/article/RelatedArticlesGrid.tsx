@@ -1,33 +1,14 @@
 import { CardNews } from "@repo/ui";
-import { getAllArticles } from "@/data/articles";
+import type { ArticleView } from "@/lib/news";
 
 interface RelatedArticlesGridProps {
-  currentSlug: string;
-  currentCategory: string;
+  articles: ArticleView[];
 }
 
 export default function RelatedArticlesGrid({
-  currentSlug,
-  currentCategory,
+  articles,
 }: RelatedArticlesGridProps) {
-  const allArticles = getAllArticles();
-
-  // Get related articles: same category first, then others
-  const sameCategoryArticles = allArticles.filter(
-    (a) => a.category === currentCategory && a.slug !== currentSlug
-  );
-
-  const otherArticles = allArticles.filter(
-    (a) => a.category !== currentCategory && a.slug !== currentSlug
-  );
-
-  // Combine: up to 3 from same category, fill rest from others
-  const relatedArticles = [
-    ...sameCategoryArticles.slice(0, 3),
-    ...otherArticles.slice(0, Math.max(0, 3 - sameCategoryArticles.length)),
-  ].slice(0, 3);
-
-  if (relatedArticles.length === 0) return null;
+  if (articles.length === 0) return null;
 
   return (
     <section className="mt-16 pt-10 border-t border-neutral-10">
@@ -43,7 +24,7 @@ export default function RelatedArticlesGrid({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {relatedArticles.map((article) => (
+        {articles.slice(0, 3).map((article) => (
           <CardNews
             key={article.id}
             slug={article.slug}

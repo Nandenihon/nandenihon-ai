@@ -2,29 +2,64 @@
 > landing@0.1.0 build
 > next build
 
-▲ Next.js 16.1.4 (Turbopack)
-- Environments: .env.local
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\ZSTORE\package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * C:\Users\ZSTORE\Desktop\nandenihon-ai\package-lock.json
 
-  Creating an optimized production build ...
-Turbopack build encountered 1 warnings:
-[next]/internal/font/google/noto_sans_1b20a0b0.module.css
-Error while requesting resource
-There was an issue establishing a connection while requesting https://fonts.googleapis.com/css2?family=Noto+Sans:wght@100..900&display=swap
+   ▲ Next.js 15.5.19
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 7.4s
+   Linting and checking validity of types ...
+
+ ⚠ The Next.js plugin was not detected in your ESLint configuration. See https://nextjs.org/docs/app/api-reference/config/eslint#migrating-existing-config
+   Collecting page data ...
+   Generating static pages (0/24) ...
+   Generating static pages (6/24) 
+   Generating static pages (12/24) 
+   Generating static pages (18/24) 
+ ✓ Generating static pages (24/24)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                    Size  First Load JS
+┌ ƒ /                                         946 B         109 kB
+├ ○ /_not-found                               987 B         104 kB
+├ ƒ /about                                    484 B         108 kB
+├ ƒ /api/log                                  156 B         103 kB
+├ ƒ /api/payment/upload                       156 B         103 kB
+├ ƒ /api/register/complete                    156 B         103 kB
+├ ƒ /api/register/start                       156 B         103 kB
+├ ƒ /api/student/check-email                  156 B         103 kB
+├ ƒ /api/student/result/[studentId]           156 B         103 kB
+├ ƒ /api/test/finish                          156 B         103 kB
+├ ƒ /api/test/question/[level]/[studentId]    156 B         103 kB
+├ ƒ /api/test/submit                          156 B         103 kB
+├ ƒ /api/testimony                            156 B         103 kB
+├ ○ /article                                4.42 kB         121 kB
+├ ƒ /article/[slug]                         5.08 kB         121 kB
+├ ƒ /class                                    156 B         103 kB
+├ ○ /class/confirm                           6.7 kB         118 kB
+├ ○ /class/information-and-rules            5.16 kB         111 kB
+├ ○ /class/payment                          2.35 kB         113 kB
+├ ○ /class/quiz                              2.6 kB         105 kB
+├ ○ /class/register                         3.14 kB         115 kB
+├ ○ /class/result                           1.13 kB         107 kB
+├ ○ /class/submitted                        2.97 kB         109 kB
+├ ○ /contact                                  156 B         103 kB
+├ ○ /information                              162 B         106 kB
+├ ○ /information/konseling/formulir         1.18 kB         104 kB
+└ ○ /information/konseling/register         1.95 kB         108 kB
++ First Load JS shared by all                103 kB
+  ├ chunks/18-a6801e2fc629b9f0.js           46.3 kB
+  ├ chunks/87c73c54-24122e7b92478d00.js     54.2 kB
+  └ other shared chunks (total)             1.99 kB
 
 
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
 
-> Build error occurred
-Error: Turbopack build failed with 1 errors:
-[next]/internal/font/google/noto_sans_1b20a0b0.module.css
-next/font: error:
-Failed to fetch `Noto Sans` from Google Fonts.
-
-
-    at ignore-listed frames
-npm error Lifecycle script `build` failed with error:
-npm error code 1
-npm error path /Applications/nandenihon-ai/apps/landing
-npm error workspace landing@0.1.0
-npm error location /Applications/nandenihon-ai/apps/landing
-npm error command failed
-npm error command sh -c next build

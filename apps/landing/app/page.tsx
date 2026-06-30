@@ -4,6 +4,8 @@ import { OurPartnerSection } from "@/components/home/OurPartnerSection";
 import OurTeamList from "@/components/home/OurTeamList";
 import PublicationSection from "@/components/home/PublicationSection";
 import TestimonialSection from "@/components/home/TestimonialSection";
+import { mapNewsToArticle } from "@/lib/news";
+import { listNews } from "@repo/database";
 import Image from "next/image";
 
 export const dynamic = "force-dynamic";
@@ -72,7 +74,14 @@ const HeroSection = () => (
   </div>
 );
 
-function HomeContent() {
+async function getPublicationArticles() {
+  const news = await listNews({ limit: 6 });
+  return news.data.map(mapNewsToArticle);
+}
+
+async function HomeContent() {
+  const publicationArticles = await getPublicationArticles();
+
   return (
     <div className="relative">
       <BackgroundPattern />
@@ -81,7 +90,7 @@ function HomeContent() {
 
       <OurPartnerSection />
       <BenefitSection />
-      <PublicationSection />
+      <PublicationSection articles={publicationArticles} />
       <TestimonialSection />
       <OurTeamList />
       <CtaSection />

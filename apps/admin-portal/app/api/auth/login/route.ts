@@ -3,6 +3,9 @@ import { queryMySQL, type RowDataPacket } from "@repo/database";
 import { signToken, COOKIE_NAME, COOKIE_MAX_AGE } from "@/app/lib/auth";
 import crypto from "crypto";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 function md5(str: string): string {
     return crypto.createHash("md5").update(str).digest("hex");
 }
@@ -164,8 +167,13 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("Login error:", error);
+        const body =
+            process.env.NODE_ENV === "production"
+                ? { error: "Terjadi kesalahan server" }
+                : { error: "Terjadi kesalahan server", details: errorMessage };
+
         return NextResponse.json(
-            { error: "Terjadi kesalahan server", details: errorMessage },
+            body,
             { status: 500 }
         );
     }
