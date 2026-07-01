@@ -1,5 +1,6 @@
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Metadata } from "next";
 import React from "react";
 import "./globals.css";
@@ -20,6 +21,7 @@ function AppLayout({ children }: NewAppLayoutProps) {
         <Navbar />
         <main className="relative">{children}</main>
         <Footer />
+        <SpeedInsights />
       </body>
     </html>
   );
