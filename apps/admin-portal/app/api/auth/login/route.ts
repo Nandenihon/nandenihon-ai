@@ -167,8 +167,13 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("Login error:", error);
+        const body =
+            process.env.NODE_ENV === "production"
+                ? { error: "Terjadi kesalahan server" }
+                : { error: "Terjadi kesalahan server", details: errorMessage };
+
         return NextResponse.json(
-            { error: "Terjadi kesalahan server", details: errorMessage },
+            body,
             { status: 500 }
         );
     }
