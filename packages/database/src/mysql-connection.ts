@@ -91,15 +91,18 @@ function isLocalRuntime(): boolean {
 }
 
 function getProductionMysqlConfig(): MySQLConfig["mysql"] {
-    const host = process.env.PRODUCTION_DB_HOST;
-    const port = parseInt(process.env.PRODUCTION_DB_PORT || "3306", 10);
-    const user = process.env.PRODUCTION_DB_USER;
-    const password = process.env.PRODUCTION_DB_PASSWORD;
-    const database = process.env.PRODUCTION_DB_NAME || process.env.PRODUCTION_DB_DATABASE;
+    const host = process.env.DB_HOST || process.env.PRODUCTION_DB_HOST;
+    const port = parseInt(process.env.DB_PORT || process.env.PRODUCTION_DB_PORT || "3306", 10);
+    const user = process.env.DB_USER || process.env.PRODUCTION_DB_USER;
+    const password = process.env.DB_PASSWORD || process.env.PRODUCTION_DB_PASSWORD;
+    const database =
+        process.env.DB_NAME ||
+        process.env.PRODUCTION_DB_NAME ||
+        process.env.PRODUCTION_DB_DATABASE;
 
     if (!host || !user || !password || !database) {
         throw new Error(
-            "Please define PRODUCTION_DB_HOST, PRODUCTION_DB_USER, PRODUCTION_DB_PASSWORD, and PRODUCTION_DB_NAME environment variables on Vercel"
+            "Please define DB_HOST, DB_USER, DB_PASSWORD, and DB_NAME environment variables on Vercel"
         );
     }
 
