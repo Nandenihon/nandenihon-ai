@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import FeaturedArticles from "@/components/article/FeaturedArticles";
 import MostPopularArticles from "@/components/article/MostPopularArticles";
 import ArticleSelection from "@/components/article/ArticleSelection";
