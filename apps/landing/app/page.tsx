@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import BenefitSection from "@/components/home/BenefitSection";
 import CtaSection from "@/components/home/CtaSection";
 import { OurPartnerSection } from "@/components/home/OurPartnerSection";
