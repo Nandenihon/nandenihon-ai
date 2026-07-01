@@ -6,30 +6,34 @@ import PublicationSection from "@/components/home/PublicationSection";
 import TestimonialSection from "@/components/home/TestimonialSection";
 import { mapNewsToArticle } from "@/lib/news";
 import { listNews } from "@repo/database";
+import { unstable_cache } from "next/cache";
 import Image from "next/image";
+import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const BackgroundPattern = () => (
   <>
     <div className="absolute top-0 w-328 -mt-50 z-0 hidden lg:block">
       <Image
         src="/images/pattern-hero.png"
-        alt="pattern-hero"
+        alt=""
         width={1200}
         height={1200}
         className="w-full"
-        priority
+        sizes="1200px"
+        aria-hidden="true"
       />
     </div>
 
     <div className="absolute top-0 right-0 z-0">
       <Image
         src="/images/vector-gradient.png"
-        alt="vector-gradient"
+        alt=""
         width={800}
         height={800}
-        priority
+        sizes="(min-width: 1024px) 800px, 60vw"
+        aria-hidden="true"
       />
     </div>
   </>
@@ -52,32 +56,46 @@ const HeroSection = () => (
       </p>
 
       <div className="flex flex-col sm:flex-row items-center gap-4 mt-6 w-full lg:w-auto">
-        <button className="btn w-full sm:w-auto justify-center">
+        <Link
+          href="/class/register"
+          prefetch={false}
+          className="btn w-full sm:w-auto justify-center"
+        >
           Mulai Belajar
-        </button>
-        <button className="btn bg-white text-primary-base border border-primary-base w-full sm:w-auto justify-center">
+        </Link>
+        <Link
+          href="/class"
+          prefetch={false}
+          className="btn bg-white text-primary-base border border-primary-base w-full sm:w-auto justify-center"
+        >
           Lihat Kelas
-        </button>
+        </Link>
       </div>
     </div>
 
     <div className="hidden lg:block">
       <Image
         src="/images/hero.png"
-        alt="hero"
-        width={620}
-        height={620}
+        alt="Siswa belajar bahasa Jepang bersama Nande Nihon"
+        width={638}
+        height={530}
         className="w-150"
+        sizes="600px"
         priority
       />
     </div>
   </div>
 );
 
-async function getPublicationArticles() {
-  const news = await listNews({ limit: 6 });
-  return news.data.map(mapNewsToArticle);
-}
+const getPublicationArticles = unstable_cache(async () => {
+  try {
+    const news = await listNews({ limit: 6 });
+    return news.data.map(mapNewsToArticle);
+  } catch (error) {
+    console.error("Failed to fetch homepage publications:", error);
+    return [];
+  }
+}, ["home-publication-articles"], { revalidate: 300, tags: ["news"] });
 
 async function HomeContent() {
   const publicationArticles = await getPublicationArticles();

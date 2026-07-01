@@ -1,24 +1,11 @@
+import { resolveUploadImageUrl } from "@/lib/images";
 import MainSection from "./MainSection";
 import WebinarItem, { type WebinarItemProps } from "./WebinarItem";
 import { queryMySQL, type RowDataPacket } from "@repo/database";
 import type { Seminar } from "@repo/types";
 
-const UPLOAD_BASE_URL =
-  process.env.NEXT_PUBLIC_UPLOAD_BASE_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://nandenihon.com";
-
-function resolveImageUrl(image: string): string {
-  if (!image) {
-    return "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop";
-  }
-
-  if (image.startsWith("http://") || image.startsWith("https://")) {
-    return image;
-  }
-
-  return `${UPLOAD_BASE_URL}${image.startsWith("/") ? image : `/${image}`}`;
-}
+const WEBINAR_IMAGE_FALLBACK =
+  "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop";
 
 function formatDate(value: Date | string): string {
   return new Date(value).toLocaleDateString("id-ID", {
@@ -42,7 +29,7 @@ async function getSeminars(): Promise<WebinarItemProps[]> {
       id: item.id,
       title: item.theme,
       type: item.status,
-      image: resolveImageUrl(item.image_banner),
+      image: resolveUploadImageUrl(item.image_banner, WEBINAR_IMAGE_FALLBACK),
       date: formatDate(item.event_date),
       time: formatTime(item.event_time),
     }));

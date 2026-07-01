@@ -1,4 +1,11 @@
-import React from "react";
+import { HOME_SECTION_TITLE_CLASS } from "@/components/home/shared";
+import Image from "next/image";
+
+type Benefit = {
+  image: string;
+  title: string;
+  description: string;
+};
 
 const benefits = [
   {
@@ -37,14 +44,17 @@ const benefits = [
     description:
       "Kami pantau perkembanganmu, jawab pertanyaan, dan siap membimbing setiap kali kamu membutuhkan.",
   },
-];
+] as const satisfies readonly Benefit[];
 
-const BenefitCard = ({ image, title, description }: (typeof benefits)[0]) => (
-  <div className="relative flex flex-col items-center bg-[#F0F0F0] px-8 pb-10 pt-24 rounded-[40px] mb-10 text-center hover:shadow-lg transition-shadow duration-300">
+const BenefitCard = ({ image, title, description }: Benefit) => (
+  <article className="relative flex h-full flex-col items-center bg-[#F0F0F0] px-8 pb-10 pt-24 rounded-[40px] mb-10 text-center hover:shadow-lg transition-shadow duration-300">
     <div className="absolute -top-20">
-      <img
+      <Image
         src={image}
         alt={title}
+        width={160}
+        height={160}
+        sizes="160px"
         className="w-40 h-40 object-contain drop-shadow-lg"
       />
     </div>
@@ -53,21 +63,21 @@ const BenefitCard = ({ image, title, description }: (typeof benefits)[0]) => (
       {title}
     </h3>
     <p className="text-gray-600 text-[14px] leading-relaxed">{description}</p>
-  </div>
+  </article>
 );
 
 function BenefitSection() {
   return (
     <div className="py-12 bg-[#FFFBFD]">
       <div className="max-w-7xl mx-auto px-6 lg:px-0">
-        <h2 className="lg:text-4xl  text-2xl font-bold text-center text-gray-900 mb-10">
+        <h2 className={`${HOME_SECTION_TITLE_CLASS} text-center mb-10`}>
           Benefit yang Akan Kamu Dapatkan di Nande Nihon
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 gap-y-20 mt-40">
-          {benefits.map((item, idx) => (
+          {benefits.map((item) => (
             <BenefitCard
-              key={idx}
+              key={item.title}
               image={item.image}
               title={item.title}
               description={item.description}

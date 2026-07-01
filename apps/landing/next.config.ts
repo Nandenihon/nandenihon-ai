@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 const uploadUrl = process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || "https://nandenihon.com";
@@ -29,6 +30,9 @@ const uploadImagePatterns = [
 const nextConfig: NextConfig = {
   transpilePackages: ["@repo/ui", "@repo/database", "@repo/types", "@repo/utils"],
   serverExternalPackages: ["ssh2", "mysql2"],
+  turbopack: {
+    root: path.resolve(__dirname, "../../"),
+  },
   images: {
     remotePatterns: [
       {
@@ -39,6 +43,19 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "www.nandenihon.com",
         pathname: "/blog/wp-content/uploads/**",
+      },
+      {
+        protocol: "https",
+        hostname: "nandenihon.com",
+        pathname: "/blog/wp-content/uploads/**",
+      },
+      {
+        protocol: "https",
+        hostname: "drive.google.com",
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
       },
       ...uploadImagePatterns,
     ],

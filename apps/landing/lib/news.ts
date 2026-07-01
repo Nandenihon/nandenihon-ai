@@ -1,3 +1,4 @@
+import { resolveUploadImageUrl } from "@/lib/images";
 import type { NewsItem } from "@repo/database";
 
 export type ArticleView = {
@@ -39,7 +40,7 @@ export function mapNewsToArticle(news: NewsItem): ArticleView {
     title: news.title,
     author: news.authorName || "Nande Nihon",
     date: formatNewsDate(news.publishedAt),
-    image: news.featuredImageUrl || undefined,
+    image: resolveUploadImageUrl(news.featuredImageUrl, "") || undefined,
     category: news.categoryName || "Artikel",
     description: stripHtml(news.excerpt) || stripHtml(news.content).slice(0, 180),
     content: news.content,
