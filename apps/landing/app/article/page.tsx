@@ -1,15 +1,19 @@
-export const dynamic = 'force-dynamic';
+// ISR: cache the article list for 1 hour, revalidate in background.
+export const revalidate = 3600;
 
 import FeaturedArticles from "@/components/article/FeaturedArticles";
 import MostPopularArticles from "@/components/article/MostPopularArticles";
 import ArticleSelection from "@/components/article/ArticleSelection";
-import { mapNewsToArticle } from "@/lib/news";
-import { listNews } from "@repo/database";
+import { mapNewsSummaryToArticle } from "@/lib/news";
+import { listNewsSummary } from "@repo/database";
 
 async function getArticlePageData() {
-  const news = await listNews({ limit: 100 });
-  return news.data.map(mapNewsToArticle);
+  // Use listNewsSummary — no LONGTEXT content field needed for list pages.
+  // Limit 30 is enough; the list doesn't display 100 articles at once.
+  const news = await listNewsSummary({ limit: 30 });
+  return news.data.map(mapNewsSummaryToArticle);
 }
+
 
 export default async function ArticlePage() {
   const articles = await getArticlePageData();

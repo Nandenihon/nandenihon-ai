@@ -1,54 +1,174 @@
-export default function StudentsPage() {
-    const students = [
-        { id: 1, name: "Budi Santoso", email: "budi@example.com", phone: "081234567890", level: "N5", batch: "Batch 12", status: "Aktif", joinDate: "10 Jan 2025" },
-        { id: 2, name: "Siti Rahayu", email: "siti@example.com", phone: "082345678901", level: "N4", batch: "Batch 7", status: "Aktif", joinDate: "15 Feb 2025" },
-        { id: 3, name: "Ahmad Fauzi", email: "ahmad@example.com", phone: "083456789012", level: "N3", batch: "Batch 3", status: "Non-Aktif", joinDate: "20 Mar 2025" },
-        { id: 4, name: "Dewi Kusuma", email: "dewi@example.com", phone: "084567890123", level: "N5", batch: "Batch 12", status: "Aktif", joinDate: "5 Apr 2025" },
-        { id: 5, name: "Rizky Pratama", email: "rizky@example.com", phone: "085678901234", level: "N4", batch: "Batch 7", status: "Aktif", joinDate: "1 Mei 2025" },
-        { id: 6, name: "Maya Indah", email: "maya@example.com", phone: "086789012345", level: "N5", batch: "Batch 13", status: "Aktif", joinDate: "10 Jun 2025" },
-        { id: 7, name: "Hendra Wijaya", email: "hendra@example.com", phone: "087890123456", level: "N4", batch: "Batch 8", status: "Aktif", joinDate: "12 Jun 2025" },
-    ];
+export const dynamic = "force-dynamic";
+
+import { queryMySQL, type RowDataPacket } from "@repo/database";
+
+interface Student {
+    id: number;
+    full_name: string;
+    email: string;
+    whatsapp: string | null;
+    level: string | null;
+    test_status: string;
+    pass_status: string;
+    created_at: Date;
+}
+
+interface StudentsPageProps {
+    searchParams?: Promise<{ page?: string; level?: string; status?: string }>;
+}
+
+const PAGE_SIZE = 10;
+
+function formatDate(date: Date | null): string {
+    if (!date) return "-";
+    return new Intl.DateTimeFormat("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    }).format(new Date(date));
+}
+
+function getStatusLabel(testStatus: string, passStatus: string): string {
+    if (testStatus === "completed") {
+        return passStatus === "passed" ? "Lulus" : "Tidak Lulus";
+    }
+    if (testStatus === "in_progress") return "Dalam Tes";
+    return "Aktif";
+}
+
+function getStatusColor(testStatus: string, passStatus: string): string {
+    if (testStatus === "completed") {
+        return passStatus === "passed"
+            ? "bg-success-10 text-success-base"
+            : "bg-error-10 text-error-base";
+    }
+    if (testStatus === "in_progress") return "bg-warning-10 text-warning-100";
+    return "bg-primary-10 text-primary-base";
+}
+
+export default async function StudentsPage({ searchParams }: StudentsPageProps) {
+    const params = searchParams ? await searchParams : {};
+    const page = Math.max(1, parseInt(params.page ?? "1", 10));
+    const levelFilter = params.level ?? "";
+    const statusFilter = params.status ?? "";
+    const offset = (page - 1) * PAGE_SIZE;
+
+    const conditions: string[] = [];
+    const queryParams: unknown[] = [];
+
+    if (levelFilter) {
+        conditions.push("level = ?");
+        queryParams.push(levelFilter);
+    }
+    if (statusFilter === "active") {
+        conditions.push("test_status != 'completed'");
+    } else if (statusFilter === "completed") {
+        conditions.push("test_status = 'completed'");
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    let students: Student[] = [];
+    let total = 0;
+
+    try {
+        const countRows = await queryMySQL<RowDataPacket[]>(
+            `SELECT COUNT(*) as total FROM students ${whereClause}`,
+            queryParams
+        );
+        total = Number(countRows[0]?.total ?? 0);
+
+        const rows = await queryMySQL<RowDataPacket[]>(
+            `SELECT id, full_name, email, whatsapp, level, test_status, pass_status, created_at
+             FROM students
+             ${whereClause}
+             ORDER BY created_at DESC
+             LIMIT ? OFFSET ?`,
+            [...queryParams, PAGE_SIZE, offset]
+        );
+        students = rows as Student[];
+    } catch {
+        // Leave students empty, show error state
+    }
+
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+    function buildUrl(newPage: number, newLevel?: string, newStatus?: string) {
+        const p = new URLSearchParams();
+        if (newPage > 1) p.set("page", String(newPage));
+        const lv = newLevel ?? levelFilter;
+        const st = newStatus ?? statusFilter;
+        if (lv) p.set("level", lv);
+        if (st) p.set("status", st);
+        return `/dashboard/students${p.size > 0 ? `?${p}` : ""}`;
+    }
+
+    const pageNumbers: number[] = [];
+    const delta = 2;
+    for (let i = Math.max(1, page - delta); i <= Math.min(totalPages, page + delta); i++) {
+        pageNumbers.push(i);
+    }
 
     return (
         <div className="flex flex-col gap-6">
             {/* Header Actions */}
             <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                     <div className="relative">
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-40">
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                             </svg>
                         </div>
-                        <input
-                            type="search"
-                            placeholder="Cari siswa..."
-                            className="w-64 bg-absolute-white border border-neutral-20 rounded-xl py-2 pl-9 pr-4 text-sm text-neutral-70 placeholder:text-neutral-40 outline-none focus:border-primary-base transition-all"
-                        />
+                        <form method="GET" action="/dashboard/students">
+                            {levelFilter && <input type="hidden" name="level" value={levelFilter} />}
+                            {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
+                            <input
+                                type="search"
+                                name="search"
+                                placeholder="Cari siswa..."
+                                className="w-64 bg-absolute-white border border-neutral-20 rounded-xl py-2 pl-9 pr-4 text-sm text-neutral-70 placeholder:text-neutral-40 outline-none focus:border-primary-base transition-all"
+                            />
+                        </form>
                     </div>
-                    <select className="bg-absolute-white border border-neutral-20 rounded-xl py-2 px-3 text-sm text-neutral-70 outline-none focus:border-primary-base transition-all">
-                        <option value="">Semua Level</option>
-                        <option value="N5">N5</option>
-                        <option value="N4">N4</option>
-                        <option value="N3">N3</option>
-                        <option value="N2">N2</option>
-                        <option value="N1">N1</option>
-                    </select>
-                    <select className="bg-absolute-white border border-neutral-20 rounded-xl py-2 px-3 text-sm text-neutral-70 outline-none focus:border-primary-base transition-all">
-                        <option value="">Semua Status</option>
-                        <option value="active">Aktif</option>
-                        <option value="inactive">Non-Aktif</option>
-                    </select>
+                    <div className="flex items-center gap-2">
+                        <a
+                            href={buildUrl(1, "", statusFilter)}
+                            className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${!levelFilter ? "bg-primary-base text-absolute-white border-primary-base" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}
+                        >
+                            Semua Level
+                        </a>
+                        {["N5", "N4", "N3", "N2", "N1"].map((lv) => (
+                            <a
+                                key={lv}
+                                href={buildUrl(1, lv, statusFilter)}
+                                className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${levelFilter === lv ? "bg-primary-base text-absolute-white border-primary-base" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}
+                            >
+                                {lv}
+                            </a>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <a
+                            href={buildUrl(1, levelFilter, "")}
+                            className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${!statusFilter ? "bg-neutral-80 text-absolute-white border-neutral-80" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}
+                        >
+                            Semua Status
+                        </a>
+                        <a
+                            href={buildUrl(1, levelFilter, "active")}
+                            className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${statusFilter === "active" ? "bg-neutral-80 text-absolute-white border-neutral-80" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}
+                        >
+                            Aktif
+                        </a>
+                        <a
+                            href={buildUrl(1, levelFilter, "completed")}
+                            className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${statusFilter === "completed" ? "bg-neutral-80 text-absolute-white border-neutral-80" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}
+                        >
+                            Selesai
+                        </a>
+                    </div>
                 </div>
-                <a
-                    href="/dashboard/students/add"
-                    className="flex items-center gap-2 bg-primary-base text-absolute-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary-80 transition-all"
-                >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    Tambah Siswa
-                </a>
             </div>
 
             {/* Table */}
@@ -60,65 +180,48 @@ export default function StudentsPage() {
                                 <th className="text-left text-xs font-semibold text-neutral-50 px-6 py-3.5">Siswa</th>
                                 <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">No. HP</th>
                                 <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Level</th>
-                                <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Batch</th>
                                 <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Bergabung</th>
                                 <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Status</th>
-                                <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-10">
-                            {students.map((student) => (
-                                <tr key={student.id} className="hover:bg-neutral-0 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-full bg-primary-20 flex items-center justify-center text-primary-base text-sm font-bold flex-shrink-0">
-                                                {student.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-semibold text-neutral-80">{student.name}</p>
-                                                <p className="text-xs text-neutral-40">{student.email}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-neutral-60">{student.phone}</td>
-                                    <td className="px-4 py-4">
-                                        <span className="bg-primary-10 text-primary-base text-xs font-semibold px-2.5 py-1 rounded-full">
-                                            {student.level}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-neutral-60">{student.batch}</td>
-                                    <td className="px-4 py-4 text-sm text-neutral-60">{student.joinDate}</td>
-                                    <td className="px-4 py-4">
-                                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                                            student.status === "Aktif" ? "bg-success-10 text-success-base" : "bg-neutral-10 text-neutral-50"
-                                        }`}>
-                                            {student.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <button className="p-1.5 rounded-lg text-primary-base hover:bg-primary-10 transition-all" title="Lihat Detail">
-                                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                                    <circle cx="12" cy="12" r="3" />
-                                                </svg>
-                                            </button>
-                                            <button className="p-1.5 rounded-lg text-neutral-50 hover:bg-neutral-10 transition-all" title="Edit">
-                                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                                                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                                </svg>
-                                            </button>
-                                            <button className="p-1.5 rounded-lg text-error-base hover:bg-error-10 transition-all" title="Hapus">
-                                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                    <polyline points="3 6 5 6 21 6" />
-                                                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2" />
-                                                </svg>
-                                            </button>
-                                        </div>
+                            {students.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-10 text-center text-sm text-neutral-50">
+                                        Belum ada data siswa.
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                students.map((student) => (
+                                    <tr key={student.id} className="hover:bg-neutral-0 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 rounded-full bg-primary-20 flex items-center justify-center text-primary-base text-sm font-bold flex-shrink-0">
+                                                    {student.full_name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-semibold text-neutral-80">{student.full_name}</p>
+                                                    <p className="text-xs text-neutral-40">{student.email}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4 text-sm text-neutral-60">{student.whatsapp ?? "-"}</td>
+                                        <td className="px-4 py-4">
+                                            <span className="bg-primary-10 text-primary-base text-xs font-semibold px-2.5 py-1 rounded-full">
+                                                {student.level ?? "-"}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-4 text-sm text-neutral-60">
+                                            {formatDate(student.created_at)}
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getStatusColor(student.test_status, student.pass_status)}`}>
+                                                {getStatusLabel(student.test_status, student.pass_status)}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -126,31 +229,52 @@ export default function StudentsPage() {
                 {/* Pagination */}
                 <div className="flex items-center justify-between px-6 py-4 border-t border-neutral-20">
                     <p className="text-sm text-neutral-50">
-                        Menampilkan <span className="font-semibold text-neutral-80">7</span> dari{" "}
-                        <span className="font-semibold text-neutral-80">1,248</span> siswa
+                        Menampilkan{" "}
+                        <span className="font-semibold text-neutral-80">
+                            {Math.min(offset + 1, total)}–{Math.min(offset + PAGE_SIZE, total)}
+                        </span>{" "}
+                        dari <span className="font-semibold text-neutral-80">{new Intl.NumberFormat("id-ID").format(total)}</span> siswa
                     </p>
-                    <div className="flex items-center gap-2">
-                        <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral-20 text-neutral-50 hover:bg-neutral-10 transition-all disabled:opacity-40" disabled>
+                    <div className="flex items-center gap-1.5">
+                        <a
+                            href={buildUrl(Math.max(1, page - 1))}
+                            aria-disabled={page === 1}
+                            className={`w-8 h-8 flex items-center justify-center rounded-lg border border-neutral-20 text-neutral-50 transition-all ${page === 1 ? "opacity-40 pointer-events-none" : "hover:bg-neutral-10"}`}
+                        >
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <polyline points="15 18 9 12 15 6" />
                             </svg>
-                        </button>
-                        {[1, 2, 3].map((page) => (
-                            <button key={page} className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-all ${
-                                page === 1 ? "bg-primary-base text-absolute-white" : "border border-neutral-20 text-neutral-60 hover:bg-neutral-10"
-                            }`}>
-                                {page}
-                            </button>
+                        </a>
+                        {page > 3 && (
+                            <>
+                                <a href={buildUrl(1)} className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral-20 text-sm font-medium text-neutral-60 hover:bg-neutral-10 transition-all">1</a>
+                                {page > 4 && <span className="text-neutral-40 text-sm px-1">…</span>}
+                            </>
+                        )}
+                        {pageNumbers.map((p) => (
+                            <a
+                                key={p}
+                                href={buildUrl(p)}
+                                className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-all ${p === page ? "bg-primary-base text-absolute-white" : "border border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}
+                            >
+                                {p}
+                            </a>
                         ))}
-                        <span className="text-neutral-40 text-sm">...</span>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral-20 text-sm font-medium text-neutral-60 hover:bg-neutral-10 transition-all">
-                            178
-                        </button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral-20 text-neutral-50 hover:bg-neutral-10 transition-all">
+                        {page < totalPages - 2 && (
+                            <>
+                                {page < totalPages - 3 && <span className="text-neutral-40 text-sm px-1">…</span>}
+                                <a href={buildUrl(totalPages)} className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral-20 text-sm font-medium text-neutral-60 hover:bg-neutral-10 transition-all">{totalPages}</a>
+                            </>
+                        )}
+                        <a
+                            href={buildUrl(Math.min(totalPages, page + 1))}
+                            aria-disabled={page === totalPages}
+                            className={`w-8 h-8 flex items-center justify-center rounded-lg border border-neutral-20 text-neutral-50 transition-all ${page === totalPages ? "opacity-40 pointer-events-none" : "hover:bg-neutral-10"}`}
+                        >
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <polyline points="9 18 15 12 9 6" />
                             </svg>
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>

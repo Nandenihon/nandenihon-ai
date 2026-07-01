@@ -1,11 +1,144 @@
-export default function DashboardPage() {
-    const stats = [
+export const dynamic = "force-dynamic";
+
+import { queryMySQL, type RowDataPacket } from "@repo/database";
+
+interface DashboardStats {
+    totalStudents: number;
+    totalClasses: number;
+    activeSeminars: number;
+    totalTestimonies: number;
+}
+
+interface RecentStudent {
+    id: number;
+    name: string;
+    email: string;
+    level: string | null;
+    status: string;
+}
+
+interface UpcomingClass {
+    id: number;
+    name: string;
+    time: string;
+    level: string;
+    date: string;
+}
+
+async function getDashboardStats(): Promise<DashboardStats> {
+    try {
+        const [studentsRow, classesRow, seminarsRow, testimoniesRow] =
+            await Promise.all([
+                queryMySQL<RowDataPacket[]>("SELECT COUNT(*) as total FROM students"),
+                queryMySQL<RowDataPacket[]>("SELECT COUNT(*) as total FROM `class`"),
+                queryMySQL<RowDataPacket[]>(
+                    "SELECT COUNT(*) as total FROM seminar WHERE status = 'ongoing' OR status = 'upcoming'"
+                ),
+                queryMySQL<RowDataPacket[]>("SELECT COUNT(*) as total FROM testimony"),
+            ]);
+
+        return {
+            totalStudents: Number(studentsRow[0]?.total ?? 0),
+            totalClasses: Number(classesRow[0]?.total ?? 0),
+            activeSeminars: Number(seminarsRow[0]?.total ?? 0),
+            totalTestimonies: Number(testimoniesRow[0]?.total ?? 0),
+        };
+    } catch {
+        return { totalStudents: 0, totalClasses: 0, activeSeminars: 0, totalTestimonies: 0 };
+    }
+}
+
+async function getRecentStudents(): Promise<RecentStudent[]> {
+    try {
+        const rows = await queryMySQL<RowDataPacket[]>(
+            `SELECT id, full_name, email, level, test_status
+             FROM students
+             ORDER BY created_at DESC
+             LIMIT 5`
+        );
+        return rows.map((row) => ({
+            id: Number(row.id),
+            name: String(row.full_name),
+            email: String(row.email),
+            level: row.level ? String(row.level) : "-",
+            status: row.test_status === "completed" ? "Selesai" : "Aktif",
+        }));
+    } catch {
+        return [];
+    }
+}
+
+async function getUpcomingClasses(): Promise<UpcomingClass[]> {
+    try {
+        const rows = await queryMySQL<RowDataPacket[]>(
+            `SELECT id, class_name, register_start, register_end, level
+             FROM \`class\`
+             WHERE status = 'active'
+             ORDER BY register_start ASC
+             LIMIT 4`
+        );
+
+        const now = new Date();
+        const todayStr = now.toDateString();
+        const tomorrowStr = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate() + 1
+        ).toDateString();
+
+        return rows.map((row) => {
+            const start = new Date(row.register_start);
+            const end = new Date(row.register_end);
+            const startStr = start.toDateString();
+
+            let dateLabel: string;
+            if (startStr === todayStr) {
+                dateLabel = "Hari ini";
+            } else if (startStr === tomorrowStr) {
+                dateLabel = "Besok";
+            } else {
+                dateLabel = start.toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "short",
+                });
+            }
+
+            const fmt = (d: Date) =>
+                d.toLocaleTimeString("id-ID", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                });
+
+            return {
+                id: Number(row.id),
+                name: String(row.class_name),
+                time: `${fmt(start)} - ${fmt(end)}`,
+                level: row.level ? String(row.level) : "-",
+                date: dateLabel,
+            };
+        });
+    } catch {
+        return [];
+    }
+}
+
+function formatNumber(n: number): string {
+    return new Intl.NumberFormat("id-ID").format(n);
+}
+
+export default async function DashboardPage() {
+    const [stats, recentStudents, upcomingClasses] = await Promise.all([
+        getDashboardStats(),
+        getRecentStudents(),
+        getUpcomingClasses(),
+    ]);
+
+    const statCards = [
         {
             id: "total-students",
             label: "Total Siswa",
-            value: "1,248",
-            change: "+12%",
-            positive: true,
+            value: formatNumber(stats.totalStudents),
             icon: (
                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
@@ -15,14 +148,11 @@ export default function DashboardPage() {
                 </svg>
             ),
             color: "bg-primary-10 text-primary-base",
-            bgGradient: "from-primary-base to-primary-80",
         },
         {
             id: "total-classes",
             label: "Total Kelas",
-            value: "24",
-            change: "+3",
-            positive: true,
+            value: formatNumber(stats.totalClasses),
             icon: (
                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />
@@ -30,14 +160,11 @@ export default function DashboardPage() {
                 </svg>
             ),
             color: "bg-success-10 text-success-base",
-            bgGradient: "from-success-base to-success-100",
         },
         {
             id: "total-seminars",
             label: "Seminar Aktif",
-            value: "8",
-            change: "+2",
-            positive: true,
+            value: formatNumber(stats.activeSeminars),
             icon: (
                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect x="2" y="7" width="20" height="14" rx="2" />
@@ -47,37 +174,18 @@ export default function DashboardPage() {
                 </svg>
             ),
             color: "bg-warning-10 text-warning-100",
-            bgGradient: "from-warning-base to-warning-100",
         },
         {
             id: "total-testimonials",
             label: "Testimoni",
-            value: "342",
-            change: "+28",
-            positive: true,
+            value: formatNumber(stats.totalTestimonies),
             icon: (
                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                 </svg>
             ),
             color: "bg-secondary-10 text-secondary-80",
-            bgGradient: "from-secondary-base to-secondary-80",
         },
-    ];
-
-    const recentStudents = [
-        { id: 1, name: "Budi Santoso", email: "budi@example.com", level: "N5", status: "Aktif" },
-        { id: 2, name: "Siti Rahayu", email: "siti@example.com", level: "N4", status: "Aktif" },
-        { id: 3, name: "Ahmad Fauzi", email: "ahmad@example.com", level: "N3", status: "Non-Aktif" },
-        { id: 4, name: "Dewi Kusuma", email: "dewi@example.com", level: "N5", status: "Aktif" },
-        { id: 5, name: "Rizky Pratama", email: "rizky@example.com", level: "N4", status: "Aktif" },
-    ];
-
-    const upcomingClasses = [
-        { id: 1, name: "JLPT N5 - Batch 12", time: "09:00 - 11:00", students: 18, date: "Hari ini" },
-        { id: 2, name: "JLPT N4 - Batch 7", time: "13:00 - 15:00", students: 14, date: "Hari ini" },
-        { id: 3, name: "Japanese Culture", time: "16:00 - 17:30", students: 22, date: "Besok" },
-        { id: 4, name: "Kanji Intensive", time: "10:00 - 12:00", students: 10, date: "Lusa" },
     ];
 
     return (
@@ -110,7 +218,7 @@ export default function DashboardPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                {stats.map((stat) => (
+                {statCards.map((stat) => (
                     <div
                         key={stat.id}
                         id={stat.id}
@@ -120,15 +228,6 @@ export default function DashboardPage() {
                             <div className={`p-3 rounded-xl ${stat.color}`}>
                                 {stat.icon}
                             </div>
-                            <span
-                                className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                                    stat.positive
-                                        ? "bg-success-10 text-success-base"
-                                        : "bg-error-10 text-error-base"
-                                }`}
-                            >
-                                {stat.change}
-                            </span>
                         </div>
                         <div>
                             <p className="text-3xl font-bold text-neutral-90">
@@ -176,44 +275,52 @@ export default function DashboardPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-10">
-                                {recentStudents.map((student) => (
-                                    <tr
-                                        key={student.id}
-                                        className="hover:bg-neutral-0 transition-colors"
-                                    >
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-primary-20 flex items-center justify-center text-primary-base text-xs font-bold flex-shrink-0">
-                                                    {student.name.charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-neutral-80">
-                                                        {student.name}
-                                                    </p>
-                                                    <p className="text-xs text-neutral-40">
-                                                        {student.email}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <span className="bg-primary-10 text-primary-base text-xs font-semibold px-2.5 py-1 rounded-full">
-                                                {student.level}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <span
-                                                className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                                                    student.status === "Aktif"
-                                                        ? "bg-success-10 text-success-base"
-                                                        : "bg-neutral-10 text-neutral-50"
-                                                }`}
-                                            >
-                                                {student.status}
-                                            </span>
+                                {recentStudents.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={3} className="px-6 py-10 text-center text-sm text-neutral-50">
+                                            Belum ada data siswa.
                                         </td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    recentStudents.map((student) => (
+                                        <tr
+                                            key={student.id}
+                                            className="hover:bg-neutral-0 transition-colors"
+                                        >
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-primary-20 flex items-center justify-center text-primary-base text-xs font-bold flex-shrink-0">
+                                                        {student.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-neutral-80">
+                                                            {student.name}
+                                                        </p>
+                                                        <p className="text-xs text-neutral-40">
+                                                            {student.email}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-4">
+                                                <span className="bg-primary-10 text-primary-base text-xs font-semibold px-2.5 py-1 rounded-full">
+                                                    {student.level}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-4">
+                                                <span
+                                                    className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                                        student.status === "Aktif"
+                                                            ? "bg-success-10 text-success-base"
+                                                            : "bg-neutral-10 text-neutral-50"
+                                                    }`}
+                                                >
+                                                    {student.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -238,61 +345,65 @@ export default function DashboardPage() {
                         </a>
                     </div>
                     <div className="flex flex-col divide-y divide-neutral-10">
-                        {upcomingClasses.map((cls) => (
-                            <div
-                                key={cls.id}
-                                className="px-6 py-4 hover:bg-neutral-0 transition-colors"
-                            >
-                                <div className="flex items-start justify-between gap-2">
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-neutral-80 truncate">
-                                            {cls.name}
-                                        </p>
-                                        <div className="flex items-center gap-2 mt-1.5">
-                                            <span className="flex items-center gap-1 text-xs text-neutral-50">
-                                                <svg
-                                                    className="w-3.5 h-3.5"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                >
-                                                    <circle cx="12" cy="12" r="10" />
-                                                    <polyline points="12 6 12 12 16 14" />
-                                                </svg>
-                                                {cls.time}
-                                            </span>
-                                            <span className="flex items-center gap-1 text-xs text-neutral-50">
-                                                <svg
-                                                    className="w-3.5 h-3.5"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                >
-                                                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                                                    <circle cx="9" cy="7" r="4" />
-                                                    <path d="M23 21v-2a4 4 0 00-3-3.87" />
-                                                    <path d="M16 3.13a4 4 0 010 7.75" />
-                                                </svg>
-                                                {cls.students} siswa
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <span
-                                        className={`flex-shrink-0 text-xs font-medium px-2 py-1 rounded-lg ${
-                                            cls.date === "Hari ini"
-                                                ? "bg-primary-10 text-primary-base"
-                                                : cls.date === "Besok"
-                                                ? "bg-warning-10 text-warning-100"
-                                                : "bg-neutral-10 text-neutral-50"
-                                        }`}
-                                    >
-                                        {cls.date}
-                                    </span>
-                                </div>
+                        {upcomingClasses.length === 0 ? (
+                            <div className="px-6 py-10 text-center text-sm text-neutral-50">
+                                Belum ada jadwal kelas aktif.
                             </div>
-                        ))}
+                        ) : (
+                            upcomingClasses.map((cls) => (
+                                <div
+                                    key={cls.id}
+                                    className="px-6 py-4 hover:bg-neutral-0 transition-colors"
+                                >
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-neutral-80 truncate">
+                                                {cls.name}
+                                            </p>
+                                            <div className="flex items-center gap-2 mt-1.5">
+                                                <span className="flex items-center gap-1 text-xs text-neutral-50">
+                                                    <svg
+                                                        className="w-3.5 h-3.5"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                    >
+                                                        <circle cx="12" cy="12" r="10" />
+                                                        <polyline points="12 6 12 12 16 14" />
+                                                    </svg>
+                                                    {cls.time}
+                                                </span>
+                                                <span className="flex items-center gap-1 text-xs text-neutral-50">
+                                                    <svg
+                                                        className="w-3.5 h-3.5"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                    >
+                                                        <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />
+                                                        <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
+                                                    </svg>
+                                                    {cls.level}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <span
+                                            className={`flex-shrink-0 text-xs font-medium px-2 py-1 rounded-lg ${
+                                                cls.date === "Hari ini"
+                                                    ? "bg-primary-10 text-primary-base"
+                                                    : cls.date === "Besok"
+                                                    ? "bg-warning-10 text-warning-100"
+                                                    : "bg-neutral-10 text-neutral-50"
+                                            }`}
+                                        >
+                                            {cls.date}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
@@ -319,7 +430,7 @@ export default function DashboardPage() {
                         },
                         {
                             label: "Tambah Kelas",
-                            href: "/dashboard/classes/add",
+                            href: "/dashboard/classes",
                             icon: (
                                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />

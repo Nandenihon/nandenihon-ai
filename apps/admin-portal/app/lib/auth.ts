@@ -1,6 +1,10 @@
 import type { UserSession } from "@repo/types";
 
-const JWT_SECRET = process.env.JWT_SECRET || "nandenihon-admin-secret-2025";
+const _rawJwtSecret = process.env.JWT_SECRET;
+if (!_rawJwtSecret) {
+    throw new Error("JWT_SECRET environment variable is not set. Please define it in your .env.local file.");
+}
+const JWT_SECRET: string = _rawJwtSecret;
 const COOKIE_NAME = "nn_admin_session";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days in seconds
 

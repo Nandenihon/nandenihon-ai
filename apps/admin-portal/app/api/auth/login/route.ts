@@ -18,7 +18,8 @@ async function getUserColumns(): Promise<Set<string>> {
 async function seedDefaultAdmin() {
     const columns = await getUserColumns();
     const defaultEmail = "admin@nandenihon.com";
-    const defaultPw = md5("NandeNihonAdmin@2025");
+    const rawDefaultPw = process.env.ADMIN_DEFAULT_PASSWORD ?? crypto.randomUUID();
+    const defaultPw = md5(rawDefaultPw);
     const displayColumn = columns.has("name") ? "name" : columns.has("username") ? "username" : null;
     const activeColumn = columns.has("is_active") ? "is_active" : null;
     const insertColumns = ["email", "password", "role"];

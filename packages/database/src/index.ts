@@ -34,6 +34,8 @@ export {
     ensureNewsInfrastructure,
     syncNewsFromWordPress,
     listNews,
+    listNewsSummary,
     findNewsBySlug,
     type NewsItem,
+    type NewsItemSummary,
 } from "./news-mysql";
