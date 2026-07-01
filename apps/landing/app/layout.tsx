@@ -1,6 +1,5 @@
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
-import { Analytics } from "@vercel/analytics/next";
 import { Metadata } from "next";
 import React from "react";
 import "./globals.css";
@@ -21,7 +20,6 @@ function AppLayout({ children }: NewAppLayoutProps) {
         <Navbar />
         <main className="relative">{children}</main>
         <Footer />
-        <Analytics />
       </body>
     </html>
   );
