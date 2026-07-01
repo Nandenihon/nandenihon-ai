@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { listNews } from "@repo/database";
 
 function formatDate(date: Date | null) {
