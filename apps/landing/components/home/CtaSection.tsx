@@ -1,5 +1,5 @@
-import React from "react";
 import { GraduationCap, MessageCircleHeart } from "lucide-react";
+import Link from "next/link";
 
 function CtaSection() {
   return (
@@ -19,14 +19,22 @@ function CtaSection() {
           </p>
         </div>
         <div className="flex flex-col gap-4 w-full lg:w-auto">
-          <button className="btn justify-center w-full sm:w-auto text-nowrap">
+          <Link
+            href="/class/register"
+            prefetch={false}
+            className="btn justify-center w-full sm:w-auto text-nowrap"
+          >
             <GraduationCap className="w-6 h-6" />
             Gabung Sekarang
-          </button>
-          <button className="bg-white text-primary-base border-primary-base border btn justify-center w-full sm:w-auto">
+          </Link>
+          <Link
+            href="/information/konseling/register"
+            prefetch={false}
+            className="bg-white text-primary-base border-primary-base border btn justify-center w-full sm:w-auto"
+          >
             <MessageCircleHeart className="w-6 h-6" />
             Konsultasi Gratis
-          </button>
+          </Link>
         </div>
       </div>
     </div>

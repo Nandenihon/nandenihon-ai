@@ -2,64 +2,65 @@
 > landing@0.1.0 build
 > next build
 
- ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
- We detected multiple lockfiles and selected the directory of C:\Users\ZSTORE\package-lock.json as the root directory.
- To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
-   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
- Detected additional lockfiles: 
-   * C:\Users\ZSTORE\Desktop\nandenihon-ai\package-lock.json
+SyntaxError: Expected ',' or '}' after property value in JSON at position 232267 (line 6727 column 1)
+    at JSON.parse (<anonymous>)
+▲ Next.js 16.1.4 (Turbopack)
+- Environments: .env.local
 
-   ▲ Next.js 15.5.19
-   - Environments: .env.local
+  Creating an optimized production build ...
+SyntaxError: Expected ',' or '}' after property value in JSON at position 232267 (line 6727 column 1)
+    at JSON.parse (<anonymous>)
 
-   Creating an optimized production build ...
- ✓ Compiled successfully in 7.4s
-   Linting and checking validity of types ...
+-----
+[1m[31mFATAL[39m[0m: An unexpected Turbopack error occurred. A panic log has been written to /var/folders/st/c_lzb74n21b1pq98_0w6rjlr0000gn/T/next-panic-1264f21f050af3d19332f0deeccdb3e9.log.
 
- ⚠ The Next.js plugin was not detected in your ESLint configuration. See https://nextjs.org/docs/app/api-reference/config/eslint#migrating-existing-config
-   Collecting page data ...
-   Generating static pages (0/24) ...
-   Generating static pages (6/24) 
-   Generating static pages (12/24) 
-   Generating static pages (18/24) 
- ✓ Generating static pages (24/24)
-   Finalizing page optimization ...
-   Collecting build traces ...
-
-Route (app)                                    Size  First Load JS
-┌ ƒ /                                         946 B         109 kB
-├ ○ /_not-found                               987 B         104 kB
-├ ƒ /about                                    484 B         108 kB
-├ ƒ /api/log                                  156 B         103 kB
-├ ƒ /api/payment/upload                       156 B         103 kB
-├ ƒ /api/register/complete                    156 B         103 kB
-├ ƒ /api/register/start                       156 B         103 kB
-├ ƒ /api/student/check-email                  156 B         103 kB
-├ ƒ /api/student/result/[studentId]           156 B         103 kB
-├ ƒ /api/test/finish                          156 B         103 kB
-├ ƒ /api/test/question/[level]/[studentId]    156 B         103 kB
-├ ƒ /api/test/submit                          156 B         103 kB
-├ ƒ /api/testimony                            156 B         103 kB
-├ ○ /article                                4.42 kB         121 kB
-├ ƒ /article/[slug]                         5.08 kB         121 kB
-├ ƒ /class                                    156 B         103 kB
-├ ○ /class/confirm                           6.7 kB         118 kB
-├ ○ /class/information-and-rules            5.16 kB         111 kB
-├ ○ /class/payment                          2.35 kB         113 kB
-├ ○ /class/quiz                              2.6 kB         105 kB
-├ ○ /class/register                         3.14 kB         115 kB
-├ ○ /class/result                           1.13 kB         107 kB
-├ ○ /class/submitted                        2.97 kB         109 kB
-├ ○ /contact                                  156 B         103 kB
-├ ○ /information                              162 B         106 kB
-├ ○ /information/konseling/formulir         1.18 kB         104 kB
-└ ○ /information/konseling/register         1.95 kB         108 kB
-+ First Load JS shared by all                103 kB
-  ├ chunks/18-a6801e2fc629b9f0.js           46.3 kB
-  ├ chunks/87c73c54-24122e7b92478d00.js     54.2 kB
-  └ other shared chunks (total)             1.99 kB
+To help make Turbopack better, report this error by clicking here: https://github.com/vercel/next.js/discussions/new?category=turbopack-error-report&title=Turbopack%20Error%3A%20Failed%20to%20write%20app%20endpoint%20%2Fpage&body=Turbopack%20version%3A%20%60v16.1.0-canary.19-88-gda605e0c4%60%0ANext.js%20version%3A%20%600.0.0%60%0A%0AError%20message%3A%0A%60%60%60%0ATurbopack%20Error%3A%20Failed%20to%20write%20app%20endpoint%20%2Fpage%0A%60%60%60&labels=Turbopack,Turbopack%20Panic%20Backtrace
+-----
 
 
-○  (Static)   prerendered as static content
-ƒ  (Dynamic)  server-rendered on demand
+> Build error occurred
+Error [TurbopackInternalError]: Failed to write app endpoint /page
 
+Caused by:
+- [project]/apps/landing/app/globals.css [app-client] (css)
+- creating new process
+- node process exited before we could connect to it with exit status: 0
+
+Debug info:
+- Execution of get_all_written_entrypoints_with_issues_operation failed
+- Execution of EntrypointsOperation::new failed
+- Execution of all_entrypoints_write_to_disk_operation failed
+- Execution of Project::emit_all_output_assets failed
+- Execution of *emit_assets failed
+- Execution of all_assets_from_entries_operation failed
+- Execution of *all_assets_from_entries failed
+- Execution of output_assets_operation failed
+- Execution of <AppEndpoint as Endpoint>::output failed
+- Failed to write app endpoint /page
+- Execution of AppEndpoint::output failed
+- Execution of whole_app_module_graph_operation failed
+- Execution of *ModuleGraph::from_single_graph failed
+- Execution of SingleModuleGraph::new_with_entries failed
+- [project]/apps/landing/app/globals.css [app-client] (css)
+- Execution of primary_chunkable_referenced_modules failed
+- Execution of <CssModuleAsset as Module>::references failed
+- Execution of parse_css failed
+- Execution of <PostCssTransformedAsset as Asset>::content failed
+- Execution of PostCssTransformedAsset::process failed
+- Execution of evaluate_webpack_loader failed
+- creating new process
+- node process exited before we could connect to it with exit status: 0
+  Process output:
+  
+  Process error output:
+    at <unknown> (TurbopackInternalError: Failed to write app endpoint /page) {
+  type: 'TurbopackInternalError',
+  location: undefined
+}
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path /Applications/nandenihon-ai/apps/landing
+npm error workspace landing@0.1.0
+npm error location /Applications/nandenihon-ai/apps/landing
+npm error command failed
+npm error command sh -c next build

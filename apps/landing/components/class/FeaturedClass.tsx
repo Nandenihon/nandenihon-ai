@@ -1,24 +1,11 @@
+import { resolveUploadImageUrl } from "@/lib/images";
 import MainSection from "./MainSection";
 import ClassItem, { type ClassItemProps } from "./ClassItem";
 import { queryMySQL, type RowDataPacket } from "@repo/database";
 import type { Class } from "@repo/types";
 
-const UPLOAD_BASE_URL =
-  process.env.NEXT_PUBLIC_UPLOAD_BASE_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://nandenihon.com";
-
-function resolveImageUrl(image: string): string {
-  if (!image) {
-    return "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop";
-  }
-
-  if (image.startsWith("http://") || image.startsWith("https://")) {
-    return image;
-  }
-
-  return `${UPLOAD_BASE_URL}${image.startsWith("/") ? image : `/${image}`}`;
-}
+const CLASS_IMAGE_FALLBACK =
+  "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop";
 
 function formatCurrency(value: number | string): string {
   return new Intl.NumberFormat("id-ID", {
@@ -38,7 +25,7 @@ async function getClasses(): Promise<ClassItemProps[]> {
       id: item.id,
       title: item.class_name,
       type: item.level,
-      image: resolveImageUrl(item.image_banner),
+      image: resolveUploadImageUrl(item.image_banner, CLASS_IMAGE_FALLBACK),
       price: formatCurrency(item.register_fee),
       description: item.description,
       slot: item.status === "active",

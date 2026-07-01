@@ -2,6 +2,7 @@ import React from "react";
 import Image from "next/image";
 import { queryMySQL, type RowDataPacket } from "@repo/database";
 import { TeamCard } from "@/components/shared/TeamCard";
+import { resolveUploadImageUrl } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
 
@@ -12,17 +13,6 @@ interface TeamMember {
   motto: string | null;
   photo: string | null;
   instagram: string | null;
-}
-
-const UPLOAD_BASE_URL =
-  process.env.NEXT_PUBLIC_UPLOAD_BASE_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://nandenihon.com";
-
-function resolveImageUrl(photo: string | null): string {
-  if (!photo) return "/images/Rectangle 6.png";
-  if (photo.startsWith("http://") || photo.startsWith("https://")) return photo;
-  return `${UPLOAD_BASE_URL}${photo.startsWith("/") ? photo : `/${photo}`}`;
 }
 
 async function getTeamData(): Promise<TeamMember[]> {
@@ -141,7 +131,7 @@ export default async function AboutPage() {
                   name={member.full_name || "Nama"}
                   role={member.division || "Founder"}
                   description={member.motto || "Motto belum diisi."}
-                  imageSrc={resolveImageUrl(member.photo)}
+                  imageSrc={resolveUploadImageUrl(member.photo)}
                   instagramUrl={member.instagram || "#"}
                 />
               ))
@@ -165,7 +155,7 @@ export default async function AboutPage() {
                   name={member.full_name || "Nama"}
                   role={member.division || "Admin"}
                   description={member.motto || "Motto belum diisi."}
-                  imageSrc={resolveImageUrl(member.photo)}
+                  imageSrc={resolveUploadImageUrl(member.photo)}
                   instagramUrl={member.instagram || "#"}
                 />
               ))
