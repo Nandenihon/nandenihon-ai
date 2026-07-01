@@ -82,7 +82,43 @@ function isRetryableConnectionError(error: unknown): boolean {
     );
 }
 
+function isVercelRuntime(): boolean {
+    return process.env.VERCEL === "1";
+}
+
+function isLocalRuntime(): boolean {
+    return process.env.NODE_ENV === "development" || !isVercelRuntime();
+}
+
+function getProductionMysqlConfig(): MySQLConfig["mysql"] {
+    const host = process.env.PRODUCTION_DB_HOST;
+    const port = parseInt(process.env.PRODUCTION_DB_PORT || "3306", 10);
+    const user = process.env.PRODUCTION_DB_USER;
+    const password = process.env.PRODUCTION_DB_PASSWORD;
+    const database = process.env.PRODUCTION_DB_NAME || process.env.PRODUCTION_DB_DATABASE;
+
+    if (!host || !user || !password || !database) {
+        throw new Error(
+            "Please define PRODUCTION_DB_HOST, PRODUCTION_DB_USER, PRODUCTION_DB_PASSWORD, and PRODUCTION_DB_NAME environment variables on Vercel"
+        );
+    }
+
+    return {
+        host,
+        port,
+        user,
+        password,
+        database,
+    };
+}
+
 function getConfig(): MySQLConfig {
+    if (!isLocalRuntime()) {
+        return {
+            mysql: getProductionMysqlConfig(),
+        };
+    }
+
     const sshHost = process.env.SSH_HOST;
     const sshPort = parseInt(process.env.SSH_PORT || "22", 10);
     const sshUsername = process.env.SSH_USERNAME;
@@ -133,11 +169,11 @@ function isLocalMysqlHost(host: string): boolean {
 }
 
 function shouldUseSshStream(config: MySQLConfig): boolean {
-    return hasSshConfig(config) && (process.env.MYSQL_CONNECTION_MODE === "ssh-stream" || process.env.VERCEL === "1");
+    return isLocalRuntime() && hasSshConfig(config) && process.env.MYSQL_CONNECTION_MODE === "ssh-stream";
 }
 
 function shouldUseDirectConnection(config: MySQLConfig): boolean {
-    return process.env.MYSQL_CONNECTION_MODE === "direct" || !hasSshConfig(config);
+    return !isLocalRuntime() || process.env.MYSQL_CONNECTION_MODE === "direct" || !hasSshConfig(config);
 }
 
 function getSshConnectConfig(config: MySQLConfig) {
@@ -171,148 +207,72 @@ function getSshConnectConfig(config: MySQLConfig) {
 }
 
 async function createSshForwardStream(config: MySQLConfig): Promise<{ client: Client; stream: Duplex }> {
-    return new Promise((resolve, reject) => {
-        const sshClient = new Client();
+    const sshClient = new Client();
+
+    await new Promise<void>((resolve, reject) => {
         let settled = false;
+        const timeout = setTimeout(() => {
+            if (settled) {
+                return;
+            }
+
+            settled = true;
+            sshClient.end();
+            reject(new Error("SSH connection timed out"));
+        }, 12000);
 
         const fail = (error: Error) => {
             if (settled) {
                 return;
             }
+
             settled = true;
+            clearTimeout(timeout);
             sshClient.end();
             reject(error);
         };
 
         sshClient.once("ready", () => {
-            sshClient.forwardOut(
-                "127.0.0.1",
-                0,
-                config.mysql.host,
-                config.mysql.port,
-                (error, stream) => {
-                    if (error) {
-                        fail(error);
-                        return;
-                    }
+            if (settled) {
+                return;
+            }
 
-                    settled = true;
-                    resolve({ client: sshClient, stream });
-                }
-            );
-        });
-
-        sshClient.once("error", fail);
-        sshClient.connect(getSshConnectConfig(config));
-    });
-}
-
-async function queryMySQLViaSshStream<T extends RowDataPacket[] | ResultSetHeader>(
-    sql: string,
-    params?: unknown[]
-): Promise<T> {
-    const config = getConfig();
-    const { client, stream } = await createSshForwardStream(config);
-    const connection = await mysql.createConnection({
-        stream,
-        user: config.mysql.user,
-        password: config.mysql.password,
-        database: config.mysql.database,
-        connectTimeout: 10000,
-    });
-
-    try {
-        const [results] = await connection.query<T>(sql, params);
-        return results;
-    } finally {
-        await connection.end().catch(() => undefined);
-        client.end();
-    }
-}
-
-function shouldUseSshStream(): boolean {
-    return process.env.MYSQL_CONNECTION_MODE === "ssh-stream" || process.env.VERCEL === "1";
-}
-
-function getSshConnectConfig(config: MySQLConfig): {
-    host: string;
-    port: number;
-    username: string;
-    password?: string;
-    privateKey?: Buffer;
-    readyTimeout: number;
-} {
-    const connectConfig = {
-        host: config.ssh.host,
-        port: config.ssh.port,
-        username: config.ssh.username,
-        readyTimeout: 10000,
-    } as {
-        host: string;
-        port: number;
-        username: string;
-        password?: string;
-        privateKey?: Buffer;
-        readyTimeout: number;
-    };
-
-    if (config.ssh.privateKey) {
-        connectConfig.privateKey = Buffer.from(config.ssh.privateKey);
-    } else if (config.ssh.password) {
-        connectConfig.password = config.ssh.password;
-    }
-
-    return connectConfig;
-}
-
-async function createSshForwardStream(config: MySQLConfig): Promise<{ client: Client; stream: Duplex }> {
-    const client = new Client();
-
-    await new Promise<void>((resolve, reject) => {
-        let settled = false;
-        const timeout = setTimeout(() => {
-            if (settled) return;
-            settled = true;
-            client.end();
-            reject(new Error("SSH connection timed out"));
-        }, 12000);
-
-        client.once("ready", () => {
-            if (settled) return;
             settled = true;
             clearTimeout(timeout);
             resolve();
         });
 
-        client.once("error", (error) => {
-            if (settled) return;
-            settled = true;
-            clearTimeout(timeout);
-            reject(error);
+        sshClient.once("error", fail);
+        sshClient.once("close", () => {
+            fail(new Error("SSH connection closed before ready"));
         });
 
-        client.once("close", () => {
-            if (settled) return;
-            settled = true;
-            clearTimeout(timeout);
-            reject(new Error("SSH connection closed before ready"));
-        });
-
-        client.connect(getSshConnectConfig(config));
+        sshClient.connect(getSshConnectConfig(config));
     });
 
     try {
         const stream = await new Promise<Duplex>((resolve, reject) => {
+            let settled = false;
             const timeout = setTimeout(() => {
+                if (settled) {
+                    return;
+                }
+
+                settled = true;
                 reject(new Error("SSH forwardOut timed out"));
             }, 10000);
 
-            client.forwardOut(
+            sshClient.forwardOut(
                 "127.0.0.1",
                 0,
                 config.mysql.host,
                 config.mysql.port,
                 (error, forwardStream) => {
+                    if (settled) {
+                        return;
+                    }
+
+                    settled = true;
                     clearTimeout(timeout);
                     if (error) {
                         reject(error);
@@ -323,9 +283,9 @@ async function createSshForwardStream(config: MySQLConfig): Promise<{ client: Cl
             );
         });
 
-        return { client, stream };
+        return { client: sshClient, stream };
     } catch (error) {
-        client.end();
+        sshClient.end();
         throw error;
     }
 }
@@ -430,10 +390,6 @@ async function createSSHTunnel(config: MySQLConfig): Promise<{ client: Client; s
  * Uses connection caching for serverless environments
  */
 export async function connectMySQL(): Promise<Pool> {
-    if (shouldUseSshStream()) {
-        throw new Error("connectMySQL pool is disabled when MYSQL_CONNECTION_MODE=ssh-stream or VERCEL=1. Use queryMySQL instead.");
-    }
-
     if (cached.pool) {
         return cached.pool;
     }
@@ -446,9 +402,9 @@ export async function connectMySQL(): Promise<Pool> {
         }
 
         if (shouldUseDirectConnection(config)) {
-            if (process.env.VERCEL === "1" && isLocalMysqlHost(config.mysql.host)) {
+            if (isVercelRuntime() && isLocalMysqlHost(config.mysql.host)) {
                 throw new Error(
-                    "Vercel cannot connect to a local MYSQL_HOST. Set SSH_* variables with MYSQL_CONNECTION_MODE=ssh-stream, or use a public MySQL host with MYSQL_CONNECTION_MODE=direct."
+                    "Vercel cannot connect to a local database host. Set PRODUCTION_DB_* variables to a public or whitelisted production database."
                 );
             }
 
@@ -459,7 +415,7 @@ export async function connectMySQL(): Promise<Pool> {
                 password: config.mysql.password,
                 database: config.mysql.database,
                 waitForConnections: true,
-                connectionLimit: process.env.VERCEL === "1" ? 1 : 10,
+                connectionLimit: isVercelRuntime() ? 1 : 10,
                 queueLimit: 0,
                 connectTimeout: 10000,
             });
@@ -501,10 +457,6 @@ export async function queryMySQL<T extends RowDataPacket[] | ResultSetHeader>(
     sql: string,
     params?: unknown[]
 ): Promise<T> {
-    if (shouldUseSshStream()) {
-        return await queryMySQLViaSshStream<T>(sql, params);
-    }
-
     try {
         const config = getConfig();
         if (shouldUseSshStream(config)) {
@@ -520,6 +472,11 @@ export async function queryMySQL<T extends RowDataPacket[] | ResultSetHeader>(
         }
 
         await closeMySQLConnection();
+        const config = getConfig();
+        if (shouldUseSshStream(config)) {
+            return queryMySQLViaSshStream<T>(sql, params);
+        }
+
         const pool = await connectMySQL();
         const [results] = await pool.query<T>(sql, params);
         return results;
