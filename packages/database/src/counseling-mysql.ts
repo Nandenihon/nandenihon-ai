@@ -84,45 +84,10 @@ export function resolveConsultationTime(reg: CounselingRegistration): string {
 }
 
 // ---------------------------------------------------------------------------
-// Schema management
+// Table metadata
 // ---------------------------------------------------------------------------
 
-/** Module-level cache — table is only created/migrated once per server process lifetime. */
-let tableReady: Promise<void> | null = null;
 let tableColumns: Promise<Set<string>> | null = null;
-
-/**
- * Columns that may be missing in older table versions — added via ALTER if absent.
- * Each entry: [column_name, ALTER TABLE fragment].
- */
-const REQUIRED_COLUMNS: [string, string][] = [
-    ["phone",             "ADD COLUMN phone              VARCHAR(30)  NOT NULL DEFAULT '' AFTER email"],
-    ["birth_place",       "ADD COLUMN birth_place        VARCHAR(255) NOT NULL DEFAULT '' AFTER phone"],
-    ["birth_date",        "ADD COLUMN birth_date         DATE         NOT NULL DEFAULT '1970-01-01' AFTER birth_place"],
-    ["domicile",          "ADD COLUMN domicile           VARCHAR(255) NOT NULL DEFAULT '' AFTER birth_date"],
-    ["last_education",    "ADD COLUMN last_education     VARCHAR(20)  NOT NULL DEFAULT '' AFTER domicile"],
-    ["topic",             "ADD COLUMN topic              VARCHAR(50)  NOT NULL DEFAULT '' AFTER last_education"],
-    ["story",             "ADD COLUMN story              TEXT         NOT NULL AFTER last_education"],
-    ["consultation_time", "ADD COLUMN consultation_time  DATETIME     NOT NULL DEFAULT '1970-01-01 00:00:00' AFTER story"],
-    ["terms_and_conditions", "ADD COLUMN terms_and_conditions TINYINT(1) NOT NULL DEFAULT 0"],
-];
-
-/**
- * MODIFY statements to set DEFAULT values on pre-existing NOT NULL columns
- * that lack a default (would cause INSERT to fail if field not supplied).
- */
-const COLUMN_DEFAULT_FIXES: string[] = [
-    "ALTER TABLE counseling_registration MODIFY COLUMN terms_and_conditions TINYINT(1) NOT NULL DEFAULT 0",
-    "ALTER TABLE counseling_registration MODIFY COLUMN phone_number         VARCHAR(30)  NOT NULL DEFAULT ''",
-    "ALTER TABLE counseling_registration MODIFY COLUMN place_of_birth       VARCHAR(255) NOT NULL DEFAULT ''",
-    "ALTER TABLE counseling_registration MODIFY COLUMN date_of_birth        DATE         NOT NULL DEFAULT '1970-01-01'",
-    "ALTER TABLE counseling_registration MODIFY COLUMN domicile             VARCHAR(255) NOT NULL DEFAULT ''",
-    "ALTER TABLE counseling_registration MODIFY COLUMN last_education       VARCHAR(20)  NOT NULL DEFAULT ''",
-    "ALTER TABLE counseling_registration MODIFY COLUMN topic                VARCHAR(50)  NOT NULL DEFAULT ''",
-    "ALTER TABLE counseling_registration MODIFY COLUMN story                TEXT         NOT NULL",
-    "ALTER TABLE counseling_registration MODIFY COLUMN theme                VARCHAR(50)  NOT NULL DEFAULT ''",
-    "ALTER TABLE counseling_registration MODIFY COLUMN appointment_time     DATETIME     NOT NULL DEFAULT '1970-01-01 00:00:00'",
-];
 
 async function getCounselingTableColumns(): Promise<Set<string>> {
     if (!tableColumns) {
@@ -198,69 +163,58 @@ function buildCounselingWhere(
     };
 }
 
-async function ensureCounselingTable(): Promise<void> {
-    if (tableReady) return tableReady;
+function firstExistingColumn(columns: Set<string>, columnNames: string[]): string | null {
+    return columnNames.find((columnName) => columns.has(columnName)) || null;
+}
 
-    tableReady = (async () => {
-        try {
-            // 1. Create table if it doesn't exist
-            await queryMySQL<ResultSetHeader>(
-                `CREATE TABLE IF NOT EXISTS counseling_registration (
-                    id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                    full_name       VARCHAR(255) NOT NULL,
-                    email           VARCHAR(255) NOT NULL,
-                    phone           VARCHAR(30)  NOT NULL DEFAULT '',
-                    birth_place     VARCHAR(255) NOT NULL DEFAULT '',
-                    birth_date      DATE         NOT NULL DEFAULT '1970-01-01',
-                    domicile        VARCHAR(255) NOT NULL DEFAULT '',
-                    last_education  VARCHAR(20)  NOT NULL DEFAULT '',
-                    topic           VARCHAR(50)  NOT NULL,
-                    story           TEXT         NOT NULL,
-                    consultation_time DATETIME   NOT NULL,
-                    terms_and_conditions TINYINT(1) NOT NULL DEFAULT 0,
-                    created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    PRIMARY KEY (id),
-                    KEY idx_email (email),
-                    KEY idx_created_at (created_at)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
-            );
+function requiredColumn(columns: Set<string>, columnNames: string[], label: string): string {
+    const column = firstExistingColumn(columns, columnNames);
 
-            // 2. Detect and add any columns that are missing (handles stale table schema)
-            const existingCols = await queryMySQL<RowDataPacket[]>(
-                `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
-                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'counseling_registration'`
-            );
-            const existingSet = new Set(existingCols.map((r) => r.COLUMN_NAME as string));
+    if (!column) {
+        throw new Error(`counseling_registration table is missing a ${label} column`);
+    }
 
-            for (const [colName, alterFragment] of REQUIRED_COLUMNS) {
-                if (!existingSet.has(colName)) {
-                    await queryMySQL<ResultSetHeader>(
-                        `ALTER TABLE counseling_registration ${alterFragment}`
-                    );
-                    existingSet.add(colName);
-                    tableColumns = null;
-                }
-            }
+    return column;
+}
 
-            // 3. Fix defaults on columns that already exist but may lack a DEFAULT
-            for (const sql of COLUMN_DEFAULT_FIXES) {
-                try {
-                    await queryMySQL<ResultSetHeader>(sql);
-                } catch {
-                    // ignore — column may not exist on fresh installs, or TEXT can't have DEFAULT
-                }
-            }
-        } catch (err) {
-            tableReady = null;
-            const msg = err instanceof Error ? err.message : String(err);
-            throw new Error(
-                `Failed to initialize counseling_registration table. ` +
-                `Ensure the DB user has CREATE, ALTER, and SELECT privileges. Details: ${msg}`
-            );
+function addInsertColumn(
+    insertColumns: string[],
+    values: unknown[],
+    columns: Set<string>,
+    columnNames: string[],
+    value: unknown
+): void {
+    for (const columnName of columnNames) {
+        if (!columns.has(columnName)) {
+            continue;
         }
-    })();
 
-    return tableReady;
+        insertColumns.push(columnName);
+        values.push(value);
+    }
+}
+
+function buildCounselingSelectFields(columns: Set<string>): string {
+    return [
+        `${columnSql(columns, "id", "0")} AS id`,
+        `${textValueSql(columns, ["full_name"])} AS full_name`,
+        `${textValueSql(columns, ["email"])} AS email`,
+        `${textValueSql(columns, ["phone", "phone_number"])} AS phone`,
+        `${textValueSql(columns, ["phone_number", "phone"])} AS phone_number`,
+        `${textValueSql(columns, ["birth_place", "place_of_birth"])} AS birth_place`,
+        `${textValueSql(columns, ["place_of_birth", "birth_place"])} AS place_of_birth`,
+        `${dateValueSql(columns, ["birth_date", "date_of_birth"])} AS birth_date`,
+        `${dateValueSql(columns, ["date_of_birth", "birth_date"])} AS date_of_birth`,
+        `${textValueSql(columns, ["domicile"])} AS domicile`,
+        `${textValueSql(columns, ["last_education"])} AS last_education`,
+        `${textValueSql(columns, ["topic", "theme"])} AS topic`,
+        `${textValueSql(columns, ["theme", "topic"])} AS theme`,
+        `${textValueSql(columns, ["story"])} AS story`,
+        `${dateTimeValueSql(columns, ["consultation_time", "appointment_time"])} AS consultation_time`,
+        `${dateTimeValueSql(columns, ["appointment_time", "consultation_time"])} AS appointment_time`,
+        `${columnSql(columns, "terms_and_conditions", "0")} AS terms_and_conditions`,
+        `${columnSql(columns, "created_at", "NULL")} AS created_at`,
+    ].join(",\n            ");
 }
 
 // ---------------------------------------------------------------------------
@@ -270,7 +224,7 @@ async function ensureCounselingTable(): Promise<void> {
 export async function createCounselingRegistration(
     input: CreateCounselingInput
 ): Promise<CounselingRegistration> {
-    await ensureCounselingTable();
+    const columns = await getCounselingTableColumns();
 
     const {
         full_name,
@@ -285,19 +239,64 @@ export async function createCounselingRegistration(
         consultation_time,
     } = input;
 
+    const insertColumns = [
+        requiredColumn(columns, ["full_name"], "full name"),
+        requiredColumn(columns, ["email"], "email"),
+    ];
+    const values: unknown[] = [full_name, email];
+
+    addInsertColumn(insertColumns, values, columns, ["phone", "phone_number"], phone);
+    addInsertColumn(insertColumns, values, columns, ["birth_place", "place_of_birth"], birth_place);
+    addInsertColumn(insertColumns, values, columns, ["birth_date", "date_of_birth"], birth_date);
+    addInsertColumn(insertColumns, values, columns, ["domicile"], domicile);
+    addInsertColumn(insertColumns, values, columns, ["last_education"], last_education);
+    addInsertColumn(insertColumns, values, columns, ["topic", "theme"], topic);
+    addInsertColumn(insertColumns, values, columns, ["story"], story);
+    addInsertColumn(insertColumns, values, columns, ["consultation_time", "appointment_time"], consultation_time);
+    addInsertColumn(insertColumns, values, columns, ["terms_and_conditions"], 1);
+
+    const escapedColumns = insertColumns.map((column) => `\`${column}\``).join(", ");
+    const placeholders = insertColumns.map(() => "?").join(", ");
     const result = await queryMySQL<ResultSetHeader>(
-        `INSERT INTO counseling_registration
-         (full_name, email, phone, birth_place, birth_date, domicile, last_education, topic, story, consultation_time, terms_and_conditions)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-        [full_name, email, phone, birth_place, birth_date, domicile, last_education, topic, story, consultation_time]
+        `INSERT INTO counseling_registration (${escapedColumns}) VALUES (${placeholders})`,
+        values
     );
 
-    const rows = await queryMySQL<RowDataPacket[]>(
-        "SELECT * FROM counseling_registration WHERE id = ?",
-        [result.insertId]
-    );
+    if (columns.has("id") && result.insertId) {
+        const rows = await queryMySQL<RowDataPacket[]>(
+            `SELECT
+                ${buildCounselingSelectFields(columns)}
+             FROM counseling_registration
+             WHERE \`id\` = ?
+             LIMIT 1`,
+            [result.insertId]
+        );
 
-    return rows[0] as CounselingRegistration;
+        if (rows[0]) {
+            return rows[0] as CounselingRegistration;
+        }
+    }
+
+    return {
+        id: result.insertId,
+        full_name,
+        email,
+        phone,
+        phone_number: phone,
+        birth_place,
+        place_of_birth: birth_place,
+        birth_date,
+        date_of_birth: birth_date,
+        domicile,
+        last_education,
+        topic,
+        theme: topic,
+        story,
+        consultation_time,
+        appointment_time: consultation_time,
+        terms_and_conditions: columns.has("terms_and_conditions") ? 1 : 0,
+        created_at: null,
+    };
 }
 
 // ---------------------------------------------------------------------------
@@ -344,24 +343,7 @@ export async function listCounselingRegistrations(
     // Build a schema-aware SELECT so the dashboard can read canonical and legacy tables.
     const rows = await queryMySQL<RowDataPacket[]>(
         `SELECT
-            ${columnSql(columns, "id", "0")} AS id,
-            ${textValueSql(columns, ["full_name"])} AS full_name,
-            ${textValueSql(columns, ["email"])} AS email,
-            ${textValueSql(columns, ["phone", "phone_number"])} AS phone,
-            ${textValueSql(columns, ["phone_number", "phone"])} AS phone_number,
-            ${textValueSql(columns, ["birth_place", "place_of_birth"])} AS birth_place,
-            ${textValueSql(columns, ["place_of_birth", "birth_place"])} AS place_of_birth,
-            ${dateValueSql(columns, ["birth_date", "date_of_birth"])} AS birth_date,
-            ${dateValueSql(columns, ["date_of_birth", "birth_date"])} AS date_of_birth,
-            ${textValueSql(columns, ["domicile"])} AS domicile,
-            ${textValueSql(columns, ["last_education"])} AS last_education,
-            ${textValueSql(columns, ["topic", "theme"])} AS topic,
-            ${textValueSql(columns, ["theme", "topic"])} AS theme,
-            ${textValueSql(columns, ["story"])} AS story,
-            ${dateTimeValueSql(columns, ["consultation_time", "appointment_time"])} AS consultation_time,
-            ${dateTimeValueSql(columns, ["appointment_time", "consultation_time"])} AS appointment_time,
-            ${columnSql(columns, "terms_and_conditions", "0")} AS terms_and_conditions,
-            ${columnSql(columns, "created_at", "NULL")} AS created_at
+            ${buildCounselingSelectFields(columns)}
          FROM counseling_registration${whereSql}
          ORDER BY ${orderBy}
          LIMIT ? OFFSET ?`,

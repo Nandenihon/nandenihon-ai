@@ -109,35 +109,7 @@ function mapNews(row: NewsRow): NewsItem {
 }
 
 async function createNewsTable(): Promise<void> {
-    await queryMySQL(`
-        CREATE TABLE IF NOT EXISTS news (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            wp_post_id BIGINT UNSIGNED NOT NULL,
-            slug VARCHAR(255) NOT NULL,
-            title TEXT NOT NULL,
-            excerpt TEXT NULL,
-            content LONGTEXT NOT NULL,
-            status VARCHAR(20) NOT NULL,
-            type VARCHAR(20) NOT NULL,
-            author_id BIGINT UNSIGNED NULL,
-            author_name VARCHAR(250) NULL,
-            category_id BIGINT UNSIGNED NULL,
-            category_name VARCHAR(200) NULL,
-            category_slug VARCHAR(200) NULL,
-            categories TEXT NULL,
-            featured_image_id BIGINT UNSIGNED NULL,
-            featured_image_url TEXT NULL,
-            source_url TEXT NULL,
-            published_at DATETIME NULL,
-            modified_at DATETIME NULL,
-            synced_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY news_wp_post_unique (wp_post_id),
-            UNIQUE KEY news_slug_unique (slug),
-            KEY news_category_slug_idx (category_slug),
-            KEY news_published_at_idx (published_at)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
+    return;
 }
 
 async function createSyncProcedures(prefix: string): Promise<void> {
