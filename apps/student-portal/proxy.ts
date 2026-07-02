@@ -6,7 +6,7 @@ import { verifyToken, COOKIE_NAME } from "@/app/lib/auth";
  * - Protects /dashboard/* — must be logged in as 'student'
  * - Redirects already-logged-in students away from /login
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     if (pathname.startsWith("/dashboard")) {

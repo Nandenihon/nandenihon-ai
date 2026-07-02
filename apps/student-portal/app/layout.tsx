@@ -2,9 +2,17 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+    metadataBase: new URL("https://nandenihon.com"),
     title: "Nande Nihon — Student Portal",
     description: "Portal belajar Bahasa Jepang untuk siswa Nande Nihon. Akses kursus N5, N4, dan N3 lengkap dengan video, teks, dan kuis interaktif.",
     keywords: ["belajar bahasa jepang", "JLPT", "N5", "N4", "N3", "nande nihon"],
+    alternates: {
+        canonical: "./",
+    },
+    robots: {
+        index: false,
+        follow: false,
+    },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

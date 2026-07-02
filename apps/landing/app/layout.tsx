@@ -5,8 +5,19 @@ import React from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://nandenihon.com"),
   title: "Nande Nihon",
   description: "Platform Belajar Bahasa Jepang",
+  alternates: {
+    canonical: "./",
+  },
+  openGraph: {
+    title: "Nande Nihon",
+    description: "Platform Belajar Bahasa Jepang",
+    url: "https://nandenihon.com",
+    siteName: "Nande Nihon",
+    type: "website",
+  },
 };
 
 interface NewAppLayoutProps {

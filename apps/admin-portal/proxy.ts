@@ -8,7 +8,7 @@ import { verifyToken, COOKIE_NAME } from "@/app/lib/auth";
  * - student              → redirected to login (students use student-portal)
  * Redirects to login if no valid session cookie found.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Protect all dashboard routes

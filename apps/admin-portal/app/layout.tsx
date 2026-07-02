@@ -2,8 +2,16 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+    metadataBase: new URL("https://nandenihon.com"),
     title: "Admin Portal - Nande Nihon",
     description: "Admin portal for managing Nande Nihon Japanese learning platform",
+    alternates: {
+        canonical: "./",
+    },
+    robots: {
+        index: false,
+        follow: false,
+    },
 };
 
 export default function RootLayout({
