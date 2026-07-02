@@ -21,11 +21,26 @@ interface QuestionRow extends RowDataPacket {
     updated_at: Date;
 }
 
+function parseOptions(raw: unknown): string[] {
+    if (!raw) return [];
+    // mysql2 may auto-parse JSON columns → already an array
+    if (Array.isArray(raw)) return raw.map(String);
+    const str = typeof raw === "string" ? raw : JSON.stringify(raw);
+    try {
+        const parsed = JSON.parse(str);
+        if (Array.isArray(parsed)) return parsed.map(String);
+    } catch {
+        // Legacy: comma-separated plain string
+        return str.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+    return [];
+}
+
 function mapQuestion(row: QuestionRow) {
     return {
         id: row.id,
         text: row.text,
-        options: JSON.parse(row.options || "[]"),
+        options: parseOptions(row.options),
         correctAnswer: row.correct_answer,
         timeLimit: row.time_limit,
         category: row.category,

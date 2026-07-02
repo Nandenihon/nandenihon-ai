@@ -3,6 +3,10 @@ import path from "path";
 
 const nextConfig: NextConfig = {
     transpilePackages: ["@repo/ui", "@repo/database", "@repo/types", "@repo/utils"],
+    serverExternalPackages: ["ssh2", "mysql2"],
+    env: {
+        JWT_SECRET: process.env.JWT_SECRET ?? "",
+    },
     turbopack: {
         root: path.resolve(__dirname, "../../"),
     },

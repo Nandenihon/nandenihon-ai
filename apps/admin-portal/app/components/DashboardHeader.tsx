@@ -18,6 +18,10 @@ const breadcrumbMap: Record<string, string> = {
     "/dashboard/news": "Berita & Artikel",
     "/dashboard/settings": "Pengaturan",
     "/dashboard/users": "Manajemen User",
+    "/dashboard/lecturer": "Dashboard Pengajar",
+    "/dashboard/lecturer/courses": "Kursus Saya",
+    "/dashboard/lecturer/courses/new": "Tambah Kursus",
+    "/dashboard/lecturer/students": "Progres Siswa",
 };
 
 const roleLabels: Record<string, string> = {
