@@ -1,17 +1,21 @@
 import type { UserSession } from "@repo/types";
 
-const _rawJwtSecret = process.env.JWT_SECRET;
-if (!_rawJwtSecret) {
-    throw new Error(
-        "JWT_SECRET environment variable is not set. Please define it in your .env.local file."
-    );
-}
-const JWT_SECRET: string = _rawJwtSecret;
-
 export const COOKIE_NAME = "nn_student_session";
 export const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
 const encoder = new TextEncoder();
+
+function getJwtSecret(): string {
+    const jwtSecret = process.env.JWT_SECRET;
+
+    if (!jwtSecret) {
+        throw new Error(
+            "JWT_SECRET environment variable is not set. Please define it in your .env.local file."
+        );
+    }
+
+    return jwtSecret;
+}
 
 function base64UrlEncode(str: string): string {
     return btoa(unescape(encodeURIComponent(str)))
@@ -57,7 +61,7 @@ export async function signToken(payload: UserSession): Promise<string> {
     const now = Math.floor(Date.now() / 1000);
     const claims = base64UrlEncode(JSON.stringify({ ...payload, iat: now, exp: now + COOKIE_MAX_AGE }));
     const data = encoder.encode(`${header}.${claims}`);
-    const key = await getCryptoKey(JWT_SECRET);
+    const key = await getCryptoKey(getJwtSecret());
     const signatureBuffer = await crypto.subtle.sign("HMAC", key, data);
     return `${header}.${claims}.${bufferToBase64Url(signatureBuffer)}`;
 }
@@ -68,7 +72,7 @@ export async function verifyToken(token: string): Promise<UserSession | null> {
         if (parts.length !== 3) return null;
         const [header, claims, signature] = parts;
         const data = encoder.encode(`${header}.${claims}`);
-        const key = await getCryptoKey(JWT_SECRET);
+        const key = await getCryptoKey(getJwtSecret());
         const sigBytes = base64UrlToBuffer(signature);
         const isValid = await crypto.subtle.verify(
             "HMAC", key,

@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
+import { loadEnvConfig } from "@next/env";
 import path from "path";
+
+loadEnvConfig(__dirname);
 
 const nextConfig: NextConfig = {
     transpilePackages: ["@repo/ui", "@repo/database", "@repo/types", "@repo/utils"],
