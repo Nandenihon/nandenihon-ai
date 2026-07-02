@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { NandeNihonLogo } from "@repo/ui";
 import type { UserSession } from "@repo/types";
 
 export default function StudentNavbar() {
@@ -27,24 +26,17 @@ export default function StudentNavbar() {
         : "S";
 
     return (
-        <header className="sticky top-0 z-30 bg-absolute-white/80 backdrop-blur-md border-b border-neutral-10 px-6 py-3 flex items-center justify-between">
-            <a href="/dashboard" className="flex items-center gap-3">
-                <div className="bg-primary-base rounded-xl p-1.5">
-                    <NandeNihonLogo variant="favicon" colorMode="white" className="w-6 h-6" />
-                </div>
-                <span className="font-bold text-neutral-90 text-sm hidden sm:block">Nande Nihon</span>
-            </a>
-
-            <nav className="hidden md:flex items-center gap-1">
-                <a
-                    href="/dashboard"
-                    className="px-3 py-2 text-sm text-neutral-60 hover:text-primary-base hover:bg-primary-10 rounded-lg transition-all"
-                >
-                    Dashboard
-                </a>
-            </nav>
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-neutral-10 bg-absolute-white/80 px-4 py-3 backdrop-blur-md sm:px-6">
+            <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-40">Nande Nihon</p>
+                <p className="text-sm font-bold text-neutral-90">Student Portal</p>
+            </div>
 
             <div className="flex items-center gap-3">
+                <div className="hidden text-right sm:block">
+                    <p className="text-sm font-semibold text-neutral-80">{user?.name ?? "Siswa"}</p>
+                    <p className="text-xs text-neutral-40">{user?.email ?? "student"}</p>
+                </div>
                 <div
                     className="w-8 h-8 rounded-full bg-primary-base flex items-center justify-center text-white text-sm font-bold"
                     title={user?.name}

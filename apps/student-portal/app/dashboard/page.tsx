@@ -1,23 +1,69 @@
 import { headers } from "next/headers";
-import { ensureLmsTables, getStudentDashboard } from "@repo/database";
 import type { StudentDashboard } from "@repo/database";
 import ProgressRing from "../components/ProgressRing";
 import CourseCard from "../components/CourseCard";
+import {
+    getAttendanceSummary,
+    getDailyQuizLeaderboard,
+    getSchedulePreview,
+    getStudentDashboardSafe,
+    getStudentGrades,
+} from "./dashboard-data";
 
 export const dynamic = "force-dynamic";
+
+function StatCard({
+    label,
+    value,
+    detail,
+    tone = "primary",
+}: {
+    label: string;
+    value: string;
+    detail: string;
+    tone?: "primary" | "success" | "warning" | "neutral";
+}) {
+    const toneClass = {
+        primary: "bg-primary-10 text-primary-base",
+        success: "bg-success-10 text-success-base",
+        warning: "bg-warning-10 text-warning-100",
+        neutral: "bg-neutral-10 text-neutral-70",
+    }[tone];
+
+    return (
+        <div className="card p-5">
+            <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-lg ${toneClass}`}>
+                <span className="text-sm font-bold">{value}</span>
+            </div>
+            <p className="text-sm font-semibold text-neutral-80">{label}</p>
+            <p className="mt-1 text-xs text-neutral-50">{detail}</p>
+        </div>
+    );
+}
+
+function SectionHeader({ title, href }: { title: string; href?: string }) {
+    return (
+        <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-neutral-90">{title}</h2>
+            {href && (
+                <a href={href} className="text-xs font-semibold text-primary-base hover:text-primary-80">
+                    Lihat semua
+                </a>
+            )}
+        </div>
+    );
+}
 
 export default async function StudentDashboardPage() {
     const headersList = await headers();
     const studentName = headersList.get("x-user-name") ?? "Siswa";
     const studentId = Number(headersList.get("x-user-id") ?? "0");
 
-    let dashboard: StudentDashboard = { enrolledCourses: [], overallProgressPercent: 0 };
-    try {
-        await ensureLmsTables();
-        dashboard = await getStudentDashboard(studentId);
-    } catch {
-        // If tables don't have data yet, show empty state
-    }
+    const dashboard: StudentDashboard = await getStudentDashboardSafe(studentId);
+    const recentGrades = await getStudentGrades(studentId, 3);
+    const leaderboard = await getDailyQuizLeaderboard(5);
+    const attendance = getAttendanceSummary(dashboard);
+    const schedule = getSchedulePreview(dashboard);
 
     const hour = new Date().getHours();
     const greeting =
@@ -37,7 +83,7 @@ export default async function StudentDashboardPage() {
                             Selamat datang, <span className="text-tertiary-base">{studentName}</span>！
                         </h1>
                         <p className="text-primary-20 text-sm">
-                            Lanjutkan belajar bahasa Jepang hari ini 🎌
+                            Pantau progres belajar, jadwal, absensi, nilai, dan aktivitas harian.
                         </p>
                     </div>
 
@@ -57,10 +103,108 @@ export default async function StudentDashboardPage() {
                 </div>
             </section>
 
+            <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <StatCard
+                    label="Progress Studying"
+                    value={`${dashboard.overallProgressPercent}%`}
+                    detail={`${dashboard.enrolledCourses.length} kursus aktif`}
+                    tone="primary"
+                />
+                <StatCard
+                    label="Summary Absensi"
+                    value={`${attendance.percent}%`}
+                    detail={`${attendance.present}/${attendance.total} sesi selesai`}
+                    tone="success"
+                />
+                <StatCard
+                    label="Nilai Terbaru"
+                    value={recentGrades[0] ? `${recentGrades[0].score}` : "-"}
+                    detail={recentGrades[0]?.lessonTitle ?? "Belum ada nilai quiz"}
+                    tone="warning"
+                />
+                <StatCard
+                    label="Daily Quiz"
+                    value={leaderboard[0] ? `#${leaderboard[0].rank}` : "-"}
+                    detail={leaderboard[0] ? `${leaderboard[0].studentName} memimpin hari ini` : "Belum ada skor hari ini"}
+                    tone="neutral"
+                />
+            </section>
+
+            <section className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+                <div className="card p-5 xl:col-span-2">
+                    <SectionHeader title="Jadwal Belajar" href="/dashboard/schedule" />
+                    {schedule.length === 0 ? (
+                        <p className="rounded-xl bg-neutral-0 p-5 text-sm text-neutral-50">
+                            Belum ada jadwal. Kursus yang aktif akan muncul di sini.
+                        </p>
+                    ) : (
+                        <div className="space-y-3">
+                            {schedule.map((item) => (
+                                <a
+                                    key={item.id}
+                                    href={`/courses/${item.id}`}
+                                    className="flex items-center justify-between rounded-xl border border-neutral-10 p-4 transition-colors hover:border-primary-base hover:bg-primary-10"
+                                >
+                                    <div>
+                                        <p className="text-sm font-semibold text-neutral-80">{item.title}</p>
+                                        <p className="text-xs text-neutral-50">{item.description}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs font-semibold text-primary-base">{item.time}</p>
+                                        <p className="text-xs text-neutral-40">{item.level}</p>
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className="card p-5">
+                    <SectionHeader title="Leaderboard Daily Quiz" href="/dashboard/daily-quiz/leaderboard" />
+                    {leaderboard.length === 0 ? (
+                        <p className="rounded-xl bg-neutral-0 p-5 text-sm text-neutral-50">
+                            Belum ada peserta daily quiz hari ini.
+                        </p>
+                    ) : (
+                        <div className="space-y-3">
+                            {leaderboard.map((item) => (
+                                <div key={item.studentId} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-10 text-xs font-bold text-primary-base">
+                                            {item.rank}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-neutral-80">{item.studentName}</p>
+                                            <p className="text-xs text-neutral-40">{item.attempts} attempt</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-sm font-bold text-neutral-90">{item.bestScore}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            <section className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+                <a href="/dashboard/ebooks" className="card-muted p-5 transition-colors hover:bg-primary-10">
+                    <p className="text-sm font-semibold text-neutral-80">E-Book</p>
+                    <p className="mt-1 text-xs text-neutral-50">Akses materi bacaan dan latihan pendukung.</p>
+                </a>
+                <a href="/dashboard/daily-quiz" className="card-muted p-5 transition-colors hover:bg-primary-10">
+                    <p className="text-sm font-semibold text-neutral-80">Daily Quiz</p>
+                    <p className="mt-1 text-xs text-neutral-50">Latihan singkat untuk menjaga konsistensi belajar.</p>
+                </a>
+                <a href="/dashboard/forum" className="card-muted p-5 transition-colors hover:bg-primary-10">
+                    <p className="text-sm font-semibold text-neutral-80">Forum Diskusi</p>
+                    <p className="mt-1 text-xs text-neutral-50">Diskusi materi dan tanya jawab bersama kelas.</p>
+                </a>
+            </section>
+
             {/* Course Cards */}
             <section>
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-neutral-90">Kursus Saya</h2>
+                <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-neutral-90">Progress Kursus</h2>
                     {dashboard.enrolledCourses.length > 0 && (
                         <span className="text-xs text-neutral-40">
                             {dashboard.enrolledCourses.filter((c) => c.enrollmentStatus === "completed").length} selesai
@@ -97,9 +241,9 @@ export default async function StudentDashboardPage() {
                     <span className="jp-text text-lg">💡</span>
                 </div>
                 <div>
-                    <p className="text-sm font-semibold text-neutral-80">Tips Belajar</p>
-                    <p className="text-xs text-neutral-50">
-                        Konsistensi adalah kunci. Belajar 15–30 menit setiap hari lebih efektif daripada belajar lama sekaligus.{" "}
+                        <p className="text-sm font-semibold text-neutral-80">Tips Belajar</p>
+                        <p className="text-xs text-neutral-50">
+                            Konsistensi adalah kunci. Belajar 15–30 menit setiap hari lebih efektif daripada belajar lama sekaligus.{" "}
                         <span className="jp-text">毎日少しずつ！</span>
                     </p>
                 </div>
