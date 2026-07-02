@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+// ISR is set via revalidate = 300 below; force-dynamic is not needed.
 
 import BenefitSection from "@/components/home/BenefitSection";
 import CtaSection from "@/components/home/CtaSection";
@@ -6,8 +6,8 @@ import { OurPartnerSection } from "@/components/home/OurPartnerSection";
 import OurTeamList from "@/components/home/OurTeamList";
 import PublicationSection from "@/components/home/PublicationSection";
 import TestimonialSection from "@/components/home/TestimonialSection";
-import { mapNewsToArticle } from "@/lib/news";
-import { listNews } from "@repo/database";
+import { mapNewsSummaryToArticle } from "@/lib/news";
+import { listNewsSummary } from "@repo/database";
 import { unstable_cache } from "next/cache";
 import Image from "next/image";
 import Link from "next/link";
@@ -91,8 +91,9 @@ const HeroSection = () => (
 
 const getPublicationArticles = unstable_cache(async () => {
   try {
-    const news = await listNews({ limit: 6 });
-    return news.data.map(mapNewsToArticle);
+    // listNewsSummary skips LONGTEXT content — homepage cards only need title/image/excerpt
+    const news = await listNewsSummary({ limit: 6 });
+    return news.data.map(mapNewsSummaryToArticle);
   } catch (error) {
     console.error("Failed to fetch homepage publications:", error);
     return [];

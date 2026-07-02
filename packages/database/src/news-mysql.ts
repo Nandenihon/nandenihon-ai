@@ -66,6 +66,11 @@ interface ListNewsResult {
 let newsReady: Promise<void> | null = null;
 let newsTriggersReady = false;
 
+/** Timestamp (ms) of the last successful sync_all_news call. */
+let lastSyncAt = 0;
+/** Minimum gap between full syncs when triggers are unavailable (ms). */
+const SYNC_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+
 function getWordPressPrefix(): string {
     const prefix = process.env.WP_TABLE_PREFIX || "wp_";
     if (!/^[A-Za-z0-9_]+$/.test(prefix)) {
@@ -104,35 +109,7 @@ function mapNews(row: NewsRow): NewsItem {
 }
 
 async function createNewsTable(): Promise<void> {
-    await queryMySQL(`
-        CREATE TABLE IF NOT EXISTS news (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            wp_post_id BIGINT UNSIGNED NOT NULL,
-            slug VARCHAR(255) NOT NULL,
-            title TEXT NOT NULL,
-            excerpt TEXT NULL,
-            content LONGTEXT NOT NULL,
-            status VARCHAR(20) NOT NULL,
-            type VARCHAR(20) NOT NULL,
-            author_id BIGINT UNSIGNED NULL,
-            author_name VARCHAR(250) NULL,
-            category_id BIGINT UNSIGNED NULL,
-            category_name VARCHAR(200) NULL,
-            category_slug VARCHAR(200) NULL,
-            categories TEXT NULL,
-            featured_image_id BIGINT UNSIGNED NULL,
-            featured_image_url TEXT NULL,
-            source_url TEXT NULL,
-            published_at DATETIME NULL,
-            modified_at DATETIME NULL,
-            synced_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY news_wp_post_unique (wp_post_id),
-            UNIQUE KEY news_slug_unique (slug),
-            KEY news_category_slug_idx (category_slug),
-            KEY news_published_at_idx (published_at)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
+    return;
 }
 
 async function createSyncProcedures(prefix: string): Promise<void> {
@@ -477,7 +454,14 @@ export async function listNews(options: ListNewsOptions = {}): Promise<ListNewsR
     if (newsTriggersReady) {
         await createNewsTable();
     } else {
-        await syncNewsFromWordPress();
+        const now = Date.now();
+        if (now - lastSyncAt > SYNC_COOLDOWN_MS) {
+            await syncNewsFromWordPress();
+            lastSyncAt = Date.now();
+        } else {
+            // Cooldown active — just ensure the table exists, skip expensive sync
+            await createNewsTable();
+        }
     }
 
     const page = Math.max(1, options.page || 1);
@@ -523,7 +507,13 @@ export async function findNewsBySlug(slug: string): Promise<NewsItem | null> {
     if (newsTriggersReady) {
         await createNewsTable();
     } else {
-        await syncNewsFromWordPress();
+        const now = Date.now();
+        if (now - lastSyncAt > SYNC_COOLDOWN_MS) {
+            await syncNewsFromWordPress();
+            lastSyncAt = Date.now();
+        } else {
+            await createNewsTable();
+        }
     }
 
     const rows = await queryMySQL<NewsRow[]>(
@@ -532,4 +522,130 @@ export async function findNewsBySlug(slug: string): Promise<NewsItem | null> {
     );
 
     return rows[0] ? mapNews(rows[0]) : null;
+}
+
+// ---------------------------------------------------------------------------
+// Lightweight summary types & queries (no content/LONGTEXT field)
+// ---------------------------------------------------------------------------
+
+export interface NewsItemSummary {
+    id: number;
+    wpPostId: number;
+    slug: string;
+    title: string;
+    excerpt: string | null;
+    status: string;
+    authorName: string | null;
+    categoryId: number | null;
+    categoryName: string | null;
+    categorySlug: string | null;
+    featuredImageUrl: string | null;
+    sourceUrl: string | null;
+    publishedAt: Date | null;
+}
+
+interface NewsSummaryRow extends RowDataPacket {
+    id: number;
+    wp_post_id: number;
+    slug: string;
+    title: string;
+    excerpt: string | null;
+    status: string;
+    author_name: string | null;
+    category_id: number | null;
+    category_name: string | null;
+    category_slug: string | null;
+    featured_image_url: string | null;
+    source_url: string | null;
+    published_at: Date | null;
+}
+
+function mapNewsSummary(row: NewsSummaryRow): NewsItemSummary {
+    return {
+        id: row.id,
+        wpPostId: row.wp_post_id,
+        slug: row.slug,
+        title: row.title,
+        excerpt: row.excerpt,
+        status: row.status,
+        authorName: row.author_name,
+        categoryId: row.category_id,
+        categoryName: row.category_name,
+        categorySlug: row.category_slug,
+        featuredImageUrl: row.featured_image_url,
+        sourceUrl: row.source_url,
+        publishedAt: row.published_at,
+    };
+}
+
+interface ListNewsSummaryResult {
+    data: NewsItemSummary[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
+}
+
+/**
+ * Lightweight version of listNews — selects all fields EXCEPT `content`.
+ * Use this for article lists, related-article panels, and sidebar widgets
+ * where the full body HTML is not needed. Significantly faster as it avoids
+ * transferring large LONGTEXT values over the network.
+ */
+export async function listNewsSummary(
+    options: ListNewsOptions = {}
+): Promise<ListNewsSummaryResult> {
+    // Honour the same sync cooldown as listNews
+    if (newsTriggersReady) {
+        await createNewsTable();
+    } else {
+        const now = Date.now();
+        if (now - lastSyncAt > SYNC_COOLDOWN_MS) {
+            await syncNewsFromWordPress();
+            lastSyncAt = Date.now();
+        } else {
+            await createNewsTable();
+        }
+    }
+
+    const page = Math.max(1, options.page || 1);
+    const limit = Math.min(100, Math.max(1, options.limit || 10));
+    const offset = (page - 1) * limit;
+    const params: unknown[] = [];
+    const where: string[] = [];
+
+    if (options.search) {
+        where.push("(title LIKE ? OR excerpt LIKE ?)");
+        params.push(`%${options.search}%`, `%${options.search}%`);
+    }
+
+    if (options.category) {
+        where.push("(category_slug = ? OR category_name = ?)");
+        params.push(options.category, options.category);
+    }
+
+    const whereSql = where.length > 0 ? ` WHERE ${where.join(" AND ")}` : "";
+
+    const countRows = await queryMySQL<RowDataPacket[]>(
+        `SELECT COUNT(*) AS total FROM news${whereSql}`,
+        params
+    );
+    const total = countRows[0]?.total || 0;
+
+    const rows = await queryMySQL<NewsSummaryRow[]>(
+        `SELECT id, wp_post_id, slug, title, excerpt, status,
+                author_name, category_id, category_name, category_slug,
+                featured_image_url, source_url, published_at
+         FROM news${whereSql}
+         ORDER BY published_at DESC, id DESC
+         LIMIT ? OFFSET ?`,
+        [...params, limit, offset]
+    );
+
+    return {
+        data: rows.map(mapNewsSummary),
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
 }

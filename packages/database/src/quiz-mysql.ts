@@ -89,8 +89,6 @@ interface QuestionRow extends RowDataPacket {
     updated_at: Date;
 }
 
-let schemaReady: Promise<void> | null = null;
-
 export function isValidNumericId(id: string): boolean {
     return /^[1-9]\d*$/.test(id);
 }
@@ -159,78 +157,7 @@ function mapStudent(row: StudentRow, answers: QuizAnswer[] = []): QuizStudent {
 }
 
 export async function ensureQuizTables(): Promise<void> {
-    if (!schemaReady) {
-        schemaReady = (async () => {
-            await queryMySQL(`
-                CREATE TABLE IF NOT EXISTS students (
-                    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                    full_name VARCHAR(100) NOT NULL,
-                    email VARCHAR(255) NOT NULL,
-                    test_status ENUM('not_started', 'in_progress', 'completed') NOT NULL DEFAULT 'not_started',
-                    pass_status ENUM('pending', 'passed', 'failed') NOT NULL DEFAULT 'pending',
-                    score INT NOT NULL DEFAULT 0,
-                    nickname VARCHAR(50) NULL,
-                    whatsapp VARCHAR(20) NULL,
-                    age INT NULL,
-                    domicile VARCHAR(100) NULL,
-                    motivation VARCHAR(500) NULL,
-                    level VARCHAR(50) NULL,
-                    japanese_level VARCHAR(100) NULL,
-                    payment_proof_url VARCHAR(500) NULL,
-                    registration_complete TINYINT(1) NOT NULL DEFAULT 0,
-                    test_started_at DATETIME NULL,
-                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                    PRIMARY KEY (id),
-                    UNIQUE KEY students_email_unique (email),
-                    KEY students_status_idx (test_status, pass_status),
-                    KEY students_level_idx (level)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-            `);
-
-            await queryMySQL(`
-                CREATE TABLE IF NOT EXISTS questions (
-                    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                    text TEXT NOT NULL,
-                    options JSON NOT NULL,
-                    correct_answer VARCHAR(500) NOT NULL,
-                    time_limit INT NOT NULL DEFAULT 30,
-                    category VARCHAR(100) NULL,
-                    level ENUM('N5', 'N4') NOT NULL,
-                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                    PRIMARY KEY (id),
-                    KEY questions_level_idx (level)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-            `);
-
-            await queryMySQL(`
-                CREATE TABLE IF NOT EXISTS student_answers (
-                    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                    student_id BIGINT UNSIGNED NOT NULL,
-                    question_id BIGINT UNSIGNED NOT NULL,
-                    selected_value VARCHAR(500) NULL,
-                    is_correct TINYINT(1) NOT NULL,
-                    answered_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    PRIMARY KEY (id),
-                    UNIQUE KEY student_answers_student_question_unique (student_id, question_id),
-                    KEY student_answers_student_idx (student_id),
-                    KEY student_answers_question_idx (question_id),
-                    CONSTRAINT student_answers_student_fk
-                        FOREIGN KEY (student_id) REFERENCES students(id)
-                        ON DELETE CASCADE,
-                    CONSTRAINT student_answers_question_fk
-                        FOREIGN KEY (question_id) REFERENCES questions(id)
-                        ON DELETE CASCADE
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-            `);
-        })().catch((error) => {
-            schemaReady = null;
-            throw error;
-        });
-    }
-
-    await schemaReady;
+    return;
 }
 
 async function getAnswersByStudentId(studentId: number): Promise<QuizAnswer[]> {

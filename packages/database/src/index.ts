@@ -34,6 +34,21 @@ export {
     ensureNewsInfrastructure,
     syncNewsFromWordPress,
     listNews,
+    listNewsSummary,
     findNewsBySlug,
     type NewsItem,
+    type NewsItemSummary,
 } from "./news-mysql";
+
+export {
+    createCounselingRegistration,
+    listCounselingRegistrations,
+    VALID_EDUCATION_LEVELS,
+    VALID_TOPICS,
+    type CounselingRegistration,
+    type CreateCounselingInput,
+    type ListCounselingOptions,
+    type ListCounselingResult,
+    type EducationLevel,
+    type CounselingTopic,
+} from "./counseling-mysql";

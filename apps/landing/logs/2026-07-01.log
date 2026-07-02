@@ -1,0 +1,2 @@
+[2026-07-01T14:14:08.423Z] [INFO] [api/register/start] Registration attempt {"email":"fauzisianakaktif@gmail.com","level":"N5","japaneseLevel":"Pernah Kursus Dasar"}
+[2026-07-01T14:14:08.521Z] [INFO] [api/register/start] New student registered {"email":"fauzisianakaktif@gmail.com","studentId":"1","fullName":"admin","level":"N5"}

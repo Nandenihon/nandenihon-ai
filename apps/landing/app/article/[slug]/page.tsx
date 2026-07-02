@@ -1,5 +1,9 @@
-import { findNewsBySlug, listNews } from "@repo/database";
-import { mapNewsToArticle } from "@/lib/news";
+// ISR: cache each article page for 1 hour, then revalidate in background.
+// Remove force-dynamic so Next.js can statically generate and cache pages.
+export const revalidate = 3600;
+
+import { findNewsBySlug, listNewsSummary } from "@repo/database";
+import { mapNewsToArticle, mapNewsSummaryToArticle } from "@/lib/news";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/article/Breadcrumb";
@@ -8,6 +12,20 @@ import CommentSection from "@/components/article/CommentSection";
 import RelatedArticlesGrid from "@/components/article/RelatedArticlesGrid";
 import NewsletterBanner from "@/components/article/NewsletterBanner";
 import { CategoryTag } from "@repo/ui";
+
+/**
+ * Pre-build all known article slugs at build time.
+ * Next.js will statically generate each page and serve instantly from CDN.
+ */
+export async function generateStaticParams() {
+  try {
+    const result = await listNewsSummary({ limit: 100 });
+    return result.data.map((article) => ({ slug: article.slug }));
+  } catch {
+    return [];
+  }
+}
+
 
 const socialIcons = [
   {
@@ -127,15 +145,20 @@ export default async function ArticleDetailPage(props: {
 }) {
   const params = await props.params;
   const slug = params.slug;
-  const news = await findNewsBySlug(slug);
+
+  // Fetch the article and related articles in parallel — no sequential waterfall
+  const [news, summaryList] = await Promise.all([
+    findNewsBySlug(slug),
+    listNewsSummary({ limit: 12 }), // lightweight: no LONGTEXT content field
+  ]);
+
   const article = news ? mapNewsToArticle(news) : null;
 
   if (!article) {
     notFound();
   }
 
-  const newsList = await listNews({ limit: 12 });
-  const allArticles = newsList.data.map(mapNewsToArticle);
+  const allArticles = summaryList.data.map(mapNewsSummaryToArticle);
 
   // Get related articles for sidebar (same category, max 3)
   const sidebarRelatedArticles = allArticles
@@ -150,6 +173,7 @@ export default async function ArticleDetailPage(props: {
     ...sidebarRelatedArticles,
     ...otherRelatedArticles.slice(0, Math.max(0, 3 - sidebarRelatedArticles.length)),
   ].slice(0, 3);
+
 
   return (
     <article className="max-w-full">

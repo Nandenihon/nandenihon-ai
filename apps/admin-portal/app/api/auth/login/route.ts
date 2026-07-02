@@ -18,7 +18,8 @@ async function getUserColumns(): Promise<Set<string>> {
 async function seedDefaultAdmin() {
     const columns = await getUserColumns();
     const defaultEmail = "admin@nandenihon.com";
-    const defaultPw = md5("NandeNihonAdmin@2025");
+    const rawDefaultPw = process.env.ADMIN_DEFAULT_PASSWORD ?? crypto.randomUUID();
+    const defaultPw = md5(rawDefaultPw);
     const displayColumn = columns.has("name") ? "name" : columns.has("username") ? "username" : null;
     const activeColumn = columns.has("is_active") ? "is_active" : null;
     const insertColumns = ["email", "password", "role"];
@@ -59,46 +60,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Query user by email (with auto-create table & auto-seed if not exists)
-        let users: RowDataPacket[] = [];
-        try {
-            users = await queryMySQL<RowDataPacket[]>(
-                "SELECT * FROM users WHERE email = ? LIMIT 1",
-                [email]
-            );
-        } catch (dbError) {
-            const errorMsg = dbError instanceof Error ? dbError.message : String(dbError);
-            // If the table 'users' does not exist, create it and seed the default admin
-            if (
-                errorMsg.includes("doesn't exist") || 
-                errorMsg.includes("Table") || 
-                errorMsg.includes("not found")
-            ) {
-                console.log("Table 'users' doesn't exist. Creating and seeding...");
-                await queryMySQL(`
-                    CREATE TABLE IF NOT EXISTS users (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        username VARCHAR(255) NOT NULL,
-                        email VARCHAR(255) UNIQUE NOT NULL,
-                        password VARCHAR(255) NOT NULL,
-                        role VARCHAR(50) DEFAULT 'admin',
-                        is_active TINYINT(1) DEFAULT 1,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-                    )
-                `);
-                
-                await seedDefaultAdmin();
-                
-                // Retry querying
-                users = await queryMySQL<RowDataPacket[]>(
-                    "SELECT * FROM users WHERE email = ? LIMIT 1",
-                    [email]
-                );
-            } else {
-                throw dbError;
-            }
-        }
+        let users = await queryMySQL<RowDataPacket[]>(
+            "SELECT * FROM users WHERE email = ? LIMIT 1",
+            [email]
+        );
 
         // If the table exists but has no users, let's seed the default admin
         if ((!users || users.length === 0) && email === "admin@nandenihon.com") {
