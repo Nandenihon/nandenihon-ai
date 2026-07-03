@@ -17,7 +17,7 @@ async function requireAdminSession(request: NextRequest) {
 }
 
 const USER_SELECT = "SELECT id, username AS name, email, role, created_at, updated_at FROM users";
-const VALID_ROLES = new Set(["super_admin", "admin", "teacher", "student"]);
+const VALID_ROLES = new Set(["super_admin", "admin", "teacher", "student", "admin-class", "helpdesk"]);
 
 function normalizeRole(role: unknown): string {
     if (role === "teachers") return "teacher";

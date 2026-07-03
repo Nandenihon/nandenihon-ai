@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NandeNihonLogo } from "@repo/ui";
 
@@ -157,13 +157,63 @@ const navItems: NavItem[] = [
             </svg>
         ),
     },
+    {
+        id: "tool-requests",
+        label: "Request Tool",
+        href: "/dashboard/tool-requests",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+        ),
+    },
+    {
+        id: "attendance",
+        label: "Absensi Kelas",
+        href: "/dashboard/attendance",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 11l3 3L22 4" />
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2 2V5a2 2 0 012-2h11" />
+            </svg>
+        ),
+    },
+    {
+        id: "class-prep",
+        label: "Menyiapkan Kelas",
+        href: "/dashboard/class-prep",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+            </svg>
+        ),
+    },
 ];
 
+const roleAllowedItems: Record<string, string[]> = {
+    super_admin: ["dashboard", "students", "classes", "seminars", "counseling", "questions", "testimonials", "team", "news", "settings", "users", "tool-requests", "attendance", "class-prep"],
+    admin: ["dashboard", "students", "classes", "seminars", "counseling", "questions", "testimonials", "team", "news", "settings", "users", "tool-requests", "attendance", "class-prep"],
+    "admin-class": ["dashboard", "tool-requests", "attendance", "class-prep"],
+    helpdesk: ["dashboard", "tool-requests"],
+};
 
 export default function DashboardSidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const [openMenus, setOpenMenus] = useState<string[]>([]);
+    const [userRole, setUserRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetch("/api/auth/me")
+            .then((r) => r.json())
+            .then((data) => {
+                if (data.user) {
+                    setUserRole(data.user.role || "student");
+                }
+            })
+            .catch(() => {});
+    }, []);
 
     const toggleMenu = (id: string) => {
         setOpenMenus((prev) =>
@@ -176,8 +226,12 @@ export default function DashboardSidebar() {
         return pathname.startsWith(href);
     };
 
+    // Filter items based on user role (default to showing nothing or a minimal subset until loaded)
+    const allowedItems = userRole ? roleAllowedItems[userRole] || ["dashboard"] : [];
+    const filteredNavItems = navItems.filter((item) => allowedItems.includes(item.id));
+
     return (
-        <aside className="fixed left-0 top-0 w-[260px] min-h-screen flex flex-col bg-absolute-white border-r border-neutral-20 z-30">
+        <aside className="h-screen w-full flex flex-col bg-absolute-white border-r border-neutral-20">
             {/* Logo */}
             <div className="flex items-center gap-3 px-6 py-5 border-b border-neutral-20">
                 <div className="bg-primary-base rounded-xl p-2">
@@ -201,7 +255,7 @@ export default function DashboardSidebar() {
                     Menu Utama
                 </p>
                 <div className="flex flex-col gap-1 px-3">
-                    {navItems.map((item) => {
+                    {filteredNavItems.map((item) => {
                         const active = isActive(item.href);
                         const isOpen = openMenus.includes(item.id);
                         const hasChildren = item.children && item.children.length > 0;
@@ -275,8 +329,6 @@ export default function DashboardSidebar() {
                     })}
                 </div>
             </nav>
-
-
         </aside>
     );
 }
