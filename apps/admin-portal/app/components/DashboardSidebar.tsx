@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NandeNihonLogo } from "@repo/ui";
 
@@ -157,13 +157,63 @@ const navItems: NavItem[] = [
             </svg>
         ),
     },
+    {
+        id: "tool-requests",
+        label: "Request Tool",
+        href: "/dashboard/tool-requests",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+        ),
+    },
+    {
+        id: "attendance",
+        label: "Absensi Kelas",
+        href: "/dashboard/attendance",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 11l3 3L22 4" />
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2 2V5a2 2 0 012-2h11" />
+            </svg>
+        ),
+    },
+    {
+        id: "class-prep",
+        label: "Menyiapkan Kelas",
+        href: "/dashboard/class-prep",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+            </svg>
+        ),
+    },
 ];
 
+const roleAllowedItems: Record<string, string[]> = {
+    super_admin: ["dashboard", "students", "classes", "seminars", "counseling", "questions", "testimonials", "team", "news", "settings", "users", "tool-requests", "attendance", "class-prep"],
+    admin: ["dashboard", "students", "classes", "seminars", "counseling", "questions", "testimonials", "team", "news", "settings", "users", "tool-requests", "attendance", "class-prep"],
+    "admin-class": ["dashboard", "tool-requests", "attendance", "class-prep"],
+    helpdesk: ["dashboard", "tool-requests"],
+};
 
 export default function DashboardSidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const [openMenus, setOpenMenus] = useState<string[]>([]);
+    const [userRole, setUserRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetch("/api/auth/me")
+            .then((r) => r.json())
+            .then((data) => {
+                if (data.user) {
+                    setUserRole(data.user.role || "student");
+                }
+            })
+            .catch(() => {});
+    }, []);
 
     const toggleMenu = (id: string) => {
         setOpenMenus((prev) =>
@@ -176,8 +226,12 @@ export default function DashboardSidebar() {
         return pathname.startsWith(href);
     };
 
+    // Filter items based on user role (default to showing nothing or a minimal subset until loaded)
+    const allowedItems = userRole ? roleAllowedItems[userRole] || ["dashboard"] : [];
+    const filteredNavItems = navItems.filter((item) => allowedItems.includes(item.id));
+
     return (
-        <aside className="fixed left-0 top-0 w-[260px] min-h-screen flex flex-col bg-absolute-white border-r border-neutral-20 z-30">
+        <aside className="h-screen w-full flex flex-col bg-absolute-white border-r border-neutral-20">
             {/* Logo */}
             <div className="flex items-center gap-3 px-6 py-5 border-b border-neutral-20">
                 <div className="bg-primary-base rounded-xl p-2">
@@ -201,7 +255,7 @@ export default function DashboardSidebar() {
                     Menu Utama
                 </p>
                 <div className="flex flex-col gap-1 px-3">
-                    {navItems.map((item) => {
+                    {filteredNavItems.map((item) => {
                         const active = isActive(item.href);
                         const isOpen = openMenus.includes(item.id);
                         const hasChildren = item.children && item.children.length > 0;
@@ -217,11 +271,10 @@ export default function DashboardSidebar() {
                                             router.push(item.href);
                                         }
                                     }}
-                                    className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                                        active
+                                    className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${active
                                             ? "bg-primary-base text-absolute-white"
                                             : "text-neutral-70 hover:bg-primary-10 hover:text-primary-base"
-                                    }`}
+                                        }`}
                                 >
                                     <div className="flex items-center gap-3">
                                         <span
@@ -235,9 +288,8 @@ export default function DashboardSidebar() {
                                     </div>
                                     {hasChildren && (
                                         <svg
-                                            className={`w-4 h-4 transition-transform duration-200 ${
-                                                isOpen ? "rotate-180" : ""
-                                            } ${active ? "text-absolute-white" : "text-neutral-40"}`}
+                                            className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                                                } ${active ? "text-absolute-white" : "text-neutral-40"}`}
                                             viewBox="0 0 24 24"
                                             fill="none"
                                             stroke="currentColor"
@@ -251,22 +303,20 @@ export default function DashboardSidebar() {
                                 {/* Submenu */}
                                 {hasChildren && (
                                     <div
-                                        className={`overflow-hidden transition-all duration-200 ${
-                                            isOpen
+                                        className={`overflow-hidden transition-all duration-200 ${isOpen
                                                 ? "max-h-48 opacity-100 mt-1"
                                                 : "max-h-0 opacity-0"
-                                        }`}
+                                            }`}
                                     >
                                         <div className="ml-9 flex flex-col gap-1">
                                             {item.children!.map((child) => (
                                                 <button
                                                     key={child.href}
                                                     onClick={() => router.push(child.href)}
-                                                    className={`text-left px-3 py-2 rounded-lg text-sm transition-all ${
-                                                        pathname === child.href
+                                                    className={`text-left px-3 py-2 rounded-lg text-sm transition-all ${pathname === child.href
                                                             ? "text-primary-base font-semibold bg-primary-10"
                                                             : "text-neutral-60 hover:text-primary-base hover:bg-primary-10"
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {child.label}
                                                 </button>
@@ -279,46 +329,6 @@ export default function DashboardSidebar() {
                     })}
                 </div>
             </nav>
-
-            {/* Logout */}
-            <div className="px-3 py-4 border-t border-neutral-20">
-                <div className="flex items-center gap-3 px-3 py-2 mb-2">
-                    <div className="w-8 h-8 rounded-full bg-primary-20 flex items-center justify-center flex-shrink-0">
-                        <svg
-                            className="w-4 h-4 text-primary-base"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                        >
-                            <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-                        </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-neutral-80 truncate">
-                            Admin
-                        </p>
-                        <p className="text-xs text-neutral-40 truncate">
-                            admin@nandenihon.com
-                        </p>
-                    </div>
-                </div>
-                <button
-                    onClick={() => router.push("/")}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-neutral-60 hover:bg-error-10 hover:text-error-base transition-all group"
-                >
-                    <svg
-                        className="w-5 h-5 text-neutral-40 group-hover:text-error-base"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                    >
-                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-                        <polyline points="16 17 21 12 16 7" />
-                        <line x1="21" y1="12" x2="9" y2="12" />
-                    </svg>
-                    <span>Keluar</span>
-                </button>
-            </div>
         </aside>
     );
 }

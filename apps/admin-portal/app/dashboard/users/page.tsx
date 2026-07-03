@@ -3,18 +3,22 @@
 import { useEffect, useState, useCallback } from "react";
 import type { User, UserRole } from "@repo/types";
 
-const ROLES: UserRole[] = ["super_admin", "admin", "teacher", "student"];
+const ROLES: UserRole[] = ["super_admin", "admin", "teacher", "student", "admin-class", "helpdesk"];
 const ROLE_LABELS: Record<string, string> = {
     super_admin: "Super Admin",
     admin: "Admin",
     teacher: "Pengajar",
     student: "Siswa",
+    "admin-class": "Admin Kelas",
+    helpdesk: "Helpdesk",
 };
 const ROLE_COLORS: Record<string, string> = {
     super_admin: "bg-error-10 text-error-base",
     admin: "bg-primary-10 text-primary-base",
     teacher: "bg-success-10 text-success-base",
     student: "bg-neutral-10 text-neutral-50",
+    "admin-class": "bg-info-10 text-info-base",
+    helpdesk: "bg-secondary-10 text-secondary-80",
 };
 
 interface UserFormData {
@@ -140,6 +144,7 @@ export default function UsersPage() {
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [detailsUser, setDetailsUser] = useState<User | null>(null);
 
     const fetchUsers = useCallback(async () => {
         setIsLoading(true);
@@ -226,15 +231,15 @@ export default function UsersPage() {
 
             {/* Table */}
             <div className="bg-absolute-white rounded-2xl border border-neutral-20 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-neutral-0 border-b border-neutral-20">
+                <div className="overflow-x-auto max-h-[calc(100vh-280px)] overflow-y-auto">
+                    <table className="w-full table-fixed min-w-[700px] lg:min-w-0">
+                        <thead className="bg-neutral-0 border-b border-neutral-20 sticky top-0 z-10">
                             <tr>
-                                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-50 uppercase tracking-wider">User</th>
-                                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-50 uppercase tracking-wider">Email</th>
-                                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-50 uppercase tracking-wider">Role</th>
-                                <th className="text-left px-4 py-3 text-xs font-semibold text-neutral-50 uppercase tracking-wider">Dibuat</th>
-                                <th className="text-right px-4 py-3 text-xs font-semibold text-neutral-50 uppercase tracking-wider">Aksi</th>
+                                <th className="w-[30%] text-left px-4 py-3 text-xs font-semibold text-neutral-50 uppercase tracking-wider">User</th>
+                                <th className="w-[35%] text-left px-4 py-3 text-xs font-semibold text-neutral-50 uppercase tracking-wider">Email</th>
+                                <th className="w-[15%] text-left px-4 py-3 text-xs font-semibold text-neutral-50 uppercase tracking-wider">Role</th>
+                                <th className="w-[12%] text-left px-4 py-3 text-xs font-semibold text-neutral-50 uppercase tracking-wider">Dibuat</th>
+                                <th className="w-[8%] text-right px-4 py-3 text-xs font-semibold text-neutral-50 uppercase tracking-wider">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-10">
@@ -254,25 +259,29 @@ export default function UsersPage() {
                                 </tr>
                             ) : (
                                 users.map((u) => (
-                                    <tr key={u.id} className="hover:bg-neutral-0 transition-colors">
+                                    <tr
+                                        key={u.id}
+                                        onClick={() => setDetailsUser(u)}
+                                        className="hover:bg-neutral-0 transition-colors cursor-pointer"
+                                    >
                                         <td className="px-4 py-3">
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-3 min-w-0">
                                                 <div className="w-8 h-8 rounded-full bg-primary-10 flex items-center justify-center text-primary-base text-sm font-bold flex-shrink-0">
                                                     {u.name?.charAt(0).toUpperCase() || "U"}
                                                 </div>
-                                                <span className="text-sm font-semibold text-neutral-80 truncate max-w-[140px]">{u.name}</span>
+                                                <span className="text-sm font-semibold text-neutral-80 truncate" title={u.name}>{u.name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-neutral-60 truncate max-w-[180px]">{u.email}</td>
+                                        <td className="px-4 py-3 text-sm text-neutral-60 truncate" title={u.email}>{u.email}</td>
                                         <td className="px-4 py-3">
-                                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${ROLE_COLORS[u.role] || "bg-neutral-10 text-neutral-50"}`}>
+                                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${ROLE_COLORS[u.role] || "bg-neutral-10 text-neutral-50"} truncate block w-max`}>
                                                 {ROLE_LABELS[u.role] || u.role}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-neutral-40">
+                                        <td className="px-4 py-3 text-sm text-neutral-40 truncate">
                                             {u.created_at ? new Date(u.created_at).toLocaleDateString("id-ID") : "-"}
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex items-center justify-end gap-2">
                                                 <button id={`btn-edit-user-${u.id}`} onClick={() => handleEdit(u)}
                                                     className="text-xs font-semibold text-primary-base bg-primary-10 hover:bg-primary-20 px-3 py-1.5 rounded-lg transition-all">Edit</button>
@@ -313,6 +322,46 @@ export default function UsersPage() {
                                 className="flex-1 py-2.5 rounded-xl bg-error-base text-absolute-white text-sm font-semibold hover:bg-error-100 disabled:bg-neutral-30 transition-all">
                                 {isDeleting ? "Menghapus..." : "Ya, Hapus"}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {detailsUser && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-neutral-90 opacity-40" onClick={() => setDetailsUser(null)} />
+                    <div className="relative bg-absolute-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+                        <div className="border-b border-neutral-10 px-6 py-4 flex items-center justify-between">
+                            <h2 className="text-lg font-bold text-neutral-90">Detail Informasi User</h2>
+                            <button onClick={() => setDetailsUser(null)} className="p-1.5 rounded-lg text-neutral-50 hover:bg-neutral-10 transition-all">
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="p-6 flex flex-col gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 rounded-full bg-primary-10 flex items-center justify-center text-primary-base text-2xl font-bold">
+                                    {detailsUser.name?.charAt(0).toUpperCase() || "U"}
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-neutral-90">{detailsUser.name}</h3>
+                                    <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${ROLE_COLORS[detailsUser.role] || "bg-neutral-10 text-neutral-50"}`}>
+                                        {ROLE_LABELS[detailsUser.role] || detailsUser.role}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="border-t border-neutral-10 pt-3 flex flex-col gap-1">
+                                <p className="text-xs text-neutral-45 font-semibold uppercase">Email</p>
+                                <p className="text-sm text-neutral-80">{detailsUser.email}</p>
+                            </div>
+                            <div className="border-t border-neutral-10 pt-3 flex flex-col gap-1">
+                                <p className="text-xs text-neutral-45 font-semibold uppercase">Tanggal Dibuat</p>
+                                <p className="text-sm text-neutral-80">{detailsUser.created_at ? new Date(detailsUser.created_at).toLocaleString("id-ID") : "-"}</p>
+                            </div>
+                            <div className="flex justify-end pt-3 border-t border-neutral-10">
+                                <button onClick={() => setDetailsUser(null)} className="py-2.5 px-6 rounded-xl bg-neutral-10 hover:bg-neutral-20 text-sm font-semibold text-neutral-70 transition-all">Tutup</button>
+                            </div>
                         </div>
                     </div>
                 </div>

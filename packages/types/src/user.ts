@@ -3,7 +3,7 @@
  * Maps to the `users` table in MySQL database
  */
 
-export type UserRole = "super_admin" | "admin" | "teacher" | "student";
+export type UserRole = "super_admin" | "admin" | "teacher" | "student" | "admin-class" | "helpdesk";
 
 export interface User {
     id: number;

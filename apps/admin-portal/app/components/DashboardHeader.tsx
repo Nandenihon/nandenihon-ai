@@ -18,6 +18,13 @@ const breadcrumbMap: Record<string, string> = {
     "/dashboard/news": "Berita & Artikel",
     "/dashboard/settings": "Pengaturan",
     "/dashboard/users": "Manajemen User",
+    "/dashboard/lecturer": "Dashboard Pengajar",
+    "/dashboard/lecturer/courses": "Kursus Saya",
+    "/dashboard/lecturer/courses/new": "Tambah Kursus",
+    "/dashboard/lecturer/students": "Progres Siswa",
+    "/dashboard/tool-requests": "Request Tool Pembelajaran",
+    "/dashboard/attendance": "Absensi Kelas",
+    "/dashboard/class-prep": "Menyiapkan Kelas",
 };
 
 const roleLabels: Record<string, string> = {
@@ -25,9 +32,11 @@ const roleLabels: Record<string, string> = {
     admin: "Admin",
     teacher: "Pengajar",
     student: "Siswa",
+    "admin-class": "Admin Kelas",
+    helpdesk: "Helpdesk",
 };
 
-export default function DashboardHeader() {
+export default function DashboardHeader({ onMenuClick }: { onMenuClick?: () => void }) {
     const pathname = usePathname();
     const router = useRouter();
     const pageTitle = breadcrumbMap[pathname] ?? "Dashboard";
@@ -65,13 +74,25 @@ export default function DashboardHeader() {
 
     return (
         <header className="sticky top-0 z-20 bg-absolute-white border-b border-neutral-20 px-6 py-4 flex items-center justify-between gap-4">
-            {/* Left - Title & Breadcrumb */}
-            <div className="flex flex-col gap-0.5">
-                <h1 className="text-xl font-bold text-neutral-90">{pageTitle}</h1>
-                <nav className="flex items-center gap-1.5 text-xs text-neutral-50">
-                    {breadcrumbs.map((crumb, i) => (
-                        <span key={crumb.href} className="flex items-center gap-1.5">
-                            {i > 0 && (
+            {/* Left - Hamburger & Title & Breadcrumb */}
+            <div className="flex items-center gap-3">
+                <button
+                    onClick={onMenuClick}
+                    className="p-2 rounded-xl text-neutral-55 hover:bg-neutral-10 lg:hidden flex-shrink-0"
+                    aria-label="Toggle Menu"
+                >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                </button>
+                <div className="flex flex-col gap-0.5">
+                    <h1 className="text-xl font-bold text-neutral-90">{pageTitle}</h1>
+                    <nav className="flex items-center gap-1.5 text-xs text-neutral-50">
+                        {breadcrumbs.map((crumb, i) => (
+                            <span key={crumb.href} className="flex items-center gap-1.5">
+                                {i > 0 && (
                                 <svg
                                     className="w-3 h-3 text-neutral-30"
                                     viewBox="0 0 24 24"
@@ -95,6 +116,7 @@ export default function DashboardHeader() {
                     ))}
                 </nav>
             </div>
+        </div>
 
             {/* Right - Search + Notifications + Avatar */}
             <div className="flex items-center gap-3">
