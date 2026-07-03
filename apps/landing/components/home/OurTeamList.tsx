@@ -81,7 +81,7 @@ function TeamCard({ item }: { item: TeamCardData }) {
 
       <div className="flex justify-center items-center gap-4 mt-10">
         {item.email && (
-          <a href={`mailto:${item.email}`} aria-label={`Email ${name}`}>
+          <a href={`mailto:${item.email}`} aria-label={`Email ${name}`} className="social-pop">
             <Mail className="w-6 h-6 text-gray-900" />
           </a>
         )}
@@ -91,6 +91,7 @@ function TeamCard({ item }: { item: TeamCardData }) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`Instagram ${name}`}
+            className="social-pop"
           >
             <Instagram className="w-6 h-6 text-gray-900" />
           </a>
@@ -107,7 +108,7 @@ async function OurTeamList() {
   return (
     <div className="py-12 bg-white">
       <div className="max-w-7xl mx-auto px-6 lg:px-0">
-        <h2 className={`${HOME_SECTION_TITLE_CLASS} text-center mb-10`}>
+        <h2 className={`${HOME_SECTION_TITLE_CLASS} text-center mb-10 title-reveal`}>
           Temui Tim Kami
         </h2>
       </div>

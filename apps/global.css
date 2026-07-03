@@ -173,3 +173,184 @@
     animation-play-state: paused;
   }
 }
+
+/* ────────────────────────────────────────────────────────
+   MICRO-INTERACTIONS — pure CSS, zero JS overhead
+   ──────────────────────────────────────────────────────── */
+
+/* 1. Scroll-reveal: fade-in-up using IntersectionObserver-free
+      animation-timeline: view()  (progressive enhancement) */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal {
+  animation: reveal-up linear both;
+  animation-timeline: view();
+  animation-range: entry 0% entry 30%;
+}
+
+/* Fallback for browsers without scroll-driven animations:
+   just show everything immediately */
+@supports not (animation-timeline: view()) {
+  .reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 2. Stagger delays for grid children */
+.stagger-1 { animation-delay: 0ms; }
+.stagger-2 { animation-delay: 80ms; }
+.stagger-3 { animation-delay: 160ms; }
+.stagger-4 { animation-delay: 240ms; }
+.stagger-5 { animation-delay: 320ms; }
+.stagger-6 { animation-delay: 400ms; }
+
+/* 3. Floating animation for hero image */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* 4. Button shine sweep on hover */
+@keyframes shine-sweep {
+  0%   { left: -75%; }
+  100% { left: 125%; }
+}
+
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255 255 255 / 0.25),
+    transparent
+  );
+  pointer-events: none;
+  transition: none;
+}
+
+.btn-shine:hover::after {
+  animation: shine-sweep 0.6s ease-out;
+}
+
+/* 5. Card hover lift — composable utility */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(0 0 0 / 0.1);
+}
+
+/* 6. Image zoom inside card on hover */
+.card-img-zoom img,
+.card-img-zoom [data-slot="img"] {
+  transition: transform 0.5s ease;
+}
+
+.card-img-zoom:hover img,
+.card-img-zoom:hover [data-slot="img"] {
+  transform: scale(1.05);
+}
+
+/* 7. Social icon hover pop */
+.social-pop {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+              color 0.25s ease;
+}
+
+.social-pop:hover {
+  transform: scale(1.2);
+}
+
+/* 8. Section title gradient underline reveal */
+@keyframes underline-grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+.title-reveal {
+  position: relative;
+  display: inline-block;
+}
+
+.title-reveal::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary-base), var(--color-secondary-base));
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: underline-grow linear both;
+  animation-timeline: view();
+  animation-range: entry 0% entry 30%;
+}
+
+@supports not (animation-timeline: view()) {
+  .title-reveal::after {
+    animation: none;
+    transform: scaleX(1);
+  }
+}
+
+/* 9. Subtle pulse for CTA emphasis */
+@keyframes gentle-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.3); }
+  50%      { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
+}
+
+.cta-pulse {
+  animation: gentle-pulse 2.5s ease-in-out infinite;
+}
+
+/* 10. Navbar link underline animation */
+.nav-link-hover {
+  position: relative;
+}
+
+.nav-link-hover::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--color-primary-base);
+  border-radius: 1px;
+  transition: width 0.3s ease, left 0.3s ease;
+}
+
+.nav-link-hover:hover::after {
+  width: 100%;
+  left: 0;
+}

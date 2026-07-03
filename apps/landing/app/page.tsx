@@ -61,21 +61,21 @@ const HeroSection = () => (
         <Link
           href="/class/register"
           prefetch={false}
-          className="btn w-full sm:w-auto justify-center"
+          className="btn btn-shine cta-pulse w-full sm:w-auto justify-center"
         >
           Mulai Belajar
         </Link>
         <Link
           href="/class"
           prefetch={false}
-          className="btn bg-white text-primary-base border border-primary-base w-full sm:w-auto justify-center"
+          className="btn btn-shine bg-white text-primary-base border border-primary-base w-full sm:w-auto justify-center"
         >
           Lihat Kelas
         </Link>
       </div>
     </div>
 
-    <div className="hidden lg:block">
+    <div className="hidden lg:block animate-float">
       <Image
         src="/images/hero.png"
         alt="Siswa belajar bahasa Jepang bersama Nande Nihon"
@@ -109,12 +109,12 @@ async function HomeContent() {
 
       <HeroSection />
 
-      <OurPartnerSection />
-      <BenefitSection />
-      <PublicationSection articles={publicationArticles} />
-      <TestimonialSection />
-      <OurTeamList />
-      <CtaSection />
+      <div className="reveal"><OurPartnerSection /></div>
+      <div className="reveal"><BenefitSection /></div>
+      <div className="reveal"><PublicationSection articles={publicationArticles} /></div>
+      <div className="reveal"><TestimonialSection /></div>
+      <div className="reveal"><OurTeamList /></div>
+      <div className="reveal"><CtaSection /></div>
     </div>
   );
 }

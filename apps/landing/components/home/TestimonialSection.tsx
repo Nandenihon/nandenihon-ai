@@ -42,7 +42,7 @@ const TestimonialCard = ({
   const name = item.nickname || "Anonymous";
 
   return (
-    <article className="w-132 flex-none shadow relative">
+    <article className="w-132 flex-none shadow relative hover-lift">
       <div className="px-5 pt-5 pb-8 bg-white rounded-t-2xl">
         <p className="text-wrap text-gray-600">{item.testimonial_text || ""}</p>
         <Image
@@ -71,7 +71,7 @@ async function TestimonialSection() {
   return (
     <div className="py-12 bg-[#D3E0FB]">
       <div className="max-w-7xl mx-auto px-6 lg:px-0">
-        <h2 className={`${HOME_SECTION_TITLE_CLASS} text-center mb-10`}>
+        <h2 className={`${HOME_SECTION_TITLE_CLASS} text-center mb-10 title-reveal`}>
           Kata Mereka
         </h2>
       </div>

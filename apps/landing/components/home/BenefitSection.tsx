@@ -47,7 +47,7 @@ const benefits = [
 ] as const satisfies readonly Benefit[];
 
 const BenefitCard = ({ image, title, description }: Benefit) => (
-  <article className="relative flex h-full flex-col items-center bg-[#F0F0F0] px-8 pb-10 pt-24 rounded-[40px] mb-10 text-center hover:shadow-lg transition-shadow duration-300">
+  <article className="relative flex h-full flex-col items-center bg-[#F0F0F0] px-8 pb-10 pt-24 rounded-[40px] mb-10 text-center hover-lift">
     <div className="absolute -top-20">
       <Image
         src={image}
@@ -70,7 +70,7 @@ function BenefitSection() {
   return (
     <div className="py-12 bg-[#FFFBFD]">
       <div className="max-w-7xl mx-auto px-6 lg:px-0">
-        <h2 className={`${HOME_SECTION_TITLE_CLASS} text-center mb-10`}>
+        <h2 className={`${HOME_SECTION_TITLE_CLASS} text-center mb-10 title-reveal`}>
           Benefit yang Akan Kamu Dapatkan di Nande Nihon
         </h2>
 

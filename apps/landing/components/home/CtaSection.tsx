@@ -22,7 +22,7 @@ function CtaSection() {
           <Link
             href="/class/register"
             prefetch={false}
-            className="btn justify-center w-full sm:w-auto text-nowrap"
+            className="btn btn-shine cta-pulse justify-center w-full sm:w-auto text-nowrap"
           >
             <GraduationCap className="w-6 h-6" />
             Gabung Sekarang
@@ -30,7 +30,7 @@ function CtaSection() {
           <Link
             href="/information/konseling/register"
             prefetch={false}
-            className="bg-white text-primary-base border-primary-base border btn justify-center w-full sm:w-auto"
+            className="bg-white text-primary-base border-primary-base border btn btn-shine justify-center w-full sm:w-auto"
           >
             <MessageCircleHeart className="w-6 h-6" />
             Konsultasi Gratis

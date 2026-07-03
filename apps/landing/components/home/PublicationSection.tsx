@@ -64,7 +64,7 @@ const PublicationCard = ({
     <Link
       href={`/article/${article.slug}`}
       prefetch={false}
-      className="p-3 rounded-lg bg-white shadow-[0_0_20px_2px_#0000001A] relative block transition-transform hover:-translate-y-1"
+      className="p-3 rounded-lg bg-white shadow-[0_0_20px_2px_#0000001A] relative block hover-lift card-img-zoom"
     >
       <div className="relative aspect-video overflow-hidden rounded-lg bg-neutral-10">
         <Image
@@ -123,7 +123,7 @@ const PublicationSection = ({ articles }: PublicationSectionProps) => {
     <div className="py-12 bg-[#FBFCFF]">
       <div className="max-w-7xl mx-auto px-6 lg:px-0">
         <div className="flex justify-between items-center mb-15">
-          <h2 className={HOME_SECTION_TITLE_CLASS}>Publikasi</h2>
+          <h2 className={`${HOME_SECTION_TITLE_CLASS} title-reveal`}>Publikasi</h2>
           <Link
             href="/article"
             prefetch={false}

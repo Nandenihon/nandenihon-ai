@@ -57,7 +57,7 @@ export default function NewNavbar() {
                   href={link.href}
                   className={`flex items-center gap-1 transition-colors ${isActive
                       ? "text-primary-base font-bold border-b-2"
-                      : "text-gray-600 hover:text-primary-base font-medium text-sm"
+                      : "text-gray-600 hover:text-primary-base font-medium text-sm nav-link-hover"
                     }`}
                 >
                   {link.name}

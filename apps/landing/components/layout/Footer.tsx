@@ -35,7 +35,7 @@ function NewFooter() {
                   <Link
                     key={link.title}
                     href={link.href}
-                    className="sm:text-lg text-base text-gray-900"
+                    className="sm:text-lg text-base text-gray-900 nav-link-hover"
                   >
                     {link.title}
                   </Link>
@@ -45,17 +45,17 @@ function NewFooter() {
             <div className="lg:w-[320px] w-full">
               <h3 className="text-2xl font-bold text-gray-900">Kontak Kami</h3>
               <div className="mt-6 space-y-4">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 social-pop">
                   <Mail className="w-6 h-6 text-primary-base" />
                   <p className="text-lg font-semibold">
                     Nandenihon6@gmail.com
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 social-pop">
                   <Phone className="w-6 h-6 text-primary-base" />
                   <p className="text-lg font-semibold">+62 812-9923-6462</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 social-pop">
                   <Instagram className="w-6 h-6 text-primary-base" />
                   <p className="text-lg font-semibold">@nandenihon</p>
                 </div>
