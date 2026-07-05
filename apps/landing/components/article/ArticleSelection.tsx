@@ -3,23 +3,38 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import type { ArticleView } from "@/lib/news";
+import {
+  defaultLanguage,
+  type LandingTranslations,
+  type Language,
+} from "@/lib/i18n";
 import { CardNews, Chips } from "@repo/ui";
 
 interface ArticleSelectionProps {
   articles: ArticleView[];
+  t: LandingTranslations["articlePage"];
+  language: Language;
 }
 
-export default function ArticleSelection({ articles }: ArticleSelectionProps) {
-  const [selectedCategory, setSelectedCategory] = useState("Semua Kategori");
+export default function ArticleSelection({
+  articles,
+  t,
+  language,
+}: ArticleSelectionProps) {
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    t.allCategories,
+  );
   const [searchQuery, setSearchQuery] = useState("");
+  const articleSlug = (slug: string) =>
+    language === defaultLanguage ? slug : `${slug}?lang=${language}`;
   const categories = [
-    "Semua Kategori",
+    t.allCategories,
     ...Array.from(new Set(articles.map((article) => article.category).filter(Boolean))),
   ];
 
   const filteredArticles = articles.filter((article) => {
     const matchesCategory =
-      selectedCategory === "Semua Kategori" ||
+      selectedCategory === t.allCategories ||
       article.category === selectedCategory;
     const matchesSearch = article.title
       .toLowerCase()
@@ -44,7 +59,7 @@ export default function ArticleSelection({ articles }: ArticleSelectionProps) {
         <div className="relative w-full md:w-auto">
           <input
             type="text"
-            placeholder="Search..."
+            placeholder={t.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-4 pr-10 py-2 rounded-xl border border-primary-base focus:outline-none focus:ring-2 focus:ring-primary-base w-full md:w-52"
@@ -60,7 +75,7 @@ export default function ArticleSelection({ articles }: ArticleSelectionProps) {
           filteredArticles.map((article) => (
             <CardNews
               key={article.id}
-              slug={article.slug}
+              slug={articleSlug(article.slug)}
               title={article.title}
               image={article.image}
               category={article.category}
@@ -71,14 +86,14 @@ export default function ArticleSelection({ articles }: ArticleSelectionProps) {
         ) : (
           <div className="col-span-full text-center py-20">
             <p className="text-gray-500 text-lg">
-              Tidak ada artikel yang ditemukan.
+              {t.empty}
             </p>
           </div>
         )}
       </div>
       <div className="pt-6">
         <button className="mx-auto bg-white text-primary-base px-6 py-2 rounded-lg border-primary-base border-2 font-bold text-lg hover:bg-primary-base/10 transition-colors">
-          Muat Lebih Banyak
+          {t.loadMore}
         </button>
       </div>
     </div>

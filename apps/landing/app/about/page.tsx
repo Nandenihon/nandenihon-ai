@@ -3,6 +3,7 @@ import Image from "next/image";
 import { queryMySQL, type RowDataPacket } from "@repo/database";
 import { TeamCard } from "@/components/shared/TeamCard";
 import { resolveUploadImageUrl } from "@/lib/images";
+import { getLanguage, landingTranslations } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,14 @@ async function getTeamData(): Promise<TeamMember[]> {
   }
 }
 
-export default async function AboutPage() {
+type AboutPageProps = {
+  searchParams?: Promise<{ lang?: string | string[] }>;
+};
+
+export default async function AboutPage({ searchParams }: AboutPageProps) {
+  const params = await searchParams;
+  const language = getLanguage(params?.lang);
+  const t = landingTranslations[language].about;
   const teamMembers = await getTeamData();
 
   const founders = teamMembers.filter(
@@ -46,7 +54,7 @@ export default async function AboutPage() {
     <div className="relative pb-24 font-sans overflow-x-hidden">
       <div className="max-w-7xl mx-auto pt-32 lg:pt-48 px-6 text-center">
         <h1 className="font-bold text-[36px] lg:text-[48px] leading-tight text-[#1A1A1A]">
-          Eksplorasi Serunya Belajar di{" "}
+          {t.titlePrefix}{" "}
           <span className="text-primary-base">Nande Nihon</span>
         </h1>
       </div>
@@ -75,31 +83,19 @@ export default async function AboutPage() {
         <div className="relative z-10">
           <div className="max-w-3xl mx-auto text-center mb-16 relative z-20">
             <h2 className="font-bold text-[28px] lg:text-[36px] text-[#1A1A1A] mb-4">
-              Kenapa Memilih Nande Nihon?
+              {t.whyTitle}
             </h2>
             <p className="text-gray-500 italic text-sm lg:text-[15px] leading-relaxed">
-              Didirikan oleh mereka yang berbekal kegigihan, keberanian, dan
-              tekad yang telah berhasil mengalahkan keputusasaan, kebingungan,
-              dan kesulitan. Kini, giliran kami untuk membantumu.
+              {t.whyDescription}
             </p>
           </div>
 
           <div className="flex flex-col lg:flex-row items-start gap-12 lg:gap-16">
             <div className="w-full lg:w-1/2 relative z-20">
               <div className="space-y-4 text-gray-700 text-sm lg:text-[15px] leading-relaxed text-justify">
-                <p>
-                  Nande Nihon bukan sekadar lembaga kursus, bukan pula lembaga
-                  bahasa yang besar.
-                </p>
-                <p>
-                  Kami adalah teman belajar yang mengerti perjuanganmu.
-                  Didirikan oleh orang-orang yang pernah merasakan kebingungan
-                  yang sama.
-                </p>
-                <p>
-                  Kami punya sistem belajar yang menyenangkan, terarah, dan
-                  didukung dengan suasana yang positif.
-                </p>
+                {t.paragraphs.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
               </div>
             </div>
 
@@ -107,7 +103,7 @@ export default async function AboutPage() {
               <div className="relative w-[90%] max-w-[503px] aspect-[503/453] bg-[#ffde72] rounded-[40px] overflow-hidden shadow-xl rotate-[2deg]">
                 <Image
                   src="/images/Rectangle 6.png"
-                  alt="Ilustrasi"
+                  alt={t.imageAlt}
                   fill
                   className="object-cover"
                   priority
@@ -121,23 +117,23 @@ export default async function AboutPage() {
       <div className="max-w-7xl mx-auto px-6 lg:px-0 mt-32 relative z-10">
         <div className="mb-20">
           <h2 className="font-bold text-[28px] lg:text-[36px] text-center mb-10 text-[#1A1A1A]">
-            Founder & Co-Founder
+            {t.foundersTitle}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
             {founders.length > 0 ? (
               founders.map((member) => (
                 <TeamCard
                   key={member.id}
-                  name={member.full_name || "Nama"}
-                  role={member.division || "Founder"}
-                  description={member.motto || "Motto belum diisi."}
+                  name={member.full_name || t.fallbackName}
+                  role={member.division || t.fallbackFounderRole}
+                  description={member.motto || t.fallbackMotto}
                   imageSrc={resolveUploadImageUrl(member.photo)}
                   instagramUrl={member.instagram || "#"}
                 />
               ))
             ) : (
               <p className="text-center col-span-full text-gray-400 font-medium italic">
-                Data Founder belum tersedia.
+                {t.foundersEmpty}
               </p>
             )}
           </div>
@@ -145,23 +141,23 @@ export default async function AboutPage() {
 
         <div className="mb-20">
           <h2 className="font-bold text-[28px] lg:text-[36px] text-center mb-10 text-[#1A1A1A]">
-            Admin & Data
+            {t.adminTitle}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
             {adminData.length > 0 ? (
               adminData.map((member) => (
                 <TeamCard
                   key={member.id}
-                  name={member.full_name || "Nama"}
-                  role={member.division || "Admin"}
-                  description={member.motto || "Motto belum diisi."}
+                  name={member.full_name || t.fallbackName}
+                  role={member.division || t.fallbackAdminRole}
+                  description={member.motto || t.fallbackMotto}
                   imageSrc={resolveUploadImageUrl(member.photo)}
                   instagramUrl={member.instagram || "#"}
                 />
               ))
             ) : (
               <p className="text-center col-span-full text-gray-400 font-medium italic">
-                Data Admin & Data belum tersedia.
+                {t.adminEmpty}
               </p>
             )}
           </div>

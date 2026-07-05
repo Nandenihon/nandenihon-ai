@@ -1,4 +1,5 @@
 import React from "react";
+import type { LandingTranslations } from "@/lib/i18n";
 
 export type ClassItemProps = {
   id: number;
@@ -10,7 +11,11 @@ export type ClassItemProps = {
   slot: boolean;
 };
 
-const ClassItem = (props: ClassItemProps) => {
+type ClassItemComponentProps = ClassItemProps & {
+  t: LandingTranslations["classPage"]["classes"];
+};
+
+const ClassItem = (props: ClassItemComponentProps) => {
   return (
     <div className="bg-white p-5 shadow-[0px_0px_20px_2px_#0000001A] rounded-2xl ">
       <div className="relative h-52.5 w-auto">
@@ -31,12 +36,14 @@ const ClassItem = (props: ClassItemProps) => {
         <p className="mt-4 leading-6 text-neutral-80">{props.description}</p>
       </div>
       {props.slot ? (
-        <button className="btn block w-full mt-10">Amankan Slot Kamu!</button>
+        <button className="btn block w-full mt-10">
+          {props.t.availableButton}
+        </button>
       ) : (
         <div className="flex space-x-2">
-          <button className="btn block w-full mt-10">Buka Akses</button>
+          <button className="btn block w-full mt-10">{props.t.openButton}</button>
           <button className="btn block bg-white text-primary-base border-2 border-primary-base w-full mt-10">
-            Detail Kelas
+            {props.t.detailButton}
           </button>
         </div>
       )}

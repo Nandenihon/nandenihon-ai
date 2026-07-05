@@ -1,18 +1,33 @@
-import React from "react";
+"use client";
+
+import {
+  getLanguage,
+  homeTranslations,
+  type Language,
+} from "@/lib/i18n";
+import { Instagram, Mail, Phone } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Mail, Phone, Instagram } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import React from "react";
 import FormInput from "../ui/FormInput";
 
-const links = [
-  { title: "Home", href: "/" },
-  { title: "Tentang", href: "/about" },
-  { title: "Kelas", href: "/class" },
-  { title: "Artikel", href: "/article/" },
-  { title: "Kontak", href: "/contact" },
-];
+function withLanguage(href: string, language: Language) {
+  return language === "id" ? href : `${href}?lang=${language}`;
+}
 
 function NewFooter() {
+  const searchParams = useSearchParams();
+  const language = getLanguage(searchParams.get("lang"));
+  const t = homeTranslations[language];
+  const links = [
+    { title: t.nav.home, href: "/" },
+    { title: t.nav.about, href: "/about" },
+    { title: t.nav.class, href: "/class" },
+    { title: t.nav.article, href: "/article/" },
+    { title: t.nav.contact, href: "/contact" },
+  ];
+
   return (
     <footer>
       <div className="bg-[#A8C1F7] py-15">
@@ -27,14 +42,12 @@ function NewFooter() {
                   className="object-contain object-left"
                 />
               </div>
-              <h3 className="mt-2 text-xl font-bold">
-                Temukan Dunia Jepang Bersama Kami
-              </h3>
+              <h3 className="mt-2 text-xl font-bold">{t.footer.tagline}</h3>
               <div className="mt-10 py-2 space-x-4 border-t-2 border-primary-base">
                 {links.map((link) => (
                   <Link
                     key={link.title}
-                    href={link.href}
+                    href={withLanguage(link.href, language)}
                     className="sm:text-lg text-base text-gray-900 nav-link-hover"
                   >
                     {link.title}
@@ -43,7 +56,9 @@ function NewFooter() {
               </div>
             </div>
             <div className="lg:w-[320px] w-full">
-              <h3 className="text-2xl font-bold text-gray-900">Kontak Kami</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {t.footer.contactTitle}
+              </h3>
               <div className="mt-6 space-y-4">
                 <div className="flex items-center gap-2 social-pop">
                   <Mail className="w-6 h-6 text-primary-base" />
@@ -65,18 +80,18 @@ function NewFooter() {
           <div className="mt-15 lg:w-150 flex items-end gap-5 mx-auto">
             <FormInput
               icon={<Mail className="w-5 h-5 text-primary-base" />}
-              label="Tetap Terhubung"
-              placeholder="Masukan Email Anda disini"
+              label={t.footer.subscribeLabel}
+              placeholder={t.footer.subscribePlaceholder}
             />
             <button className="btn bg-white border border-primary-base text-primary-base">
-              Subscribe
+              {t.footer.subscribeButton}
             </button>
           </div>
         </div>
       </div>
       <div className="py-4 text-center bg-primary-base">
         <p className="lg:text-lg text-base font-bold text-white">
-          © 2025 Nande Nihon. All rights reserved.
+          {t.footer.copyright}
         </p>
       </div>
     </footer>

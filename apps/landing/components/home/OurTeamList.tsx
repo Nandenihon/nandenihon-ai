@@ -3,6 +3,7 @@ import {
   HOME_SECTION_TITLE_CLASS,
   resolveUploadUrl,
 } from "@/components/home/shared";
+import type { HomeTranslations } from "@/lib/i18n";
 import { queryMySQL, type RowDataPacket } from "@repo/database";
 import type { Team } from "@repo/types";
 import { Instagram, Mail } from "lucide-react";
@@ -51,11 +52,16 @@ const getTeam = unstable_cache(async (): Promise<TeamCardData[]> => {
   }
 }, ["home-team"], { revalidate: 300, tags: ["team"] });
 
-function TeamCard({ item }: { item: TeamCardData }) {
-  const name = item.full_name || "Nama Tim";
-  const role = item.division || "Tim Nande Nihon";
-  const motto =
-    item.motto || "Belajar bahasa Jepang itu kayak ramen kadang rumit, tapi nagih!";
+function TeamCard({
+  item,
+  t,
+}: {
+  item: TeamCardData;
+  t: HomeTranslations["team"];
+}) {
+  const name = item.full_name || t.fallbackName;
+  const role = item.division || t.fallbackRole;
+  const motto = item.motto || t.fallbackMotto;
   const instagramHref = item.instagram ? resolveInstagramUrl(item.instagram) : null;
 
   return (
@@ -101,7 +107,7 @@ function TeamCard({ item }: { item: TeamCardData }) {
   );
 }
 
-async function OurTeamList() {
+async function OurTeamList({ t }: { t: HomeTranslations["team"] }) {
   const team = await getTeam();
   const displayItems = duplicateForMarquee(team);
 
@@ -109,7 +115,7 @@ async function OurTeamList() {
     <div className="py-12 bg-white">
       <div className="max-w-7xl mx-auto px-6 lg:px-0">
         <h2 className={`${HOME_SECTION_TITLE_CLASS} text-center mb-10 title-reveal`}>
-          Temui Tim Kami
+          {t.title}
         </h2>
       </div>
 
@@ -117,11 +123,11 @@ async function OurTeamList() {
         <div className="flex gap-12 whitespace-nowrap animate-marquee-right py-5">
           {displayItems.length > 0 ? (
             displayItems.map((item, index) => (
-              <TeamCard key={`${item.id}-${index}`} item={item} />
+              <TeamCard key={`${item.id}-${index}`} item={item} t={t} />
             ))
           ) : (
             <p className="w-full text-center text-gray-400 font-medium italic">
-              Data tim belum tersedia.
+              {t.empty}
             </p>
           )}
         </div>

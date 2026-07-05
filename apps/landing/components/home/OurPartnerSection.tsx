@@ -2,6 +2,7 @@ import {
   duplicateForMarquee,
   HOME_SECTION_TITLE_CLASS,
 } from "@/components/home/shared";
+import type { HomeTranslations } from "@/lib/i18n";
 import Image from "next/image";
 
 type Partner = {
@@ -33,12 +34,12 @@ const PartnerItem = ({ name, src }: Partner) => (
   </div>
 );
 
-export const OurPartnerSection = () => {
+export const OurPartnerSection = ({ t }: { t: HomeTranslations["partners"] }) => {
   return (
     <div className="py-32 mt-20">
       <div className="max-w-7xl mx-auto px-6 lg:px-0">
         <h2 className={`${HOME_SECTION_TITLE_CLASS} text-center mb-10 title-reveal`}>
-          Our Partner
+          {t.title}
         </h2>
       </div>
 

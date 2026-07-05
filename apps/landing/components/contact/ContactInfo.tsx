@@ -1,15 +1,21 @@
-export default function ContactInfo() {
+import type { LandingTranslations } from "@/lib/i18n";
+
+type ContactInfoProps = {
+  t: LandingTranslations["contactPage"];
+};
+
+export default function ContactInfo({ t }: ContactInfoProps) {
   return (
     <div className="relative flex min-h-[492px] w-full flex-col gap-[35px] overflow-hidden rounded-[16px] bg-[#2F5BD3] p-6 text-white lg:h-[492px] lg:w-[440px] lg:shrink-0">
       <div className="relative z-10">
         <h2 className="mb-3 self-stretch text-[24px] font-bold leading-[40px] text-white">
-          Informasi Kontak
+          {t.infoTitle}
         </h2>
 
         <p className="mb-[35px] max-w-[392px] self-stretch text-[16px] font-normal leading-[24px] text-white">
-          Punya pertanyaan seputar kelas atau pendaftaran?
+          {t.infoDescription[0]}
           <br />
-          Kami siap bantu.
+          {t.infoDescription[1]}
         </p>
 
         <div className="mt-[35px] flex flex-col gap-[32px]">
@@ -109,7 +115,7 @@ export default function ContactInfo() {
       >
         <img
            src="/images/vector-contact.png"
-           alt="Vector"
+           alt={t.vectorAlt}
            className="absolute bottom-[-10px] left-1/2 w-[115%] -translate-x-1/2"
           />
       </div>

@@ -2,6 +2,7 @@ import {
   HOME_SECTION_TITLE_CLASS,
   LOCAL_IMAGE_FALLBACK,
 } from "@/components/home/shared";
+import type { HomeTranslations } from "@/lib/i18n";
 import type { ArticleView } from "@/lib/news";
 import Image from "next/image";
 import Link from "next/link";
@@ -27,6 +28,7 @@ type BadgeItem = {
 
 interface PublicationSectionProps {
   articles: ArticleView[];
+  t: HomeTranslations["publications"];
 }
 
 const getCategoryStyle = (index: number) =>
@@ -102,10 +104,10 @@ const PublicationCard = ({
   );
 };
 
-const PublicationSection = ({ articles }: PublicationSectionProps) => {
+const PublicationSection = ({ articles, t }: PublicationSectionProps) => {
   const publications = articles.slice(0, MAX_PUBLICATIONS);
   const categories = [
-    "Semua Kategori",
+    t.allCategories,
     ...Array.from(new Set(publications.map((article) => article.category))),
   ];
   const badges: BadgeItem[] = categories.map((title, index) => {
@@ -123,13 +125,15 @@ const PublicationSection = ({ articles }: PublicationSectionProps) => {
     <div className="py-12 bg-[#FBFCFF]">
       <div className="max-w-7xl mx-auto px-6 lg:px-0">
         <div className="flex justify-between items-center mb-15">
-          <h2 className={`${HOME_SECTION_TITLE_CLASS} title-reveal`}>Publikasi</h2>
+          <h2 className={`${HOME_SECTION_TITLE_CLASS} title-reveal`}>
+            {t.title}
+          </h2>
           <Link
             href="/article"
             prefetch={false}
             className="text-primary-base lg:text-lg  text-base font-bold"
           >
-            Lihat Semua
+            {t.viewAll}
           </Link>
         </div>
 
@@ -150,7 +154,7 @@ const PublicationSection = ({ articles }: PublicationSectionProps) => {
             ))
           ) : (
             <div className="lg:col-span-3 text-center py-12 text-gray-500">
-              Belum ada publikasi.
+              {t.empty}
             </div>
           )}
         </div>

@@ -1,6 +1,11 @@
 "use client";
 
 import type { ArticleView } from "@/lib/news";
+import {
+  defaultLanguage,
+  type LandingTranslations,
+  type Language,
+} from "@/lib/i18n";
 import { CategoryTag } from "@repo/ui";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
@@ -9,9 +14,21 @@ import { useEffect, useState } from "react";
 
 interface FeaturedArticlesProps {
   articles: ArticleView[];
+  t: LandingTranslations["articlePage"];
+  language: Language;
 }
 
-export default function FeaturedArticles({ articles }: FeaturedArticlesProps) {
+function articleHref(slug: string, language: Language) {
+  return language === defaultLanguage
+    ? `/article/${slug}`
+    : `/article/${slug}?lang=${language}`;
+}
+
+export default function FeaturedArticles({
+  articles,
+  t,
+  language,
+}: FeaturedArticlesProps) {
   const sliderArticles = articles.slice(0, 4);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -46,10 +63,10 @@ export default function FeaturedArticles({ articles }: FeaturedArticlesProps) {
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-4xl mx-auto">
-      <h1 className="font-bold text-2xl text-gray-900">Artikel Pilihan Anda</h1>
+      <h1 className="font-bold text-2xl text-gray-900">{t.featuredTitle}</h1>
 
       <Link
-        href={`/article/${currentArticle.slug}`}
+        href={articleHref(currentArticle.slug, language)}
         className="relative w-full aspect-video md:aspect-21/9 lg:aspect-16/7 rounded-2xl overflow-hidden shadow-2xl group cursor-pointer"
       >
         {sliderArticles.map((article, index) => (
@@ -82,7 +99,7 @@ export default function FeaturedArticles({ articles }: FeaturedArticlesProps) {
             prevSlide();
           }}
           className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white p-2 rounded-full transition-all hover:scale-110 opacity-0 group-hover:opacity-100"
-          aria-label="Previous Slide"
+          aria-label={t.previousSlide}
         >
           <ChevronLeft size={20} />
         </button>
@@ -94,7 +111,7 @@ export default function FeaturedArticles({ articles }: FeaturedArticlesProps) {
             nextSlide();
           }}
           className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 backdrop-blur-sm text-white p-2 rounded-full transition-all hover:scale-110 opacity-0 group-hover:opacity-100"
-          aria-label="Next Slide"
+          aria-label={t.nextSlide}
         >
           <ChevronRight size={20} />
         </button>
@@ -113,7 +130,7 @@ export default function FeaturedArticles({ articles }: FeaturedArticlesProps) {
                   ? "bg-white scale-125 shadow-[0_0_10px_rgba(255,255,255,0.8)]"
                   : "bg-white/50 hover:bg-white/80"
               }`}
-              aria-label={`Go to slide ${index + 1}`}
+              aria-label={`${t.goToSlide} ${index + 1}`}
             />
           ))}
         </div>
@@ -127,7 +144,7 @@ export default function FeaturedArticles({ articles }: FeaturedArticlesProps) {
         </div>
 
         <div className="space-y-2">
-          <Link href={`/article/${currentArticle.slug}`}>
+          <Link href={articleHref(currentArticle.slug, language)}>
             <h2 className="text-lg md:text-xl font-semibold text-gray-900 leading-tight hover:text-primary-base transition-colors cursor-pointer">
               {currentArticle.title}
             </h2>

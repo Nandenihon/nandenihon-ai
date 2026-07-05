@@ -3,6 +3,7 @@ import MainSection from "./MainSection";
 import ClassItem, { type ClassItemProps } from "./ClassItem";
 import { queryMySQL, type RowDataPacket } from "@repo/database";
 import type { Class } from "@repo/types";
+import type { LandingTranslations } from "@/lib/i18n";
 
 const CLASS_IMAGE_FALLBACK =
   "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop";
@@ -36,20 +37,24 @@ async function getClasses(): Promise<ClassItemProps[]> {
   }
 }
 
-const FeaturedClass = async () => {
+type FeaturedClassProps = {
+  t: LandingTranslations["classPage"]["classes"];
+};
+
+const FeaturedClass = async ({ t }: FeaturedClassProps) => {
   const classes = await getClasses();
 
   return (
     <MainSection
-      title="Kelas Insentif"
-      description="Kelas intensif dengan mentor yang asik dan materi daging!"
+      title={t.title}
+      description={t.description}
     >
       {classes.length === 0 ? (
         <p className="col-span-full text-center text-gray-400 font-medium italic">
-          Data kelas belum tersedia.
+          {t.empty}
         </p>
       ) : classes.map((item) => (
-        <ClassItem key={item.id} {...item} />
+        <ClassItem key={item.id} {...item} t={t} />
       ))}
     </MainSection>
   );
