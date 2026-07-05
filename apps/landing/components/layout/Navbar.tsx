@@ -74,7 +74,14 @@ export default function NewNavbar() {
         aria-expanded={isLanguageOpen}
         aria-haspopup="menu"
       >
-        <span className="text-base leading-none">{currentLanguage.flag}</span>
+        <Image
+          src={currentLanguage.flagSrc}
+          alt=""
+          width={30}
+          height={20}
+          className="h-5 w-8 rounded-sm object-cover"
+          aria-hidden="true"
+        />
         <span>{currentLanguage.shortLabel}</span>
         <ChevronDown
           size={16}
@@ -107,7 +114,14 @@ export default function NewNavbar() {
               aria-label={item.label}
               role="menuitem"
             >
-              <span className="text-lg leading-none">{item.flag}</span>
+              <Image
+                src={item.flagSrc}
+                alt=""
+                width={30}
+                height={20}
+                className="h-5 w-8 rounded-sm object-cover"
+                aria-hidden="true"
+              />
               <span>{item.label}</span>
             </Link>
           ))}
