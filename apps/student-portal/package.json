@@ -7,7 +7,8 @@
         "build": "next build",
         "start": "next start --port 3001",
         "lint": "eslint .",
-        "type-check": "tsc --noEmit"
+        "type-check": "tsc --noEmit",
+        "setup-daily-quiz": "npx tsx scripts/setup-daily-quiz.ts"
     },
     "dependencies": {
         "@repo/database": "*",

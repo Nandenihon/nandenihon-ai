@@ -41,6 +41,22 @@ export {
 } from "./news-mysql";
 
 export {
+    ensureDailyQuizTables,
+    replaceDailyQuizQuestions,
+    listDailyQuizQuestions,
+    getDailyQuizQuestionCount,
+    getDailyQuizQuestionsForDate,
+    submitDailyQuizAttempt,
+    findLatestDailyQuizAttempt,
+    findTodayDailyQuizAttempt,
+    getDailyQuizAttemptLeaderboard,
+    type DailyQuizQuestion,
+    type DailyQuizQuestionSeed,
+    type DailyQuizAttempt,
+    type DailyQuizLeaderboardItem,
+} from "./daily-quiz-mysql";
+
+export {
     createCounselingRegistration,
     listCounselingRegistrations,
     VALID_EDUCATION_LEVELS,

@@ -1,0 +1,1562 @@
+[
+  {
+    "id": 1,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'あ'",
+    "options": [
+      "a",
+      "i",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 0,
+    "explanation": "Huruf Hiragana 'あ' dibaca sebagai 'a'."
+  },
+  {
+    "id": 2,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'い'",
+    "options": [
+      "he",
+      "i",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'い' dibaca sebagai 'i'."
+  },
+  {
+    "id": 3,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'う'",
+    "options": [
+      "i",
+      "te",
+      "tsu",
+      "u"
+    ],
+    "answer_index": 3,
+    "explanation": "Huruf Hiragana 'う' dibaca sebagai 'u'."
+  },
+  {
+    "id": 4,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'え'",
+    "options": [
+      "e",
+      "i",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 0,
+    "explanation": "Huruf Hiragana 'え' dibaca sebagai 'e'."
+  },
+  {
+    "id": 5,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'お'",
+    "options": [
+      "i",
+      "o",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'お' dibaca sebagai 'o'."
+  },
+  {
+    "id": 6,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'か'",
+    "options": [
+      "i",
+      "ka",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'か' dibaca sebagai 'ka'."
+  },
+  {
+    "id": 7,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'き'",
+    "options": [
+      "i",
+      "ki",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'き' dibaca sebagai 'ki'."
+  },
+  {
+    "id": 8,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'く'",
+    "options": [
+      "i",
+      "ku",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'く' dibaca sebagai 'ku'."
+  },
+  {
+    "id": 9,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'け'",
+    "options": [
+      "i",
+      "ke",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'け' dibaca sebagai 'ke'."
+  },
+  {
+    "id": 10,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'こ'",
+    "options": [
+      "i",
+      "ko",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'こ' dibaca sebagai 'ko'."
+  },
+  {
+    "id": 11,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'さ'",
+    "options": [
+      "i",
+      "sa",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'さ' dibaca sebagai 'sa'."
+  },
+  {
+    "id": 12,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'し'",
+    "options": [
+      "i",
+      "shi",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'し' dibaca sebagai 'shi'."
+  },
+  {
+    "id": 13,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'す'",
+    "options": [
+      "i",
+      "su",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'す' dibaca sebagai 'su'."
+  },
+  {
+    "id": 14,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'せ'",
+    "options": [
+      "i",
+      "se",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'せ' dibaca sebagai 'se'."
+  },
+  {
+    "id": 15,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'そ'",
+    "options": [
+      "i",
+      "so",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'そ' dibaca sebagai 'so'."
+  },
+  {
+    "id": 16,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'た'",
+    "options": [
+      "i",
+      "ta",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'た' dibaca sebagai 'ta'."
+  },
+  {
+    "id": 17,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'ち'",
+    "options": [
+      "chi",
+      "i",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 0,
+    "explanation": "Huruf Hiragana 'ち' dibaca sebagai 'chi'."
+  },
+  {
+    "id": 18,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'つ'",
+    "options": [
+      "he",
+      "i",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 3,
+    "explanation": "Huruf Hiragana 'つ' dibaca sebagai 'tsu'."
+  },
+  {
+    "id": 19,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'て'",
+    "options": [
+      "he",
+      "i",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 2,
+    "explanation": "Huruf Hiragana 'て' dibaca sebagai 'te'."
+  },
+  {
+    "id": 20,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'と'",
+    "options": [
+      "i",
+      "te",
+      "to",
+      "tsu"
+    ],
+    "answer_index": 2,
+    "explanation": "Huruf Hiragana 'と' dibaca sebagai 'to'."
+  },
+  {
+    "id": 21,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'な'",
+    "options": [
+      "i",
+      "na",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'な' dibaca sebagai 'na'."
+  },
+  {
+    "id": 22,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'に'",
+    "options": [
+      "i",
+      "ni",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'に' dibaca sebagai 'ni'."
+  },
+  {
+    "id": 23,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'ぬ'",
+    "options": [
+      "i",
+      "nu",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'ぬ' dibaca sebagai 'nu'."
+  },
+  {
+    "id": 24,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'ね'",
+    "options": [
+      "i",
+      "ne",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'ね' dibaca sebagai 'ne'."
+  },
+  {
+    "id": 25,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'の'",
+    "options": [
+      "i",
+      "no",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 1,
+    "explanation": "Huruf Hiragana 'の' dibaca sebagai 'no'."
+  },
+  {
+    "id": 26,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'は'",
+    "options": [
+      "ha",
+      "i",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 0,
+    "explanation": "Huruf Hiragana 'は' dibaca sebagai 'ha'."
+  },
+  {
+    "id": 27,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'ひ'",
+    "options": [
+      "hi",
+      "i",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 0,
+    "explanation": "Huruf Hiragana 'ひ' dibaca sebagai 'hi'."
+  },
+  {
+    "id": 28,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'ふ'",
+    "options": [
+      "fu",
+      "i",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 0,
+    "explanation": "Huruf Hiragana 'ふ' dibaca sebagai 'fu'."
+  },
+  {
+    "id": 29,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'へ'",
+    "options": [
+      "he",
+      "i",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 0,
+    "explanation": "Huruf Hiragana 'へ' dibaca sebagai 'he'."
+  },
+  {
+    "id": 30,
+    "category": "Hiragana & Katakana",
+    "question": "Bagaimana cara membaca huruf Hiragana berikut ini? 'ほ'",
+    "options": [
+      "ho",
+      "i",
+      "te",
+      "tsu"
+    ],
+    "answer_index": 0,
+    "explanation": "Huruf Hiragana 'ほ' dibaca sebagai 'ho'."
+  },
+  {
+    "id": 31,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'みず (mizu)'",
+    "options": [
+      "Air",
+      "Nasi",
+      "Susu",
+      "Teh"
+    ],
+    "answer_index": 0,
+    "explanation": "Kosakata 'みず (mizu)' memiliki arti 'Air'."
+  },
+  {
+    "id": 32,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'ほん (hon)'",
+    "options": [
+      "Buku",
+      "Kertas",
+      "Pena",
+      "Tas"
+    ],
+    "answer_index": 0,
+    "explanation": "Kosakata 'ほん (hon)' memiliki arti 'Buku'."
+  },
+  {
+    "id": 33,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'ねこ (neko)'",
+    "options": [
+      "Anjing",
+      "Burung",
+      "Ikan",
+      "Kucing"
+    ],
+    "answer_index": 3,
+    "explanation": "Kosakata 'ねこ (neko)' memiliki arti 'Kucing'."
+  },
+  {
+    "id": 34,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'いぬ (inu)'",
+    "options": [
+      "Anjing",
+      "Kelinci",
+      "Kucing",
+      "Kuda"
+    ],
+    "answer_index": 0,
+    "explanation": "Kosakata 'いぬ (inu)' memiliki arti 'Anjing'."
+  },
+  {
+    "id": 35,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'さかな (sakana)'",
+    "options": [
+      "Ayam",
+      "Daging",
+      "Ikan",
+      "Sayur"
+    ],
+    "answer_index": 2,
+    "explanation": "Kosakata 'さかな (sakana)' memiliki arti 'Ikan'."
+  },
+  {
+    "id": 36,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'たべもの (tabemono)'",
+    "options": [
+      "Kendaraan",
+      "Makanan",
+      "Minuman",
+      "Pakaian"
+    ],
+    "answer_index": 1,
+    "explanation": "Kosakata 'たべもの (tabemono)' memiliki arti 'Makanan'."
+  },
+  {
+    "id": 37,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'のみもの (nomimono)'",
+    "options": [
+      "Buah",
+      "Makanan",
+      "Minuman",
+      "Obat"
+    ],
+    "answer_index": 2,
+    "explanation": "Kosakata 'のみもの (nomimono)' memiliki arti 'Minuman'."
+  },
+  {
+    "id": 38,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'くるま (kuruma)'",
+    "options": [
+      "Kereta",
+      "Mobil",
+      "Pesawat",
+      "Sepeda"
+    ],
+    "answer_index": 1,
+    "explanation": "Kosakata 'くるま (kuruma)' memiliki arti 'Mobil'."
+  },
+  {
+    "id": 39,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'てがみ (tegami)'",
+    "options": [
+      "Buku",
+      "Koran",
+      "Majalah",
+      "Surat"
+    ],
+    "answer_index": 3,
+    "explanation": "Kosakata 'てがみ (tegami)' memiliki arti 'Surat'."
+  },
+  {
+    "id": 40,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'ともだち (tomodachi)'",
+    "options": [
+      "Guru",
+      "Musuh",
+      "Orang tua",
+      "Teman"
+    ],
+    "answer_index": 3,
+    "explanation": "Kosakata 'ともだち (tomodachi)' memiliki arti 'Teman'."
+  },
+  {
+    "id": 41,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'せんせい (sensei)'",
+    "options": [
+      "Dokter",
+      "Guru",
+      "Murid",
+      "Polisi"
+    ],
+    "answer_index": 1,
+    "explanation": "Kosakata 'せんせい (sensei)' memiliki arti 'Guru'."
+  },
+  {
+    "id": 42,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'がくせい (gakusei)'",
+    "options": [
+      "Guru",
+      "Karyawan",
+      "Murid / Mahasiswa",
+      "Petani"
+    ],
+    "answer_index": 2,
+    "explanation": "Kosakata 'がくせい (gakusei)' memiliki arti 'Murid / Mahasiswa'."
+  },
+  {
+    "id": 43,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'いえ (ie)'",
+    "options": [
+      "Kantor",
+      "Rumah",
+      "Sekolah",
+      "Toko"
+    ],
+    "answer_index": 1,
+    "explanation": "Kosakata 'いえ (ie)' memiliki arti 'Rumah'."
+  },
+  {
+    "id": 44,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'がっこう (gakkou)'",
+    "options": [
+      "Pasar",
+      "Rumah",
+      "Sekolah",
+      "Stasiun"
+    ],
+    "answer_index": 2,
+    "explanation": "Kosakata 'がっこう (gakkou)' memiliki arti 'Sekolah'."
+  },
+  {
+    "id": 45,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'えき (eki)'",
+    "options": [
+      "Bandara",
+      "Pelabuhan",
+      "Stasiun",
+      "Terminal"
+    ],
+    "answer_index": 2,
+    "explanation": "Kosakata 'えき (eki)' memiliki arti 'Stasiun'."
+  },
+  {
+    "id": 46,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'きょう (kyou)'",
+    "options": [
+      "Besok",
+      "Hari ini",
+      "Kemarin",
+      "Lusa"
+    ],
+    "answer_index": 1,
+    "explanation": "Kosakata 'きょう (kyou)' memiliki arti 'Hari ini'."
+  },
+  {
+    "id": 47,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'あした (ashita)'",
+    "options": [
+      "Besok",
+      "Hari ini",
+      "Kemarin",
+      "Lusa"
+    ],
+    "answer_index": 0,
+    "explanation": "Kosakata 'あした (ashita)' memiliki arti 'Besok'."
+  },
+  {
+    "id": 48,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'きのう (kinou)'",
+    "options": [
+      "Besok",
+      "Hari ini",
+      "Kemarin",
+      "Lusa"
+    ],
+    "answer_index": 2,
+    "explanation": "Kosakata 'きのう (kinou)' memiliki arti 'Kemarin'."
+  },
+  {
+    "id": 49,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'ひと (hito)'",
+    "options": [
+      "Barang",
+      "Hewan",
+      "Orang",
+      "Tumbuhan"
+    ],
+    "answer_index": 2,
+    "explanation": "Kosakata 'ひと (hito)' memiliki arti 'Orang'."
+  },
+  {
+    "id": 50,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'なまえ (namae)'",
+    "options": [
+      "Alamat",
+      "Hobi",
+      "Nama",
+      "Umur"
+    ],
+    "answer_index": 2,
+    "explanation": "Kosakata 'なまえ (namae)' memiliki arti 'Nama'."
+  },
+  {
+    "id": 51,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'とけい (tokei)'",
+    "options": [
+      "Cincin",
+      "Gelang",
+      "Jam",
+      "Kacamata"
+    ],
+    "answer_index": 2,
+    "explanation": "Kosakata 'とけい (tokei)' memiliki arti 'Jam'."
+  },
+  {
+    "id": 52,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'かばん (kaban)'",
+    "options": [
+      "Baju",
+      "Sepatu",
+      "Tas",
+      "Topi"
+    ],
+    "answer_index": 2,
+    "explanation": "Kosakata 'かばん (kaban)' memiliki arti 'Tas'."
+  },
+  {
+    "id": 53,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'くつ (kutsu)'",
+    "options": [
+      "Kaos kaki",
+      "Sandal",
+      "Sepatu",
+      "Tas"
+    ],
+    "answer_index": 2,
+    "explanation": "Kosakata 'くつ (kutsu)' memiliki arti 'Sepatu'."
+  },
+  {
+    "id": 54,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'しんぶん (shinbun)'",
+    "options": [
+      "Buku",
+      "Koran",
+      "Majalah",
+      "Surat"
+    ],
+    "answer_index": 1,
+    "explanation": "Kosakata 'しんぶん (shinbun)' memiliki arti 'Koran'."
+  },
+  {
+    "id": 55,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'じどうしゃ (jidousha)'",
+    "options": [
+      "Kereta",
+      "Mobil / Otomotif",
+      "Sepeda",
+      "Sepeda motor"
+    ],
+    "answer_index": 1,
+    "explanation": "Kosakata 'じどうしゃ (jidousha)' memiliki arti 'Mobil / Otomotif'."
+  },
+  {
+    "id": 56,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'つくえ (tsukue)'",
+    "options": [
+      "Kursi",
+      "Lemari",
+      "Meja",
+      "Pintu"
+    ],
+    "answer_index": 2,
+    "explanation": "Kosakata 'つくえ (tsukue)' memiliki arti 'Meja'."
+  },
+  {
+    "id": 57,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'いす (isu)'",
+    "options": [
+      "Jendela",
+      "Kursi",
+      "Meja",
+      "Tempat tidur"
+    ],
+    "answer_index": 1,
+    "explanation": "Kosakata 'いす (isu)' memiliki arti 'Kursi'."
+  },
+  {
+    "id": 58,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'でんわ (denwa)'",
+    "options": [
+      "Komputer",
+      "Radio",
+      "Telepon",
+      "Televisi"
+    ],
+    "answer_index": 2,
+    "explanation": "Kosakata 'でんわ (denwa)' memiliki arti 'Telepon'."
+  },
+  {
+    "id": 59,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'あさ (asa)'",
+    "options": [
+      "Malam",
+      "Pagi",
+      "Siang",
+      "Sore"
+    ],
+    "answer_index": 1,
+    "explanation": "Kosakata 'あさ (asa)' memiliki arti 'Pagi'."
+  },
+  {
+    "id": 60,
+    "category": "Vocabulary",
+    "question": "Apa arti dari kosakata berikut ini? 'よる (yoru)'",
+    "options": [
+      "Malam",
+      "Pagi",
+      "Siang",
+      "Sore"
+    ],
+    "answer_index": 0,
+    "explanation": "Kosakata 'よる (yoru)' memiliki arti 'Malam'."
+  },
+  {
+    "id": 61,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'わたし ___ がくせいです。(Saya adalah murid)'",
+    "options": [
+      "が (ga)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 2,
+    "explanation": "Partikel 'は' digunakan sebagai penanda topik kalimat."
+  },
+  {
+    "id": 62,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'これ ___ ほんです。(Ini adalah buku)'",
+    "options": [
+      "で (de)",
+      "と (to)",
+      "の (no)",
+      "は (wa)"
+    ],
+    "answer_index": 3,
+    "explanation": "Partikel 'は' digunakan untuk menunjuk topik 'これ' (ini)."
+  },
+  {
+    "id": 63,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'みず ___ のみます。(Minum air)'",
+    "options": [
+      "が (ga)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 3,
+    "explanation": "Partikel 'を' digunakan untuk menandai objek penderita/langsung dari kata kerja."
+  },
+  {
+    "id": 64,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'ごはん ___ たべます。(Makan nasi)'",
+    "options": [
+      "で (de)",
+      "と (to)",
+      "へ (he)",
+      "を (wo)"
+    ],
+    "answer_index": 3,
+    "explanation": "Partikel 'を' menandai 'ごはん' sebagai objek yang dimakan."
+  },
+  {
+    "id": 65,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'がっこう ___ いきます。(Pergi ke sekolah)'",
+    "options": [
+      "が (ga)",
+      "で (de)",
+      "へ (he)",
+      "を (wo)"
+    ],
+    "answer_index": 2,
+    "explanation": "Partikel 'へ' (dibaca 'e') atau 'に' digunakan untuk menunjukkan arah tujuan."
+  },
+  {
+    "id": 66,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'にほん ___ いきます。(Pergi ke Jepang)'",
+    "options": [
+      "で (de)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 1,
+    "explanation": "Partikel 'に' digunakan untuk menunjukkan arah tujuan tempat."
+  },
+  {
+    "id": 67,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'うち ___ かえります。(Pulang ke rumah)'",
+    "options": [
+      "が (ga)",
+      "と (to)",
+      "へ (he)",
+      "を (wo)"
+    ],
+    "answer_index": 2,
+    "explanation": "Partikel 'へ' menunjukkan arah pergerakan pulang ke rumah."
+  },
+  {
+    "id": 68,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'ペン ___ ノートがあります。(Ada pena dan buku catatan)'",
+    "options": [
+      "と (to)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 0,
+    "explanation": "Partikel 'と' digunakan untuk menggabungkan dua kata benda (artinya 'dan')."
+  },
+  {
+    "id": 69,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'あなた ___ なまえは何ですか。(Nama Anda siapa?)'",
+    "options": [
+      "が (ga)",
+      "の (no)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 1,
+    "explanation": "Partikel 'の' digunakan untuk menunjukkan kepemilikan (kepunyaan)."
+  },
+  {
+    "id": 70,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'わたし ___ のカメラです。(Kamera milik saya)'",
+    "options": [
+      "で (de)",
+      "に (ni)",
+      "の (no)",
+      "は (wa)"
+    ],
+    "answer_index": 2,
+    "explanation": "Partikel 'の' menghubungkan kata ganti saya dengan benda miliknya."
+  },
+  {
+    "id": 71,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'テニス ___ します。(Bermain tenis)'",
+    "options": [
+      "が (ga)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 3,
+    "explanation": "Partikel 'を' menandai aktivitas olahraga sebagai objek kata kerja 'shimasu'."
+  },
+  {
+    "id": 72,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: '日本語 ___ べんきょう。(Belajar bahasa Jepang)'",
+    "options": [
+      "が (ga)",
+      "の (no)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 1,
+    "explanation": "Menggabungkan dua kata benda 'Nihongo' dan 'benkyou' menggunakan partikel 'の'."
+  },
+  {
+    "id": 73,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'どこ ___ いきますか。(Pergi ke mana?)'",
+    "options": [
+      "が (ga)",
+      "の (no)",
+      "へ (he)",
+      "を (wo)"
+    ],
+    "answer_index": 2,
+    "explanation": "Partikel 'へ' dipasangkan dengan kata tanya 'doko' untuk menanyakan arah pergerakan."
+  },
+  {
+    "id": 74,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'がっこう ___ ともだちに会います。(Bertemu teman di sekolah)'",
+    "options": [
+      "で (de)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 0,
+    "explanation": "Partikel 'で' digunakan untuk menandai tempat terjadinya suatu aktivitas."
+  },
+  {
+    "id": 75,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'レストラン ___ ごはんを食べます。(Makan di restoran)'",
+    "options": [
+      "で (de)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 0,
+    "explanation": "Partikel 'で' menunjukkan tempat di mana aksi makan dilakukan."
+  },
+  {
+    "id": 76,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'つくえのうえ ___ ほんがあります。(Ada buku di atas meja)'",
+    "options": [
+      "で (de)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 1,
+    "explanation": "Partikel 'に' digunakan untuk menunjukkan keberadaan (eksistensi) suatu benda."
+  },
+  {
+    "id": 77,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'へやのなか ___ ねこがいます。(Ada kucing di dalam kamar)'",
+    "options": [
+      "で (de)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 1,
+    "explanation": "Partikel 'に' menunjukkan posisi keberadaan makhluk hidup."
+  },
+  {
+    "id": 78,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'きょう ___ あした。(Hari ini dan besok)'",
+    "options": [
+      "が (ga)",
+      "と (to)",
+      "の (no)",
+      "は (wa)"
+    ],
+    "answer_index": 1,
+    "explanation": "Partikel 'と' berarti 'dan' untuk menjajarkan dua kata benda."
+  },
+  {
+    "id": 79,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'これはだれ ___ ほんですか。(Ini buku milik siapa?)'",
+    "options": [
+      "が (ga)",
+      "の (no)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 1,
+    "explanation": "Partikel 'の' menanyakan kepemilikan bersama kata tanya 'dare'."
+  },
+  {
+    "id": 80,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'なに ___ たべますか。(Maku makan apa?)'",
+    "options": [
+      "で (de)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 3,
+    "explanation": "Partikel 'を' digunakan bersama 'nani' (apa) untuk menanyakan objek tindakan."
+  },
+  {
+    "id": 81,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: '日本語 ___ はなします。(Berbicara menggunakan bahasa Jepang)'",
+    "options": [
+      "で (de)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 0,
+    "explanation": "Partikel 'で' di sini berfungsi menandakan alat atau cara (bahasa yang digunakan)."
+  },
+  {
+    "id": 82,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'はし ___ たべます。(Makan menggunakan sumpit)'",
+    "options": [
+      "で (de)",
+      "に (ni)",
+      "へ (he)",
+      "を (wo)"
+    ],
+    "answer_index": 0,
+    "explanation": "Partikel 'で' menunjukkan instrumen atau alat yang digunakan untuk makan."
+  },
+  {
+    "id": 83,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'バス ___ いきます。(Pergi menggunakan bus)'",
+    "options": [
+      "で (de)",
+      "に (ni)",
+      "へ (he)",
+      "を (wo)"
+    ],
+    "answer_index": 0,
+    "explanation": "Partikel 'で' menunjukkan sarana transportasi."
+  },
+  {
+    "id": 84,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: '1人 ___ いきます。(Pergi sendirian)'",
+    "options": [
+      "で (de)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 0,
+    "explanation": "Frasa 'hitori de' berarti 'secara sendirian' atau dalam jumlah satu orang."
+  },
+  {
+    "id": 85,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'これ ___ あれ。(Ini dan itu)'",
+    "options": [
+      "が (ga)",
+      "と (to)",
+      "の (no)",
+      "は (wa)"
+    ],
+    "answer_index": 1,
+    "explanation": "Partikel 'と' menggabungkan kata tunjuk benda."
+  },
+  {
+    "id": 86,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'ともだち ___ はなします。(Berbicara dengan teman)'",
+    "options": [
+      "で (de)",
+      "と (to)",
+      "に (ni)",
+      "を (wo)"
+    ],
+    "answer_index": 1,
+    "explanation": "Partikel 'と' di sini berarti 'dengan' atau 'bersama' sebagai mitra interaksi."
+  },
+  {
+    "id": 87,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'せんせい ___ ききます。(Bertanya kepada guru)'",
+    "options": [
+      "で (de)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 1,
+    "explanation": "Partikel 'に' menandai target atau arah tindakan diarahkan (kepada guru)."
+  },
+  {
+    "id": 88,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'デパート ___ かいものをします。(Berbelanja di departement store)'",
+    "options": [
+      "で (de)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 0,
+    "explanation": "Partikel 'で' menandai lokasi aktivitas dinamis belanja."
+  },
+  {
+    "id": 89,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'ここ ___ すわってください。(Silakan duduk di sini)'",
+    "options": [
+      "で (de)",
+      "に (ni)",
+      "は (wa)",
+      "を (wo)"
+    ],
+    "answer_index": 1,
+    "explanation": "Kata kerja 'suwaru' (duduk) menggunakan partikel 'に' untuk titik tumpu/tujuan akhir duduk."
+  },
+  {
+    "id": 90,
+    "category": "Grammar & Particles",
+    "question": "Lengkapilah kalimat rumpang berikut dengan pilihan yang tepat: 'ほんを5さつ ___ かいました。(Membeli buku sebanyak 5 buah)'",
+    "options": [
+      "かいました (kaimashita)",
+      "かいます (kaimasu)",
+      "かう (kau)",
+      "かって (katte)"
+    ],
+    "answer_index": 0,
+    "explanation": "Bentuk lampau formal dari kata kerja 'kau' adalah 'kaimashita'."
+  },
+  {
+    "id": 91,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'おはようございます (Ohayou gozaimasu)'",
+    "options": [
+      "Selamat malam",
+      "Selamat pagi",
+      "Selamat siang",
+      "Selamat sore"
+    ],
+    "answer_index": 1,
+    "explanation": "Ungkapan 'おはようございます (Ohayou gozaimasu)' digunakan sebagai ekspresi untuk 'Selamat pagi'."
+  },
+  {
+    "id": 92,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'こんにちは (Konnichiwa)'",
+    "options": [
+      "Selamat malam",
+      "Selamat pagi",
+      "Selamat siang / halo",
+      "Selamat tinggal"
+    ],
+    "answer_index": 2,
+    "explanation": "Ungkapan 'こんにちは (Konnichiwa)' digunakan sebagai ekspresi untuk 'Selamat siang / halo'."
+  },
+  {
+    "id": 93,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'こんばんは (Konbanwa)'",
+    "options": [
+      "Sampai jumpa",
+      "Selamat malam",
+      "Selamat pagi",
+      "Selamat siang"
+    ],
+    "answer_index": 1,
+    "explanation": "Ungkapan 'こんばんは (Konbanwa)' digunakan sebagai ekspresi untuk 'Selamat malam'."
+  },
+  {
+    "id": 94,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'ありがとうがざいます (Arigatou gozaimasu)'",
+    "options": [
+      "Maaf",
+      "Permisi",
+      "Sama-sama",
+      "Terima kasih"
+    ],
+    "answer_index": 3,
+    "explanation": "Ungkapan 'ありがとうがざいます (Arigatou gozaimasu)' digunakan sebagai ekspresi untuk 'Terima kasih'."
+  },
+  {
+    "id": 95,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'すみません (Sumimasen)'",
+    "options": [
+      "Halo",
+      "Maaf / Permisi",
+      "Selamat tinggal",
+      "Terima kasih"
+    ],
+    "answer_index": 1,
+    "explanation": "Ungkapan 'すみません (Sumimasen)' digunakan sebagai ekspresi untuk 'Maaf / Permisi'."
+  },
+  {
+    "id": 96,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'さようなら (Sayounara)'",
+    "options": [
+      "Apa kabar",
+      "Selamat datang",
+      "Selamat tinggal / Sampai jumpa",
+      "Silakan"
+    ],
+    "answer_index": 2,
+    "explanation": "Ungkapan 'さようなら (Sayounara)' digunakan sebagai ekspresi untuk 'Selamat tinggal / Sampai jumpa'."
+  },
+  {
+    "id": 97,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'はじめまして (Hajimemashite)'",
+    "options": [
+      "Sampai jumpa",
+      "Senang bertemu dengan Anda (Pertama kali)",
+      "Silakan",
+      "Terima kasih"
+    ],
+    "answer_index": 1,
+    "explanation": "Ungkapan 'はじめまして (Hajimemashite)' digunakan sebagai ekspresi untuk 'Senang bertemu dengan Anda (Pertama kali)'."
+  },
+  {
+    "id": 98,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'よろしくおねがいします (Yoroniku onegaishimasu)'",
+    "options": [
+      "Maaf",
+      "Mohon bantuannya / Bimbingannya",
+      "Sama-sama",
+      "Selamat pagi"
+    ],
+    "answer_index": 1,
+    "explanation": "Ungkapan 'よろしくおねがいします (Yoroniku onegaishimasu)' digunakan sebagai ekspresi untuk 'Mohon bantuannya / Bimbingannya'."
+  },
+  {
+    "id": 99,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'おやすみなさい (Oyasuminasai)'",
+    "options": [
+      "Hati-hati",
+      "Selamat makan",
+      "Selamat pagi",
+      "Selamat tidur / Selamat malam (jelang tidur)"
+    ],
+    "answer_index": 3,
+    "explanation": "Ungkapan 'おやすみなさい (Oyasuminasai)' digunakan sebagai ekspresi untuk 'Selamat tidur / Selamat malam (jelang tidur)'."
+  },
+  {
+    "id": 100,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'ただいま (Tadaima)'",
+    "options": [
+      "Saya pulang / Saya kembali (ke rumah)",
+      "Selamat datang",
+      "Selamat jalan",
+      "Silakan masuk"
+    ],
+    "answer_index": 0,
+    "explanation": "Ungkapan 'ただいま (Tadaima)' digunakan sebagai ekspresi untuk 'Saya pulang / Saya kembali (ke rumah)'."
+  },
+  {
+    "id": 101,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'おかえりなさい (Okaerinasai)'",
+    "options": [
+      "Hati-hati",
+      "Sampai jumpa",
+      "Selamat datang kembali di rumah",
+      "Terima kasih"
+    ],
+    "answer_index": 2,
+    "explanation": "Ungkapan 'おかえりなさい (Okaerinasai)' digunakan sebagai ekspresi untuk 'Selamat datang kembali di rumah'."
+  },
+  {
+    "id": 102,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'いってきます (Ittekimasu)'",
+    "options": [
+      "Saya berangkat dulu",
+      "Saya pulang",
+      "Selamat datang",
+      "Silakan"
+    ],
+    "answer_index": 0,
+    "explanation": "Ungkapan 'いってきます (Ittekimasu)' digunakan sebagai ekspresi untuk 'Saya berangkat dulu'."
+  },
+  {
+    "id": 103,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'いってらっしゃい (Itterasshai)'",
+    "options": [
+      "Saya pulang",
+      "Selamat datang",
+      "Selamat jalan / Hati-hati di jalan",
+      "Terima kasih"
+    ],
+    "answer_index": 2,
+    "explanation": "Ungkapan 'いってらっしゃい (Itterasshai)' digunakan sebagai ekspresi untuk 'Selamat jalan / Hati-hati di jalan'."
+  },
+  {
+    "id": 104,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'いただきます (Itadakimasu)'",
+    "options": [
+      "Enak sekali",
+      "Selamat makan / Terima kasih atas makanannya",
+      "Selamat tidur",
+      "Sudah kenyang"
+    ],
+    "answer_index": 1,
+    "explanation": "Ungkapan 'いただきます (Itadakimasu)' digunakan sebagai ekspresi untuk 'Selamat makan / Terima kasih atas makanannya'."
+  },
+  {
+    "id": 105,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'ごちそうさまでした (Gochisousama deshita)'",
+    "options": [
+      "Mau makan lagi",
+      "Selamat makan",
+      "Silakan minum",
+      "Terima kasih atas hidangannya (setelah makan)"
+    ],
+    "answer_index": 3,
+    "explanation": "Ungkapan 'ごちそうさまでした (Gochisousama deshita)' digunakan sebagai ekspresi untuk 'Terima kasih atas hidangannya (setelah makan)'."
+  },
+  {
+    "id": 106,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'おめでとうございます (Omedetou gozaimasu)'",
+    "options": [
+      "Maaf",
+      "Sama-sama",
+      "Selamat! (Ucapan selamat)",
+      "Silakan"
+    ],
+    "answer_index": 2,
+    "explanation": "Ungkapan 'おめでとうございます (Omedetou gozaimasu)' digunakan sebagai ekspresi untuk 'Selamat! (Ucapan selamat)'."
+  },
+  {
+    "id": 107,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'おげんきですか (Ogenki desu ka)'",
+    "options": [
+      "Apa kabar? / Apakah Anda sehat?",
+      "Jam berapa sekarang?",
+      "Mau ke mana?",
+      "Siapa nama Anda?"
+    ],
+    "answer_index": 0,
+    "explanation": "Ungkapan 'おげんきですか (Ogenki desu ka)' digunakan sebagai ekspresi untuk 'Apa kabar? / Apakah Anda sehat?'."
+  },
+  {
+    "id": 108,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'げんきです (Genki desu)'",
+    "options": [
+      "Sama-sama",
+      "Saya sakit",
+      "Saya sehat / Kabar baik",
+      "Tidak tahu"
+    ],
+    "answer_index": 2,
+    "explanation": "Ungkapan 'げんきです (Genki desu)' digunakan sebagai ekspresi untuk 'Saya sehat / Kabar baik'."
+  },
+  {
+    "id": 109,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'ごめんなさい (Gomen nasai)'",
+    "options": [
+      "Halo",
+      "Mohon maaf / Maaf",
+      "Sama-sama",
+      "Terima kasih"
+    ],
+    "answer_index": 1,
+    "explanation": "Ungkapan 'ごめんなさい (Gomen nasai)' digunakan sebagai ekspresi untuk 'Mohon maaf / Maaf'."
+  },
+  {
+    "id": 110,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'どうぞ (Douzo)'",
+    "options": [
+      "Maaf",
+      "Silakan",
+      "Terima kasih",
+      "Tidak"
+    ],
+    "answer_index": 1,
+    "explanation": "Ungkapan 'どうぞ (Douzo)' digunakan sebagai ekspresi untuk 'Silakan'."
+  },
+  {
+    "id": 111,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'はい (Hai)'",
+    "options": [
+      "Bukan",
+      "Mungkin",
+      "Tidak",
+      "Ya"
+    ],
+    "answer_index": 3,
+    "explanation": "Ungkapan 'はい (Hai)' digunakan sebagai ekspresi untuk 'Ya'."
+  },
+  {
+    "id": 112,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'いいえ (Iie)'",
+    "options": [
+      "Benar",
+      "Tentu saja",
+      "Tidak / Bukan",
+      "Ya"
+    ],
+    "answer_index": 2,
+    "explanation": "Ungkapan 'いいえ (Iie)' digunakan sebagai ekspresi untuk 'Tidak / Bukan'."
+  },
+  {
+    "id": 113,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'わかりました (Wakarimashita)'",
+    "options": [
+      "Maaf",
+      "Salah",
+      "Saya mengerti / Paham",
+      "Saya tidak tahu"
+    ],
+    "answer_index": 2,
+    "explanation": "Ungkapan 'わかりました (Wakarimashita)' digunakan sebagai ekspresi untuk 'Saya mengerti / Paham'."
+  },
+  {
+    "id": 114,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'わかりません (Wakarimasen)'",
+    "options": [
+      "Bagus",
+      "Benar",
+      "Saya mengerti",
+      "Saya tidak mengerti / Tidak tahu"
+    ],
+    "answer_index": 3,
+    "explanation": "Ungkapan 'わかりません (Wakarimasen)' digunakan sebagai ekspresi untuk 'Saya tidak mengerti / Tidak tahu'."
+  },
+  {
+    "id": 115,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'ちょっとまってください (Chotto matte kudasai)'",
+    "options": [
+      "Silakan duduk",
+      "Silakan masuk",
+      "Tolong cepat",
+      "Tolong tunggu sebentar"
+    ],
+    "answer_index": 3,
+    "explanation": "Ungkapan 'ちょっとまってください (Chotto matte kudasai)' digunakan sebagai ekspresi untuk 'Tolong tunggu sebentar'."
+  },
+  {
+    "id": 116,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'もういちどおねがいします (Mou ichido onegaishimasu)'",
+    "options": [
+      "Sampai jumpa lagi",
+      "Sudah cukup",
+      "Terima kasih banyak",
+      "Tolong ulangi sekali lagi"
+    ],
+    "answer_index": 3,
+    "explanation": "Ungkapan 'もういちどおねがいします (Mou ichido onegaishimasu)' digunakan sebagai ekspresi untuk 'Tolong ulangi sekali lagi'."
+  },
+  {
+    "id": 117,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'おなまえは？ (O namae wa?)'",
+    "options": [
+      "Berapa harganya?",
+      "Di mana rumah Anda?",
+      "Jam berapa?",
+      "Nama Anda siapa?"
+    ],
+    "answer_index": 3,
+    "explanation": "Ungkapan 'おなまえは？ (O namae wa?)' digunakan sebagai ekspresi untuk 'Nama Anda siapa?'."
+  },
+  {
+    "id": 118,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'いくらですか (Ikura desu ka)'",
+    "options": [
+      "Berapa harganya?",
+      "Di mana ini?",
+      "Ini apa?",
+      "Siapa itu?"
+    ],
+    "answer_index": 0,
+    "explanation": "Ungkapan 'いくらですか (Ikura desu ka)' digunakan sebagai ekspresi untuk 'Berapa harganya?'."
+  },
+  {
+    "id": 119,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'どこですか (Doko desu ka)'",
+    "options": [
+      "Apa?",
+      "Di mana?",
+      "Kapan?",
+      "Siapa?"
+    ],
+    "answer_index": 1,
+    "explanation": "Ungkapan 'どこですか (Doko desu ka)' digunakan sebagai ekspresi untuk 'Di mana?'."
+  },
+  {
+    "id": 120,
+    "category": "Daily Expressions",
+    "question": "Apa arti atau kegunaan dari ungkapan harian berikut ini? 'なんですか (Nan desu ka)'",
+    "options": [
+      "Apa? / Ada apa?",
+      "Berapa?",
+      "Di mana?",
+      "Siapa?"
+    ],
+    "answer_index": 0,
+    "explanation": "Ungkapan 'なんですか (Nan desu ka)' digunakan sebagai ekspresi untuk 'Apa? / Ada apa?'."
+  }
+]

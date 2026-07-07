@@ -11,12 +11,10 @@ type Partner = {
 };
 
 const partners = [
-  { name: "DHL", src: "/images/partner/dhl.png" },
-  { name: "UPS", src: "/images/partner/ups.png" },
-  { name: "India Post", src: "/images/partner/india-pos.png" },
-  { name: "USPS", src: "/images/partner/us-pos.png" },
-  { name: "FedEx", src: "/images/partner/feedex.png" },
-  { name: "Bring", src: "/images/partner/bring.png" },
+  { name: "Arka Learn", src: "/images/partner/arkalearn.png" },
+  { name: "Jurnal Post", src: "/images/partner/jurnal-post.jpg" },
+  { name: "Meiko Global", src: "/images/partner/meiko-global.png" },
+  { name: "Smiling Kids", src: "/images/partner/smiling-kids.png" },
 ] as const satisfies readonly Partner[];
 
 const partnerItems = duplicateForMarquee(partners);
@@ -26,9 +24,9 @@ const PartnerItem = ({ name, src }: Partner) => (
     <Image
       src={src}
       alt={name}
-      width={160}
-      height={60}
-      sizes="160px"
+      width={280}
+      height={160}
+      sizes="80px"
       className="h-15 w-40 object-contain opacity-80 hover:opacity-100 transition"
     />
   </div>
