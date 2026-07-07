@@ -155,9 +155,9 @@ export default function TeamModal({ isOpen, mode, member, onClose, onSave }: Tea
                             </select>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-semibold text-neutral-70">Grup Tim</label>
+                            <label className="text-sm font-semibold text-neutral-70">Sub Divisi</label>
                             <input value={form.team_group || ""} onChange={(e) => set("team_group", e.target.value)}
-                                placeholder="Contoh: Batch 2024"
+                                placeholder="Contoh: Admin Devission"
                                 className="w-full bg-neutral-0 border border-neutral-20 rounded-xl py-2.5 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all" />
                         </div>
                         <div className="flex flex-col gap-1.5">
