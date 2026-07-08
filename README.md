@@ -178,7 +178,7 @@ cp .env.example apps/admin-portal/.env.local
 | `R2_UPLOAD_PREFIX` | dev in development, prod in production | R2 folder prefix inside bucket nande-nihon |
 | `UPLOAD_PUBLIC_PATH` | /uploads | Public URL prefix proxied by the app |
 | `UPLOAD_MAX_FILE_SIZE` | 20971520 | Max upload size in bytes |
-| `NEXT_PUBLIC_UPLOAD_BASE_URL` | https://nandenihon.com | Public base URL for uploaded files |
+| `NEXT_PUBLIC_UPLOAD_BASE_URL` | - | Optional direct upload base URL. Leave empty to use the app `/uploads` proxy backed by R2. For direct R2 public URLs, use the public base plus environment prefix, for example `https://pub-3100e4c32b054e6598de798c71120dc1.r2.dev/dev` in development and `/prod` in production. |
 
 **Upload note:** development files are stored under `nande-nihon/dev/...`. For production, set `R2_UPLOAD_PREFIX=prod` in the production environment so files are stored under `nande-nihon/prod/...`.
 

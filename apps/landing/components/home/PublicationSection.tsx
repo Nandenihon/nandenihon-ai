@@ -1,3 +1,5 @@
+"use client";
+
 import {
   HOME_SECTION_TITLE_CLASS,
   LOCAL_IMAGE_FALLBACK,
@@ -6,6 +8,7 @@ import type { HomeTranslations } from "@/lib/i18n";
 import type { ArticleView } from "@/lib/news";
 import Image from "next/image";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 
 const MAX_PUBLICATIONS = 6;
 
@@ -23,7 +26,6 @@ type BadgeItem = {
   title: string;
   color: string;
   text: string;
-  active?: boolean;
 };
 
 interface PublicationSectionProps {
@@ -34,24 +36,40 @@ interface PublicationSectionProps {
 const getCategoryStyle = (index: number) =>
   categoryStyles[index % categoryStyles.length];
 
-const Badge = ({ item }: { item: BadgeItem }) => {
+const Badge = ({
+  item,
+  isSelected,
+  onClick,
+}: {
+  item: BadgeItem;
+  isSelected: boolean;
+  onClick: () => void;
+}) => {
   const base =
-    "px-6 py-1.5 rounded-full text-nowrap border-2 whitespace-nowrap shrink-0";
+    "px-6 py-1.5 rounded-full text-nowrap border-2 whitespace-nowrap shrink-0 cursor-pointer select-none transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-base focus-visible:ring-offset-2";
 
-  if (item.active) {
+  if (isSelected) {
     return (
-      <div
-        className={`${base} bg-primary-50 border-primary-80 text-white font-bold`}
+      <button
+        type="button"
+        aria-pressed="true"
+        onClick={onClick}
+        className={`${base} bg-primary-50 border-primary-80 text-white font-bold shadow-[0_5px_0_#1E4FA8] hover:-translate-y-0.5 hover:shadow-[0_7px_0_#1E4FA8] active:translate-y-0.5 active:scale-[0.98] active:shadow-[0_2px_0_#1E4FA8]`}
       >
         {item.title}
-      </div>
+      </button>
     );
   }
 
   return (
-    <div className={`${base} border-[#A8C1F7] text-primary-base`}>
+    <button
+      type="button"
+      aria-pressed="false"
+      onClick={onClick}
+      className={`${base} bg-white border-[#A8C1F7] text-primary-base hover:-translate-y-0.5 hover:border-primary-base hover:bg-primary-10 hover:shadow-[0_8px_18px_rgba(37,99,235,0.18)] active:translate-y-0 active:scale-[0.98]`}
+    >
       {item.title}
-    </div>
+    </button>
   );
 };
 
@@ -105,21 +123,42 @@ const PublicationCard = ({
 };
 
 const PublicationSection = ({ articles, t }: PublicationSectionProps) => {
-  const publications = articles.slice(0, MAX_PUBLICATIONS);
-  const categories = [
+  const [selectedCategory, setSelectedCategory] = useState<string>(
     t.allCategories,
-    ...Array.from(new Set(publications.map((article) => article.category))),
-  ];
-  const badges: BadgeItem[] = categories.map((title, index) => {
-    const style = getCategoryStyle(index);
-    return {
-      title,
-      color: style.color,
-      text: style.text,
-      active: index === 0,
-    };
-  });
-  const badgeByCategory = new Map(badges.map((badge) => [badge.title, badge]));
+  );
+  const categories = useMemo(
+    () => [
+      t.allCategories,
+      ...Array.from(
+        new Set(articles.map((article) => article.category).filter(Boolean)),
+      ),
+    ],
+    [articles, t.allCategories],
+  );
+  const badges: BadgeItem[] = useMemo(
+    () =>
+      categories.map((title, index) => {
+        const style = getCategoryStyle(index);
+        return {
+          title,
+          color: style.color,
+          text: style.text,
+        };
+      }),
+    [categories],
+  );
+  const badgeByCategory = useMemo(
+    () => new Map(badges.map((badge) => [badge.title, badge])),
+    [badges],
+  );
+  const publications = useMemo(() => {
+    const filteredArticles =
+      selectedCategory === t.allCategories
+        ? articles
+        : articles.filter((article) => article.category === selectedCategory);
+
+    return filteredArticles.slice(0, MAX_PUBLICATIONS);
+  }, [articles, selectedCategory, t.allCategories]);
 
   return (
     <div className="py-12 bg-[#FBFCFF]">
@@ -137,9 +176,14 @@ const PublicationSection = ({ articles, t }: PublicationSectionProps) => {
           </Link>
         </div>
 
-        <div className="flex overflow-x-auto space-x-5">
+        <div className="flex overflow-x-auto gap-5 pb-2">
           {badges.map((item) => (
-            <Badge key={item.title} item={item} />
+            <Badge
+              key={item.title}
+              item={item}
+              isSelected={selectedCategory === item.title}
+              onClick={() => setSelectedCategory(item.title)}
+            />
           ))}
         </div>
 

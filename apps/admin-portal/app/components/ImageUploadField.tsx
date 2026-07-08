@@ -99,7 +99,7 @@ export default function ImageUploadField({ label, value, folder, onChange }: Ima
                 </label>
             </div>
             {error && <p className="text-xs font-medium text-error-base">{error}</p>}
-            <p className="text-xs text-neutral-40">File bisa diakses melalui path /uploads di atas.</p>
+
         </div>
     );
 }

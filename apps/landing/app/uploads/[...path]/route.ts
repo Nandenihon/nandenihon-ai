@@ -1,8 +1,37 @@
+import { readFile } from "fs/promises";
+import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { fetchR2Object } from "@repo/utils/r2-upload";
 
+const FALLBACK_IMAGE_PATH = path.join(process.cwd(), "public", "images", "Rectangle 6.png");
+const IMAGE_EXTENSIONS = new Set(["gif", "jpeg", "jpg", "png", "svg", "webp"]);
+
 interface RouteParams {
     params: Promise<{ path: string[] }>;
+}
+
+function isImagePath(pathname: string) {
+    const extension = pathname.split(".").pop()?.toLowerCase() || "";
+    return IMAGE_EXTENSIONS.has(extension);
+}
+
+async function getFallbackImageResponse() {
+    const file = await readFile(FALLBACK_IMAGE_PATH);
+
+    return new NextResponse(new Uint8Array(file), {
+        headers: {
+            "Content-Type": "image/png",
+            "Cache-Control": "public, max-age=3600",
+        },
+    });
+}
+
+async function notFoundResponse(key: string) {
+    if (isImagePath(key)) {
+        return getFallbackImageResponse();
+    }
+
+    return NextResponse.json({ error: "File not found" }, { status: 404 });
 }
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
@@ -12,7 +41,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     try {
         const r2Response = await fetchR2Object(key);
         if (!r2Response?.body) {
-            return NextResponse.json({ error: "File not found" }, { status: 404 });
+            return notFoundResponse(key);
         }
 
         const headers = new Headers();
@@ -33,6 +62,6 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
             return NextResponse.json({ error: "Invalid file path" }, { status: 400 });
         }
 
-        return NextResponse.json({ error: "File not found" }, { status: 404 });
+        return notFoundResponse(key);
     }
 }

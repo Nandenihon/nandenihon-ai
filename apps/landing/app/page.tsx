@@ -104,7 +104,7 @@ const HeroSection = ({
 const getPublicationArticles = unstable_cache(async () => {
   try {
     // listNewsSummary skips LONGTEXT content — homepage cards only need title/image/excerpt
-    const news = await listNewsSummary({ limit: 6 });
+    const news = await listNewsSummary({ limit: 30 });
     return news.data.map(mapNewsSummaryToArticle);
   } catch (error) {
     console.error("Failed to fetch homepage publications:", error);
