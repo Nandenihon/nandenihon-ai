@@ -22,12 +22,26 @@ function toRequiredDate(value: unknown, fallback = DEFAULT_DATE): string {
     return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : fallback;
 }
 
+async function ensureTeamColumns(): Promise<void> {
+    const rows = await queryMySQL<RowDataPacket[]>(
+        "SHOW COLUMNS FROM team LIKE 'last_education'"
+    );
+
+    if (rows.length === 0) {
+        await queryMySQL<ResultSetHeader>(
+            "ALTER TABLE team ADD COLUMN last_education VARCHAR(100) NULL AFTER jlpt_level"
+        );
+    }
+}
+
 /**
  * GET /api/team
  * List all team members with pagination
  */
 export async function GET(request: NextRequest) {
     try {
+        await ensureTeamColumns();
+
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get("page") || "1", 10);
         const limit = parseInt(searchParams.get("limit") || String(DEFAULT_PAGE_SIZE), 10);
@@ -71,6 +85,8 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
     try {
+        await ensureTeamColumns();
+
         const body: CreateTeamInput = await request.json();
 
         const {
@@ -84,6 +100,7 @@ export async function POST(request: NextRequest) {
             team_group,
             division,
             jlpt_level,
+            last_education,
             domicile,
             instagram,
             motto,
@@ -97,9 +114,9 @@ export async function POST(request: NextRequest) {
             `INSERT INTO team (
                 photo, full_name, nickname, place_of_birth, birth_date,
                 email, phone_number, team_group, division, jlpt_level,
-                domicile, instagram, motto, fun_fact, favorites,
+                last_education, domicile, instagram, motto, fun_fact, favorites,
                 join_date, last_date
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 toOptionalText(photo),
                 toRequiredText(full_name),
@@ -111,6 +128,7 @@ export async function POST(request: NextRequest) {
                 toOptionalText(team_group),
                 toOptionalText(division),
                 toOptionalText(jlpt_level),
+                toOptionalText(last_education),
                 toOptionalText(domicile),
                 toOptionalText(instagram),
                 toOptionalText(motto),

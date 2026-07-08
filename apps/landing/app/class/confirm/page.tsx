@@ -273,7 +273,6 @@ function ConfirmContent() {
 
           <FormFile
             label="Upload Bukti Pembayaran"
-            accept="image/*, application/pdf"
             {...register("paymentProof", {
               required: "Bukti pembayaran wajib diupload",
             })}

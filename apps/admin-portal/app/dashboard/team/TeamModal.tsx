@@ -12,25 +12,70 @@ interface TeamModalProps {
     onSave: (data: CreateTeamInput | UpdateTeamInput) => Promise<void>;
 }
 
-const DIVISIONS = ["Founder & Co Founder", "Teacher", "Research & Jurnalist", "IT Development", "Media & Communication", "Admin & Data"];
+const DIVISIONS = [
+    "Founder & Co Founder",
+    "Teaching",
+    "Web Development",
+    "Media and Communication",
+    "Research and Journal",
+    "Administration and Data",
+];
 const JLPT_LEVELS = ["N1", "N2", "N3", "N4", "N5", "Belum JLPT"];
+const EDUCATION_LEVELS = ["SD", "SMP/SLTP", "SMA/SMK/SLTA", "D3", "S1", "S2", "S3"];
+
+const SUB_DIVISION_OPTIONS: Record<string, string[]> = {
+    Teaching: ["Teacher Level N4", "Teacher Level N5", "Teacher Coordinator"],
+    "Web Development": ["Back End", "Front End", "Design"],
+    "Media and Communication": ["Copy Writer", "Content Creator", "Graphic Designer"],
+    "Research and Journal": ["Research and Journal"],
+    "Administration and Data": [
+        "Admin Utama",
+        "Admin Pengajar",
+        "Admin Konseling",
+        "Admin Divisi Web Development",
+        "Admin Divisi Media and Communication",
+        "Admin Divisi Research and Journal",
+    ],
+};
+
+function normalizeDivision(division: string | null | undefined) {
+    const divisionMap: Record<string, string> = {
+        Teacher: "Teaching",
+        "IT Development": "Web Development",
+        "Media & Communication": "Media and Communication",
+        "Research & Jurnalist": "Research and Journal",
+        "Admin & Data": "Administration and Data",
+    };
+
+    return division ? divisionMap[division] ?? division : "";
+}
+
+function getSubDivisionOptions(division: string | null | undefined) {
+    return SUB_DIVISION_OPTIONS[normalizeDivision(division)] ?? [];
+}
 
 export default function TeamModal({ isOpen, mode, member, onClose, onSave }: TeamModalProps) {
     const [form, setForm] = useState<CreateTeamInput>({});
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
+    const subDivisionOptions = getSubDivisionOptions(form.division);
 
     useEffect(() => {
         if (mode === "edit" && member) {
+            const division = normalizeDivision(member.division);
+            const options = getSubDivisionOptions(division);
+            const teamGroup = member.team_group || "";
+
             setForm({
                 photo: member.photo || "",
                 full_name: member.full_name || "",
                 nickname: member.nickname || "",
                 email: member.email || "",
                 phone_number: member.phone_number || "",
-                team_group: member.team_group || "",
-                division: member.division || "",
+                team_group: options.includes(teamGroup) ? teamGroup : division === "Research and Journal" ? division : "",
+                division,
                 jlpt_level: member.jlpt_level || "",
+                last_education: member.last_education || "",
                 domicile: member.domicile || "",
                 instagram: member.instagram || "",
                 motto: member.motto || "",
@@ -62,6 +107,20 @@ export default function TeamModal({ isOpen, mode, member, onClose, onSave }: Tea
 
     const set = (key: keyof CreateTeamInput, value: string) =>
         setForm((prev) => ({ ...prev, [key]: value }));
+
+    const handleDivisionChange = (division: string) => {
+        const options = getSubDivisionOptions(division);
+        setForm((prev) => ({
+            ...prev,
+            division,
+            team_group:
+                division === "Research and Journal"
+                    ? division
+                    : options.includes(prev.team_group || "")
+                    ? prev.team_group
+                    : "",
+        }));
+    };
 
     if (!isOpen) return null;
 
@@ -128,6 +187,14 @@ export default function TeamModal({ isOpen, mode, member, onClose, onSave }: Tea
                                 className="w-full bg-neutral-0 border border-neutral-20 rounded-xl py-2.5 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all" />
                         </div>
                         <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-semibold text-neutral-70">Pendidikan Terakhir</label>
+                            <select value={form.last_education || ""} onChange={(e) => set("last_education", e.target.value)}
+                                className="w-full bg-neutral-0 border border-neutral-20 rounded-xl py-2.5 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all">
+                                <option value="">Pilih Pendidikan</option>
+                                {EDUCATION_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-semibold text-neutral-70">Instagram</label>
                             <input value={form.instagram || ""} onChange={(e) => set("instagram", e.target.value)}
                                 placeholder="@username"
@@ -140,7 +207,7 @@ export default function TeamModal({ isOpen, mode, member, onClose, onSave }: Tea
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-semibold text-neutral-70">Divisi</label>
-                            <select value={form.division || ""} onChange={(e) => set("division", e.target.value)}
+                            <select value={form.division || ""} onChange={(e) => handleDivisionChange(e.target.value)}
                                 className="w-full bg-neutral-0 border border-neutral-20 rounded-xl py-2.5 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all">
                                 <option value="">Pilih Divisi</option>
                                 {DIVISIONS.map((d) => <option key={d} value={d}>{d}</option>)}
@@ -156,9 +223,12 @@ export default function TeamModal({ isOpen, mode, member, onClose, onSave }: Tea
                         </div>
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-semibold text-neutral-70">Sub Divisi</label>
-                            <input value={form.team_group || ""} onChange={(e) => set("team_group", e.target.value)}
-                                placeholder="Contoh: Admin Devission"
-                                className="w-full bg-neutral-0 border border-neutral-20 rounded-xl py-2.5 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all" />
+                            <select value={form.team_group || ""} onChange={(e) => set("team_group", e.target.value)}
+                                disabled={!form.division}
+                                className="w-full bg-neutral-0 border border-neutral-20 rounded-xl py-2.5 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all disabled:bg-neutral-10 disabled:text-neutral-40">
+                                <option value="">{form.division ? "Pilih Sub Divisi" : "Pilih divisi terlebih dahulu"}</option>
+                                {subDivisionOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                            </select>
                         </div>
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-semibold text-neutral-70">Tanggal Bergabung</label>

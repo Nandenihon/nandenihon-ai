@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findStudentById, isValidNumericId, updateStudentPaymentProof } from "@repo/database";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import { logInfo, logWarn, logError } from "@repo/utils";
+import { getContentTypeFromFilename, sanitizeFilenamePrefix, uploadFileToR2 } from "@repo/utils/r2-upload";
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "application/pdf"];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = Number(process.env.UPLOAD_MAX_FILE_SIZE || 20 * 1024 * 1024); // 20MB
 
 export async function POST(request: NextRequest) {
     try {
@@ -36,18 +34,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Validate file type
-        if (!ALLOWED_TYPES.includes(file.type)) {
-            return NextResponse.json(
-                { success: false, error: "Invalid file type. Allowed: jpg, png, pdf" },
-                { status: 400 }
-            );
-        }
-
         // Validate file size
         if (file.size > MAX_FILE_SIZE) {
             return NextResponse.json(
-                { success: false, error: "File too large. Maximum size: 5MB" },
+                { success: false, error: `File too large. Maximum size: ${Math.floor(MAX_FILE_SIZE / 1024 / 1024)}MB` },
                 { status: 400 }
             );
         }
@@ -73,27 +63,27 @@ export async function POST(request: NextRequest) {
 
         await logInfo("api/payment/upload", "Payment upload started", { studentId, email: student.email, fileType: file.type, fileSize: file.size });
 
-        // Create uploads directory if it doesn't exist
-        const uploadsDir = path.join(process.cwd(), "public", "uploads", "payment");
-        await mkdir(uploadsDir, { recursive: true });
-
-        // Generate unique filename using email prefix
         const emailPrefix = student.email.split("@")[0];
-        const timestamp = Date.now();
-        const extension = file.name.split(".").pop() || "jpg";
-        const filename = `${emailPrefix}_${timestamp}.${extension}`;
-        const filepath = path.join(uploadsDir, filename);
-
-        // Write file to disk
         const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        await writeFile(filepath, buffer);
+        const upload = await uploadFileToR2({
+            buffer: Buffer.from(bytes),
+            contentType: file.type || getContentTypeFromFilename(file.name),
+            filenamePrefix: sanitizeFilenamePrefix(emailPrefix),
+            folder: "payment",
+            originalFilename: file.name,
+        });
 
         // Update student record with payment proof URL
-        const paymentProofUrl = `/uploads/payment/${filename}`;
+        const paymentProofUrl = upload.pathname;
         await updateStudentPaymentProof(student.id, paymentProofUrl);
 
-        await logInfo("api/payment/upload", "Payment upload success", { studentId, email: student.email, filename, paymentProofUrl });
+        await logInfo("api/payment/upload", "Payment upload success", {
+            studentId,
+            email: student.email,
+            filename: upload.filename,
+            key: upload.key,
+            paymentProofUrl,
+        });
 
         return NextResponse.json({
             success: true,

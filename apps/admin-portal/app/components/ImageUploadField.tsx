@@ -9,9 +9,35 @@ interface ImageUploadFieldProps {
     onChange: (value: string) => void;
 }
 
+interface UploadResponse {
+    error?: string;
+    pathname?: string;
+    url?: string;
+}
+
+function getPreviewSrc(value: string) {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+        return "";
+    }
+
+    try {
+        const parsedUrl = new URL(trimmedValue);
+        if (parsedUrl.pathname.startsWith("/uploads/")) {
+            return parsedUrl.pathname;
+        }
+    } catch {
+        // Relative paths can be used directly by the browser.
+    }
+
+    return trimmedValue;
+}
+
 export default function ImageUploadField({ label, value, folder, onChange }: ImageUploadFieldProps) {
     const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState("");
+    const previewSrc = getPreviewSrc(value);
 
     const handleUpload = async (file: File | undefined) => {
         if (!file) return;
@@ -28,13 +54,13 @@ export default function ImageUploadField({ label, value, folder, onChange }: Ima
                 method: "POST",
                 body: formData,
             });
-            const data = await response.json();
+            const data = await response.json() as UploadResponse;
 
             if (!response.ok) {
                 throw new Error(data.error || "Upload gagal");
             }
 
-            onChange(data.url);
+            onChange(data.pathname || data.url || "");
         } catch (uploadError) {
             setError(uploadError instanceof Error ? uploadError.message : "Upload gagal");
         } finally {
@@ -47,7 +73,7 @@ export default function ImageUploadField({ label, value, folder, onChange }: Ima
             <label className="text-sm font-semibold text-neutral-70">{label}</label>
             {value && (
                 <div className="flex items-center gap-3 rounded-xl border border-neutral-20 bg-neutral-0 p-2">
-                    <img src={value} alt="Preview upload" className="h-14 w-14 rounded-lg object-cover bg-neutral-10" />
+                    <img src={previewSrc} alt="Preview upload" className="h-14 w-14 rounded-lg object-cover bg-neutral-10" />
                     <span className="min-w-0 flex-1 truncate text-xs text-neutral-50">{value}</span>
                 </div>
             )}
@@ -73,7 +99,7 @@ export default function ImageUploadField({ label, value, folder, onChange }: Ima
                 </label>
             </div>
             {error && <p className="text-xs font-medium text-error-base">{error}</p>}
-            <p className="text-xs text-neutral-40">File disimpan di VPS dan bisa diakses via URL di atas.</p>
+            <p className="text-xs text-neutral-40">File bisa diakses melalui path /uploads di atas.</p>
         </div>
     );
 }
