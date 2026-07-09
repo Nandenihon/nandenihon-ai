@@ -5,12 +5,12 @@ import {
     updateMerchandiseItem,
     type MerchandiseItem as DatabaseMerchandiseItem,
 } from "@repo/database";
-import { revalidateTag } from "next/cache";
 import type {
     MerchandiseItem,
     MerchandiseItemResponse,
     UpdateMerchandiseItemInput,
 } from "@repo/types";
+import { revalidateMerchandise } from "../revalidate";
 
 interface RouteParams {
     params: Promise<{ id: string }>;
@@ -116,7 +116,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         if (!item) {
             return NextResponse.json({ error: "Merchandise item not found" }, { status: 404 });
         }
-        revalidateTag("merchandise", "max");
+        revalidateMerchandise();
 
         return NextResponse.json({ data: serializeMerchandiseItem(item) });
     } catch (error) {
@@ -142,7 +142,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
         if (!deleted) {
             return NextResponse.json({ error: "Merchandise item not found" }, { status: 404 });
         }
-        revalidateTag("merchandise", "max");
+        revalidateMerchandise();
 
         return NextResponse.json({ message: "Merchandise item deleted successfully" });
     } catch (error) {

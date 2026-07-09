@@ -4,12 +4,12 @@ import {
     listMerchandiseItems,
     type MerchandiseItem as DatabaseMerchandiseItem,
 } from "@repo/database";
-import { revalidateTag } from "next/cache";
 import type {
     CreateMerchandiseItemInput,
     MerchandiseItem,
     MerchandiseListResponse,
 } from "@repo/types";
+import { revalidateMerchandise } from "./revalidate";
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
             price,
             imageUrl,
         });
-        revalidateTag("merchandise", "max");
+        revalidateMerchandise();
 
         return NextResponse.json(
             { data: serializeMerchandiseItem(item) },
