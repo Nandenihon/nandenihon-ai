@@ -5,10 +5,14 @@ import {
     findTodayDailyQuizAttempt,
     type DailyQuizQuestion,
 } from "@repo/database";
-import QuizComponent, { type QuizQuestion } from "../../components/QuizComponent";
+import DailyQuizStarter from "../../components/DailyQuizStarter";
+import type { QuizQuestion } from "../../components/QuizComponent";
 import { getLatestDailyQuizAttemptSafe } from "../dashboard-data";
 
 export const dynamic = "force-dynamic";
+
+const DAILY_QUIZ_QUESTION_COUNT = 2;
+const DAILY_QUIZ_TIME_LIMIT_SECONDS = 15;
 
 function toQuizQuestion(question: DailyQuizQuestion): QuizQuestion {
     return {
@@ -23,7 +27,7 @@ function toQuizQuestion(question: DailyQuizQuestion): QuizQuestion {
 async function loadDailyQuiz(studentId: number) {
     try {
         const [questions, totalQuestions, latestAttempt, todayAttempt] = await Promise.all([
-            getDailyQuizQuestionsForDate(2, new Date(), String(studentId)),
+            getDailyQuizQuestionsForDate(DAILY_QUIZ_QUESTION_COUNT, new Date(), String(studentId)),
             getDailyQuizQuestionCount(),
             getLatestDailyQuizAttemptSafe(studentId),
             findTodayDailyQuizAttempt(studentId),
@@ -96,16 +100,10 @@ export default async function DailyQuizPage() {
                             </div>
                         </div>
                     ) : (
-                        <QuizComponent
-                            lessonId={0}
-                            lessonTitle="Daily Quiz"
+                        <DailyQuizStarter
                             questions={questions}
                             submitUrl="/api/daily-quiz/attempts"
-                            timeLimitSeconds={15}
-                            scoreVariant="points"
-                            allowRetry={false}
-                            backHref="/dashboard"
-                            backLabel="Kembali ke Dashboard"
+                            timeLimitSeconds={DAILY_QUIZ_TIME_LIMIT_SECONDS}
                         />
                     )}
                 </div>
@@ -125,6 +123,9 @@ export default async function DailyQuizPage() {
 
                     <div className="card p-6">
                         <p className="text-sm font-bold text-neutral-90">Quiz hari ini</p>
+                        <p className="mt-1 text-xs text-neutral-50">
+                            Soal singkat yang berganti setiap hari.
+                        </p>
                         <dl className="mt-5 space-y-4 text-sm">
                             <div className="flex items-center justify-between gap-4">
                                 <dt className="text-neutral-50">Jumlah soal</dt>
@@ -132,7 +133,7 @@ export default async function DailyQuizPage() {
                             </div>
                             <div className="flex items-center justify-between gap-4">
                                 <dt className="text-neutral-50">Waktu per soal</dt>
-                                <dd className="font-semibold text-neutral-90">15 detik</dd>
+                                <dd className="font-semibold text-neutral-90">{DAILY_QUIZ_TIME_LIMIT_SECONDS} detik</dd>
                             </div>
                             <div className="flex items-center justify-between gap-4">
                                 <dt className="text-neutral-50">Bank soal aktif</dt>
