@@ -132,7 +132,7 @@ async function HomeContent({ searchParams }: HomeContentProps) {
       <div className="reveal"><BenefitSection t={t.benefits} /></div>
       <div className="reveal"><PublicationSection articles={publicationArticles} t={t.publications} /></div>
       <div className="reveal"><TestimonialSection t={t.testimonials} /></div>
-      <div className="reveal"><OurTeamList t={t.team} /></div>
+      <div className="reveal"><OurTeamList t={t.gallery} /></div>
       <div className="reveal"><CtaSection t={t.cta} language={language} /></div>
     </div>
   );

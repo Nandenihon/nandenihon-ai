@@ -39,6 +39,9 @@ export const homeTranslations = {
       class: "Kelas",
       article: "Artikel",
       information: "Informasi",
+      counseling: "Konseling",
+      merchandise: "Merchandise",
+      gallery: "Galeri",
       contact: "Kontak",
       contactUs: "Hubungi Kami",
       language: "Bahasa",
@@ -117,6 +120,14 @@ export const homeTranslations = {
       fallbackMotto:
         "Belajar bahasa Jepang itu kayak ramen kadang rumit, tapi nagih!",
     },
+    gallery: {
+      title: "Gallery Kegiatan",
+      description:
+        "Lihat suasana belajar, komunitas, dan momen seru bersama Nande Nihon.",
+      viewMore: "Lihat lebih banyak",
+      empty: "Belum ada foto kegiatan.",
+      zoomLabel: "Perbesar foto",
+    },
     cta: {
       title: "Mulai Belajar Hari Ini Biar Jepang Nggak Cuma Sebatas Mimpi!",
       description:
@@ -132,6 +143,8 @@ export const homeTranslations = {
       class: "Classes",
       article: "Articles",
       information: "Information",
+      counseling: "Counseling",
+      merchandise: "Merchandise",
       contact: "Contact",
       contactUs: "Contact Us",
       language: "Language",
@@ -210,6 +223,14 @@ export const homeTranslations = {
       fallbackMotto:
         "Learning Japanese is like ramen: sometimes complex, but always worth coming back to.",
     },
+    gallery: {
+      title: "Activity Gallery",
+      description:
+        "Explore learning moments, community activities, and highlights with Nande Nihon.",
+      viewMore: "View more",
+      empty: "No activity photos yet.",
+      zoomLabel: "Zoom photo",
+    },
     cta: {
       title: "Start Learning Today and Make Japan More Than a Dream!",
       description:
@@ -225,6 +246,8 @@ export const homeTranslations = {
       class: "クラス",
       article: "記事",
       information: "情報",
+      counseling: "カウンセリング",
+      merchandise: "グッズ",
       contact: "お問い合わせ",
       contactUs: "お問い合わせ",
       language: "言語",
@@ -302,6 +325,14 @@ export const homeTranslations = {
       fallbackRole: "Nande Nihonチーム",
       fallbackMotto:
         "日本語学習はラーメンのように、少し複雑でもまた続けたくなるものです。",
+    },
+    gallery: {
+      title: "活動ギャラリー",
+      description:
+        "Nande Nihonでの学習の様子やコミュニティ活動の瞬間をご覧ください。",
+      viewMore: "もっと見る",
+      empty: "活動写真はまだありません。",
+      zoomLabel: "写真を拡大",
     },
     cta: {
       title: "今日から学んで、日本を夢で終わらせない！",

@@ -20,6 +20,7 @@ function withLanguage(href: string, language: Language) {
 export default function NewNavbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const [isInformationOpen, setIsInformationOpen] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const language = getLanguage(searchParams.get("lang"));
@@ -37,6 +38,7 @@ export default function NewNavbar() {
 
   useEffect(() => {
     setIsLanguageOpen(false);
+    setIsInformationOpen(false);
   }, [pathname, searchParams]);
 
   const navLinks = [
@@ -44,7 +46,15 @@ export default function NewNavbar() {
     { name: t.about, href: "/about" },
     { name: t.class, href: "/class" },
     { name: t.article, href: "/article/" },
-    { name: t.information, href: "/information", hasDropdown: true },
+    {
+      name: t.information,
+      href: "/information",
+      children: [
+        { name: t.counseling, href: "/information" },
+        { name: t.merchandise, href: "/merchandise" },
+        { name: t.gallery, href: "/gallery" },
+      ],
+    },
     { name: t.contact, href: "/contact" },
   ];
 
@@ -68,9 +78,8 @@ export default function NewNavbar() {
       <button
         type="button"
         onClick={() => setIsLanguageOpen((open) => !open)}
-        className={`flex items-center gap-2 rounded-lg border border-primary-base/20 bg-white/80 font-bold text-gray-700 shadow-sm transition-colors hover:text-primary-base ${
-          mobile ? "px-3 py-2 text-sm" : "px-3 py-2 text-xs"
-        }`}
+        className={`flex items-center gap-2 rounded-lg border border-primary-base/20 bg-white/80 font-bold text-gray-700 shadow-sm transition-colors hover:text-primary-base ${mobile ? "px-3 py-2 text-sm" : "px-3 py-2 text-xs"
+          }`}
         aria-expanded={isLanguageOpen}
         aria-haspopup="menu"
       >
@@ -85,17 +94,15 @@ export default function NewNavbar() {
         <span>{currentLanguage.shortLabel}</span>
         <ChevronDown
           size={16}
-          className={`transition-transform ${
-            isLanguageOpen ? "rotate-180" : ""
-          }`}
+          className={`transition-transform ${isLanguageOpen ? "rotate-180" : ""
+            }`}
         />
       </button>
 
       {isLanguageOpen && (
         <div
-          className={`absolute z-70 mt-2 min-w-40 overflow-hidden rounded-lg border border-primary-base/15 bg-white py-1 shadow-lg ${
-            mobile ? "right-0" : "left-0"
-          }`}
+          className={`absolute z-70 mt-2 min-w-40 overflow-hidden rounded-lg border border-primary-base/15 bg-white py-1 shadow-lg ${mobile ? "right-0" : "left-0"
+            }`}
           role="menu"
         >
           {languages.map((item) => (
@@ -106,11 +113,10 @@ export default function NewNavbar() {
                 setIsLanguageOpen(false);
                 if (mobile) setIsOpen(false);
               }}
-              className={`flex items-center gap-3 px-3 py-2 text-sm font-semibold transition-colors ${
-                language === item.code
-                  ? "bg-primary-base/10 text-primary-base"
-                  : "text-gray-700 hover:bg-gray-50 hover:text-primary-base"
-              }`}
+              className={`flex items-center gap-3 px-3 py-2 text-sm font-semibold transition-colors ${language === item.code
+                ? "bg-primary-base/10 text-primary-base"
+                : "text-gray-700 hover:bg-gray-50 hover:text-primary-base"
+                }`}
               aria-label={item.label}
               role="menuitem"
             >
@@ -151,19 +157,71 @@ export default function NewNavbar() {
 
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => {
-              const isActive = pathname === link.href;
+              const hasChildren = "children" in link && link.children;
+              const isActive = hasChildren
+                ? link.children.some((child) => pathname.startsWith(child.href))
+                : pathname === link.href;
+
+              if (hasChildren) {
+                return (
+                  <div key={link.name} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsInformationOpen((open) => !open)}
+                      className={`flex items-center gap-1 transition-colors ${isActive
+                        ? "text-primary-base font-bold border-b-2"
+                        : "text-gray-600 hover:text-primary-base font-medium text-sm nav-link-hover"
+                        }`}
+                      aria-expanded={isInformationOpen}
+                      aria-haspopup="menu"
+                    >
+                      {link.name}
+                      <ChevronDown
+                        size={16}
+                        className={`transition-transform ${isInformationOpen ? "rotate-180" : ""
+                          }`}
+                      />
+                    </button>
+
+                    {isInformationOpen && (
+                      <div
+                        className="absolute left-0 top-full z-70 mt-4 min-w-48 overflow-hidden rounded-2xl border border-primary-base/15 bg-white py-2 shadow-[0_18px_45px_rgba(38,70,130,0.16)]"
+                        role="menu"
+                      >
+                        {link.children.map((child) => {
+                          const childActive = pathname.startsWith(child.href);
+
+                          return (
+                            <Link
+                              key={child.href}
+                              href={withLanguage(child.href, language)}
+                              onClick={() => setIsInformationOpen(false)}
+                              className={`block px-4 py-2.5 text-sm font-semibold transition-colors ${childActive
+                                ? "bg-primary-10 text-primary-base"
+                                : "text-gray-700 hover:bg-primary-10 hover:text-primary-base"
+                                }`}
+                              role="menuitem"
+                            >
+                              {child.name}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
               return (
                 <Link
                   key={link.name}
                   href={withLanguage(link.href, language)}
-                  className={`flex items-center gap-1 transition-colors ${
-                    isActive
-                      ? "text-primary-base font-bold border-b-2"
-                      : "text-gray-600 hover:text-primary-base font-medium text-sm nav-link-hover"
-                  }`}
+                  className={`flex items-center gap-1 transition-colors ${isActive
+                    ? "text-primary-base font-bold border-b-2"
+                    : "text-gray-600 hover:text-primary-base font-medium text-sm nav-link-hover"
+                    }`}
                 >
                   {link.name}
-                  {link.hasDropdown && <ChevronDown size={16} />}
                 </Link>
               );
             })}
@@ -200,22 +258,50 @@ export default function NewNavbar() {
             </button>
 
             <div className="flex flex-col items-end gap-8 w-full px-4">
-              {navLinks.map((link) => (
-                <div key={link.name} className="flex flex-col items-end">
-                  <Link
-                    href={withLanguage(link.href, language)}
-                    onClick={() => setIsOpen(false)}
-                    className={`text-gray-700 hover:text-primary-base font-medium text-lg flex items-center gap-2 ${
-                      pathname === link.href
+              {navLinks.map((link) => {
+                const hasChildren = "children" in link && link.children;
+
+                if (hasChildren) {
+                  return (
+                    <div key={link.name} className="flex flex-col items-end gap-3">
+                      <div className="text-gray-700 font-bold text-lg flex items-center gap-2">
+                        {link.name}
+                        <ChevronDown size={20} />
+                      </div>
+                      <div className="flex flex-col items-end gap-3 pr-3">
+                        {link.children.map((child) => (
+                          <Link
+                            key={child.href}
+                            href={withLanguage(child.href, language)}
+                            onClick={() => setIsOpen(false)}
+                            className={`text-gray-600 hover:text-primary-base font-medium text-base ${pathname.startsWith(child.href)
+                              ? "text-primary-base font-bold underline"
+                              : ""
+                              }`}
+                          >
+                            {child.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={link.name} className="flex flex-col items-end">
+                    <Link
+                      href={withLanguage(link.href, language)}
+                      onClick={() => setIsOpen(false)}
+                      className={`text-gray-700 hover:text-primary-base font-medium text-lg flex items-center gap-2 ${pathname === link.href
                         ? "text-primary-base font-bold underline"
                         : ""
-                    }`}
-                  >
-                    {link.name}
-                    {link.hasDropdown && <ChevronDown size={20} />}
-                  </Link>
-                </div>
-              ))}
+                        }`}
+                    >
+                      {link.name}
+                    </Link>
+                  </div>
+                );
+              })}
 
               <div className="flex flex-col items-end gap-4">
                 <LanguageSwitcher mobile />

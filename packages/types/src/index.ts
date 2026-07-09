@@ -48,6 +48,22 @@ export {
 } from "./team";
 
 export {
+    type GalleryItem,
+    type CreateGalleryItemInput,
+    type UpdateGalleryItemInput,
+    type GalleryListResponse,
+    type GalleryItemResponse,
+} from "./gallery";
+
+export {
+    type MerchandiseItem,
+    type CreateMerchandiseItemInput,
+    type UpdateMerchandiseItemInput,
+    type MerchandiseListResponse,
+    type MerchandiseItemResponse,
+} from "./merchandise";
+
+export {
     type Class,
     type CreateClassInput,
     type UpdateClassInput,
