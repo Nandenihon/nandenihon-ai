@@ -34,7 +34,7 @@ export default async function GradesPage() {
                 </div>
             </div>
 
-            <section className="card overflow-hidden">
+            <section className="card overflow-x-auto">
                 <table className="w-full min-w-[720px]">
                     <thead className="border-b border-neutral-10 bg-neutral-0">
                         <tr>

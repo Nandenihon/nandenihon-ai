@@ -1,20 +1,21 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { NandeNihonLogo } from "@repo/ui";
+import Link from "next/link";
 
 const primaryItems = [
-    { href: "/dashboard", label: "Dashboard", icon: "grid" },
+    { href: "/dashboard", label: "Beranda", icon: "grid" },
     { href: "/dashboard/attendance", label: "Absensi", icon: "check" },
     { href: "/dashboard/grades", label: "Nilai", icon: "chart" },
-    { href: "/dashboard/ebooks", label: "E-Book", icon: "book" },
+    { href: "/dashboard/ebooks", label: "E-Book", icon: "book", mobile: false },
     { href: "/dashboard/schedule", label: "Jadwal", icon: "calendar" },
 ];
 
 const activityItems = [
-    { href: "/dashboard/daily-quiz", label: "Daily Quiz", icon: "question" },
-    { href: "/dashboard/daily-quiz/leaderboard", label: "Leaderboard", icon: "trophy" },
-    { href: "/dashboard/forum", label: "Forum Diskusi", icon: "chat" },
+    { href: "/dashboard/daily-quiz", label: "Quiz", icon: "question" },
+    { href: "/dashboard/daily-quiz/leaderboard", label: "Leaderboard", icon: "trophy", mobile: false },
+    { href: "/dashboard/forum", label: "Forum Diskusi", icon: "chat", mobile: false },
 ];
 
 function MenuIcon({ name }: { name: string }) {
@@ -90,38 +91,31 @@ function MenuIcon({ name }: { name: string }) {
     );
 }
 
-function SidebarLink({ item }: { item: { href: string; label: string; icon: string } }) {
+function SidebarLink({ item }: { item: { href: string; label: string; icon: string; mobile?: boolean } }) {
     const pathname = usePathname();
-    const isActive = item.href === "/dashboard"
+    const isActive = item.href === "/dashboard" || item.href === "/dashboard/daily-quiz"
         ? pathname === item.href
         : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
     return (
-        <a
+        <Link
             href={item.href}
-            className={`flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors ${
+            aria-current={isActive ? "page" : undefined}
+            className={`${item.mobile === false ? "hidden lg:flex" : "flex"} portal-focus h-12 flex-col items-center justify-center gap-1 rounded-xl px-3 text-[10px] font-semibold transition-all lg:h-11 lg:flex-row lg:justify-start lg:gap-3 lg:text-sm ${
                 isActive
-                    ? "bg-primary-base text-white"
-                    : "text-neutral-60 hover:bg-primary-10 hover:text-primary-base"
+                    ? "bg-primary-base text-white shadow-lg shadow-primary-base/20"
+                    : "text-neutral-50 hover:bg-primary-10 hover:text-primary-base"
             }`}
         >
             <MenuIcon name={item.icon} />
             <span>{item.label}</span>
-        </a>
+        </Link>
     );
 }
 
 export default function StudentSidebar() {
-    const router = useRouter();
-
-    const handleLogout = async () => {
-        await fetch("/api/auth/logout", { method: "POST" });
-        router.push("/login");
-        router.refresh();
-    };
-
     return (
-        <aside className="w-full border-b border-neutral-20 bg-absolute-white lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:flex-shrink-0 lg:border-b-0 lg:border-r">
+        <aside className="lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:flex-shrink-0 lg:flex-col lg:border-r lg:border-white/80 lg:bg-white/80 lg:backdrop-blur-xl">
             <div className="hidden h-16 items-center gap-3 border-b border-neutral-10 px-5 lg:flex">
                 <div className="rounded-xl bg-primary-base p-1.5">
                     <NandeNihonLogo variant="favicon" colorMode="white" className="h-6 w-6" />
@@ -132,8 +126,8 @@ export default function StudentSidebar() {
                 </div>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto px-4 py-3 lg:block lg:space-y-6 lg:overflow-visible lg:p-4">
-                <nav className="flex min-w-max gap-2 lg:block lg:min-w-0 lg:space-y-1">
+            <div className="fixed inset-x-3 bottom-3 z-50 flex justify-around rounded-2xl border border-white/80 bg-white/90 p-2 shadow-[0_16px_45px_rgba(15,23,42,0.18)] backdrop-blur-xl lg:static lg:flex-1 lg:block lg:space-y-6 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-4 lg:shadow-none">
+                <nav aria-label="Navigasi utama" className="contents lg:block lg:space-y-1">
                     {primaryItems.map((item) => (
                         <SidebarLink key={item.href} item={item} />
                     ))}
@@ -143,28 +137,21 @@ export default function StudentSidebar() {
                     <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-neutral-40">
                         Aktivitas
                     </p>
-                    <nav className="space-y-1">
+                    <nav aria-label="Aktivitas belajar" className="space-y-1">
                         {activityItems.map((item) => (
                             <SidebarLink key={item.href} item={item} />
                         ))}
                     </nav>
                 </div>
 
-                <nav className="flex min-w-max gap-2 lg:hidden">
+                <nav aria-label="Aktivitas belajar" className="contents lg:hidden">
                     {activityItems.map((item) => (
                         <SidebarLink key={item.href} item={item} />
                     ))}
                 </nav>
             </div>
 
-            <div className="hidden border-t border-neutral-10 p-4 lg:block">
-                <button
-                    onClick={handleLogout}
-                    className="flex h-10 w-full items-center justify-center rounded-lg border border-neutral-20 text-sm font-medium text-neutral-60 transition-colors hover:border-error-base hover:text-error-base"
-                >
-                    Keluar
-                </button>
-            </div>
+            <div className="hidden border-t border-neutral-10 px-5 py-4 text-xs leading-relaxed text-neutral-40 lg:block">Belajar konsisten, sedikit demi sedikit.<br /><span className="jp-text text-primary-base">毎日少しずつ！</span></div>
         </aside>
     );
 }

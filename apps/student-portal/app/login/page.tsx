@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -145,9 +146,7 @@ export default function LoginPage() {
                     <div className="mt-6 text-center">
                         <p className="text-xs text-neutral-40">
                             Belum punya akun?{" "}
-                            <a href="https://nandenihon.com" className="text-primary-base hover:underline font-medium">
-                                Daftar di nandenihon.com
-                            </a>
+                            <Link href="/register" className="text-primary-base hover:underline font-medium">Daftar sekarang</Link>
                         </p>
                     </div>
                 </div>

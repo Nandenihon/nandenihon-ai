@@ -6,8 +6,7 @@ import {
   languages,
   type Language,
 } from "@/lib/i18n";
-import { Wa } from "@repo/ui";
-import { ChevronDown, MenuIcon, MessageCircle, X } from "lucide-react";
+import { ChevronDown, MenuIcon, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -27,6 +26,9 @@ export default function NewNavbar() {
   const currentLanguage =
     languages.find((item) => item.code === language) ?? languages[0];
   const t = homeTranslations[language].nav;
+  const studentPortalUrl = (process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL ||
+    (process.env.NODE_ENV === "development" ? "http://localhost:3001" : "https://student.nandenihon.com")
+  ).replace(/\/$/, "");
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "unset";
@@ -231,15 +233,20 @@ export default function NewNavbar() {
             <div className="mr-3">
               <LanguageSwitcher />
             </div>
-            <a
-              href="https://wa.me/6281299236462"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-primary-base hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 transition-transform hover:scale-105 shadow-md shadow-blue-500/20"
-            >
-              <Wa colorMode="white" className="w-5 h-5" />
-              <span>{t.contactUs}</span>
-            </a>
+            <div className="flex items-center gap-2">
+              <a
+                href={`${studentPortalUrl}/login`}
+                className="border border-primary-base bg-white/80 text-primary-base hover:bg-primary-10 px-4 py-2.5 rounded-lg font-bold text-sm transition-colors"
+              >
+                Login
+              </a>
+              <a
+                href={`${studentPortalUrl}/register`}
+                className="bg-primary-base hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-bold text-sm transition-transform hover:scale-105 shadow-md shadow-blue-500/20"
+              >
+                Register
+              </a>
+            </div>
           </div>
           <button onClick={() => setIsOpen(true)} className="lg:hidden block">
             <MenuIcon />
@@ -305,15 +312,22 @@ export default function NewNavbar() {
 
               <div className="flex flex-col items-end gap-4">
                 <LanguageSwitcher mobile />
-                <a
-                  href="https://wa.me/6281299236462"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-primary-base hover:bg-blue-700 text-white px-5 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 transition-transform hover:scale-105 shadow-md shadow-blue-500/20"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>{t.contactUs}</span>
-                </a>
+                <div className="flex items-center gap-3">
+                  <a
+                    href={`${studentPortalUrl}/login`}
+                    onClick={() => setIsOpen(false)}
+                    className="border border-primary-base bg-white text-primary-base px-5 py-2.5 rounded-full font-bold text-sm"
+                  >
+                    Login
+                  </a>
+                  <a
+                    href={`${studentPortalUrl}/register`}
+                    onClick={() => setIsOpen(false)}
+                    className="bg-primary-base hover:bg-blue-700 text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-md shadow-blue-500/20"
+                  >
+                    Register
+                  </a>
+                </div>
               </div>
             </div>
           </div>

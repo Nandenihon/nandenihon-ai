@@ -40,7 +40,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // Already logged in → skip login page
-    if (pathname === "/login" || pathname === "/") {
+    if (pathname === "/login" || pathname === "/register" || pathname === "/") {
         const token = request.cookies.get(COOKIE_NAME)?.value;
         if (token) {
             const session = await verifyToken(token);
@@ -54,5 +54,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/", "/login", "/dashboard/:path*"],
+    matcher: ["/", "/login", "/register", "/dashboard/:path*"],
 };
