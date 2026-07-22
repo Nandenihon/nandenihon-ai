@@ -4,6 +4,7 @@ export const revalidate = 3600;
 import FeaturedArticles from "@/components/article/FeaturedArticles";
 import MostPopularArticles from "@/components/article/MostPopularArticles";
 import ArticleSelection from "@/components/article/ArticleSelection";
+import { getLanguage, landingTranslations } from "@/lib/i18n";
 import { mapNewsSummaryToArticle } from "@/lib/news";
 import { listNewsSummary } from "@repo/database";
 
@@ -15,7 +16,14 @@ async function getArticlePageData() {
 }
 
 
-export default async function ArticlePage() {
+type ArticlePageProps = {
+  searchParams?: Promise<{ lang?: string | string[] }>;
+};
+
+export default async function ArticlePage({ searchParams }: ArticlePageProps) {
+  const params = await searchParams;
+  const language = getLanguage(params?.lang);
+  const t = landingTranslations[language].articlePage;
   const articles = await getArticlePageData();
   const featuredArticles = articles.slice(0, 6);
   const popularArticles = articles.slice(6, 10).length > 0
@@ -25,12 +33,16 @@ export default async function ArticlePage() {
   return (
     <div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
-        <FeaturedArticles articles={featuredArticles} />
-        <MostPopularArticles articles={popularArticles} />
+        <FeaturedArticles articles={featuredArticles} t={t} language={language} />
+        <MostPopularArticles
+          articles={popularArticles}
+          t={t}
+          language={language}
+        />
       </div>
       
       <div className="w-full">
-        <ArticleSelection articles={articles} />
+        <ArticleSelection articles={articles} t={t} language={language} />
       </div>
     </div>
   );

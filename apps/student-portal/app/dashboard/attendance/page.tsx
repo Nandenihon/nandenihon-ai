@@ -12,8 +12,9 @@ export default async function AttendancePage() {
     return (
         <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
             <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-40">Absensi</p>
-                <h1 className="text-2xl font-bold text-neutral-90">Summary Absensi</h1>
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary-base">Perkembangan</p>
+                <h1 className="text-2xl font-bold text-neutral-90">Ringkasan Kehadiran</h1>
+                <p className="mt-1 text-sm text-neutral-50">Pantau konsistensi kehadiran pada setiap kursus.</p>
             </div>
 
             <section className="grid grid-cols-1 gap-4 md:grid-cols-4">

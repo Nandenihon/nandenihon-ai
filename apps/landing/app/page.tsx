@@ -6,6 +6,13 @@ import { OurPartnerSection } from "@/components/home/OurPartnerSection";
 import OurTeamList from "@/components/home/OurTeamList";
 import PublicationSection from "@/components/home/PublicationSection";
 import TestimonialSection from "@/components/home/TestimonialSection";
+import {
+  defaultLanguage,
+  getLanguage,
+  homeTranslations,
+  type HomeTranslations,
+  type Language,
+} from "@/lib/i18n";
 import { mapNewsSummaryToArticle } from "@/lib/news";
 import { listNewsSummary } from "@repo/database";
 import { unstable_cache } from "next/cache";
@@ -41,44 +48,49 @@ const BackgroundPattern = () => (
   </>
 );
 
-const HeroSection = () => (
+function withLanguage(href: string, language: Language) {
+  return language === defaultLanguage ? href : `${href}?lang=${language}`;
+}
+
+const HeroSection = ({
+  t,
+  language,
+}: {
+  t: HomeTranslations["hero"];
+  language: Language;
+}) => (
   <div className="relative max-w-7xl mx-auto z-10 flex flex-col lg:flex-row items-center justify-between px-6 lg:px-0 pt-48">
     <div className="w-full lg:w-1/2">
       <h1 className="font-bold text-[36px] lg:text-[48px] leading-tight lg:leading-17">
-        Belajar Bahasa Jepang
-        <br /> Jadi Lebih Mudah &<br /> Menyenangkan
+        {t.title}
       </h1>
 
       <p className="text-base lg:text-lg leading-relaxed mt-4">
-        Berangkat dari pengalaman pernah kesulitan dan merasa bingung
-        <br className="hidden lg:block" /> sendirian. Kami tergerak untuk
-        mewujudkan gerakan bermanfaat melalu akses belajar yang lebih mudah dan
-        menyenangkan. Berperan menjadi seorang teman saat kamu sedang di fase
-        sulit dan bingung belajar Bahasa Jepang.
+        {t.description}
       </p>
 
       <div className="flex flex-col sm:flex-row items-center gap-4 mt-6 w-full lg:w-auto">
         <Link
-          href="/class/register"
+          href={withLanguage("/class/register", language)}
           prefetch={false}
-          className="btn w-full sm:w-auto justify-center"
+          className="btn btn-shine cta-pulse w-full sm:w-auto justify-center"
         >
-          Mulai Belajar
+          {t.primaryCta}
         </Link>
         <Link
-          href="/class"
+          href={withLanguage("/class", language)}
           prefetch={false}
-          className="btn bg-white text-primary-base border border-primary-base w-full sm:w-auto justify-center"
+          className="btn btn-shine bg-white text-primary-base border border-primary-base w-full sm:w-auto justify-center"
         >
-          Lihat Kelas
+          {t.secondaryCta}
         </Link>
       </div>
     </div>
 
-    <div className="hidden lg:block">
+    <div className="hidden lg:block animate-float">
       <Image
         src="/images/hero.png"
-        alt="Siswa belajar bahasa Jepang bersama Nande Nihon"
+        alt={t.imageAlt}
         width={638}
         height={530}
         className="w-150"
@@ -92,7 +104,7 @@ const HeroSection = () => (
 const getPublicationArticles = unstable_cache(async () => {
   try {
     // listNewsSummary skips LONGTEXT content — homepage cards only need title/image/excerpt
-    const news = await listNewsSummary({ limit: 6 });
+    const news = await listNewsSummary({ limit: 30 });
     return news.data.map(mapNewsSummaryToArticle);
   } catch (error) {
     console.error("Failed to fetch homepage publications:", error);
@@ -100,21 +112,28 @@ const getPublicationArticles = unstable_cache(async () => {
   }
 }, ["home-publication-articles"], { revalidate: 300, tags: ["news"] });
 
-async function HomeContent() {
+type HomeContentProps = {
+  searchParams?: Promise<{ lang?: string | string[] }>;
+};
+
+async function HomeContent({ searchParams }: HomeContentProps) {
+  const params = await searchParams;
+  const language = getLanguage(params?.lang);
+  const t = homeTranslations[language];
   const publicationArticles = await getPublicationArticles();
 
   return (
     <div className="relative">
       <BackgroundPattern />
 
-      <HeroSection />
+      <HeroSection t={t.hero} language={language} />
 
-      <OurPartnerSection />
-      <BenefitSection />
-      <PublicationSection articles={publicationArticles} />
-      <TestimonialSection />
-      <OurTeamList />
-      <CtaSection />
+      <div className="reveal"><OurPartnerSection t={t.partners} /></div>
+      <div className="reveal"><BenefitSection t={t.benefits} /></div>
+      <div className="reveal"><PublicationSection articles={publicationArticles} t={t.publications} /></div>
+      <div className="reveal"><TestimonialSection t={t.testimonials} /></div>
+      <div className="reveal"><OurTeamList t={t.gallery} /></div>
+      <div className="reveal"><CtaSection t={t.cta} language={language} /></div>
     </div>
   );
 }

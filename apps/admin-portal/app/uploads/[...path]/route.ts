@@ -1,59 +1,36 @@
-import { readFile, stat } from "fs/promises";
-import path from "path";
 import { NextRequest, NextResponse } from "next/server";
-
-const DEFAULT_UPLOAD_DIR = "/var/www/nandenihon-ai/uploads";
-const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || DEFAULT_UPLOAD_DIR);
-const UPLOAD_PUBLIC_BASE_URL =
-    process.env.UPLOAD_PUBLIC_BASE_URL ||
-    process.env.NEXT_PUBLIC_UPLOAD_BASE_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    "https://nandenihon.com";
-const CONTENT_TYPES: Record<string, string> = {
-    ".gif": "image/gif",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".png": "image/png",
-    ".webp": "image/webp",
-};
+import { fetchR2Object } from "@repo/utils/r2-upload";
 
 interface RouteParams {
     params: Promise<{ path: string[] }>;
 }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(_request: NextRequest, { params }: RouteParams) {
     const { path: filePathParts } = await params;
-    const safePath = filePathParts.join(path.sep);
-    const fullPath = path.resolve(UPLOAD_DIR, safePath);
-    const uploadRoot = path.resolve(UPLOAD_DIR);
-
-    if (!fullPath.startsWith(`${uploadRoot}${path.sep}`)) {
-        return NextResponse.json({ error: "Invalid file path" }, { status: 400 });
-    }
+    const key = filePathParts.join("/");
 
     try {
-        const fileStat = await stat(fullPath);
-        if (!fileStat.isFile()) {
+        const r2Response = await fetchR2Object(key);
+        if (!r2Response?.body) {
             return NextResponse.json({ error: "File not found" }, { status: 404 });
         }
 
-        const file = await readFile(fullPath);
-        const contentType = CONTENT_TYPES[path.extname(fullPath).toLowerCase()] || "application/octet-stream";
+        const headers = new Headers();
+        const contentType = r2Response.headers.get("content-type");
+        const contentLength = r2Response.headers.get("content-length");
+        const contentDisposition = r2Response.headers.get("content-disposition");
+        const etag = r2Response.headers.get("etag");
 
-        return new NextResponse(file, {
-            headers: {
-                "Content-Type": contentType,
-                "Cache-Control": "public, max-age=31536000, immutable",
-            },
-        });
-    } catch {
-        const publicUrl = new URL(
-            `/uploads/${filePathParts.map(encodeURIComponent).join("/")}`,
-            UPLOAD_PUBLIC_BASE_URL
-        );
+        if (contentType) headers.set("Content-Type", contentType);
+        if (contentLength) headers.set("Content-Length", contentLength);
+        if (contentDisposition) headers.set("Content-Disposition", contentDisposition);
+        if (etag) headers.set("ETag", etag);
+        headers.set("Cache-Control", "public, max-age=31536000, immutable");
 
-        if (request.url !== publicUrl.toString()) {
-            return NextResponse.redirect(publicUrl, 307);
+        return new NextResponse(r2Response.body, { headers });
+    } catch (error) {
+        if (error instanceof Error && error.message.includes("Invalid R2 object key")) {
+            return NextResponse.json({ error: "Invalid file path" }, { status: 400 });
         }
 
         return NextResponse.json({ error: "File not found" }, { status: 404 });

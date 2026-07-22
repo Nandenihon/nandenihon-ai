@@ -25,6 +25,18 @@ function toRequiredDate(value: unknown, fallback = DEFAULT_DATE): string {
     return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : fallback;
 }
 
+async function ensureTeamColumns(): Promise<void> {
+    const rows = await queryMySQL<RowDataPacket[]>(
+        "SHOW COLUMNS FROM team LIKE 'last_education'"
+    );
+
+    if (rows.length === 0) {
+        await queryMySQL<ResultSetHeader>(
+            "ALTER TABLE team ADD COLUMN last_education VARCHAR(100) NULL AFTER jlpt_level"
+        );
+    }
+}
+
 function normalizeTeamValue(key: keyof UpdateTeamInput, value: unknown): string | number | null {
     switch (key) {
         case "full_name":
@@ -42,6 +54,7 @@ function normalizeTeamValue(key: keyof UpdateTeamInput, value: unknown): string 
         case "team_group":
         case "division":
         case "jlpt_level":
+        case "last_education":
         case "domicile":
         case "instagram":
         case "motto":
@@ -59,6 +72,8 @@ function normalizeTeamValue(key: keyof UpdateTeamInput, value: unknown): string 
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
     try {
+        await ensureTeamColumns();
+
         const { id } = await params;
         const teamId = parseInt(id, 10);
 
@@ -101,6 +116,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
     try {
+        await ensureTeamColumns();
+
         const { id } = await params;
         const teamId = parseInt(id, 10);
 
@@ -128,6 +145,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
             { key: "team_group", column: "team_group" },
             { key: "division", column: "division" },
             { key: "jlpt_level", column: "jlpt_level" },
+            { key: "last_education", column: "last_education" },
             { key: "domicile", column: "domicile" },
             { key: "instagram", column: "instagram" },
             { key: "motto", column: "motto" },

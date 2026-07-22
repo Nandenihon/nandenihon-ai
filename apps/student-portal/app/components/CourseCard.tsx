@@ -36,7 +36,7 @@ export default function CourseCard({
         <a
             href={`/courses/${id}`}
             id={`course-card-${id}`}
-            className="card group flex flex-col overflow-hidden hover:-translate-y-1 transition-all duration-300 hover:shadow-xl hover:shadow-primary-base/10"
+            className="portal-card portal-card-interactive portal-focus group flex flex-col overflow-hidden"
         >
             {/* Thumbnail */}
             <div className="relative w-full h-36 bg-neutral-10 overflow-hidden flex-shrink-0">
@@ -88,8 +88,16 @@ export default function CourseCard({
                         <div
                             className="h-full bg-gradient-to-r from-primary-base to-primary-50 rounded-full transition-all duration-500"
                             style={{ width: `${progressPercent}%` }}
+                            role="progressbar"
+                            aria-label={`Progres ${title}`}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-valuenow={progressPercent}
                         />
                     </div>
+                    <span className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-primary-10 text-xs font-extrabold text-primary-base transition-colors group-hover:bg-primary-base group-hover:text-white">
+                        {progressPercent > 0 ? "Lanjutkan belajar" : "Mulai belajar"} →
+                    </span>
                 </div>
             </div>
         </a>

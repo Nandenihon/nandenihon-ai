@@ -3,6 +3,7 @@ import {
   HOME_SECTION_TITLE_CLASS,
   resolveUploadUrl,
 } from "@/components/home/shared";
+import type { HomeTranslations } from "@/lib/i18n";
 import { queryMySQL, type RowDataPacket } from "@repo/database";
 import type { Testimony } from "@repo/types";
 import { unstable_cache } from "next/cache";
@@ -36,13 +37,15 @@ const getTestimonies = unstable_cache(async (): Promise<TestimonyCardData[]> => 
 
 const TestimonialCard = ({
   item,
+  t,
 }: {
   item: TestimonyCardData;
+  t: HomeTranslations["testimonials"];
 }) => {
-  const name = item.nickname || "Anonymous";
+  const name = item.nickname || t.anonymous;
 
   return (
-    <article className="w-132 flex-none shadow relative">
+    <article className="w-132 flex-none shadow relative hover-lift">
       <div className="px-5 pt-5 pb-8 bg-white rounded-t-2xl">
         <p className="text-wrap text-gray-600">{item.testimonial_text || ""}</p>
         <Image
@@ -57,33 +60,35 @@ const TestimonialCard = ({
       <div className="h-20 bg-[#F0F0F0] rounded-b-2xl px-5 flex justify-center flex-col">
         <h3 className="text-gray-900 font-semibold text-lg">{name}</h3>
         {item.age && (
-          <p className="text-gray-600 mt-1 text-sm">{item.age} Tahun</p>
+          <p className="text-gray-600 mt-1 text-sm">
+            {item.age} {t.yearSuffix}
+          </p>
         )}
       </div>
     </article>
   );
 };
 
-async function TestimonialSection() {
+async function TestimonialSection({ t }: { t: HomeTranslations["testimonials"] }) {
   const testimonies = await getTestimonies();
   const displayItems = duplicateForMarquee(testimonies);
 
   return (
     <div className="py-12 bg-[#D3E0FB]">
       <div className="max-w-7xl mx-auto px-6 lg:px-0">
-        <h2 className={`${HOME_SECTION_TITLE_CLASS} text-center mb-10`}>
-          Kata Mereka
+        <h2 className={`${HOME_SECTION_TITLE_CLASS} text-center mb-10 title-reveal`}>
+          {t.title}
         </h2>
       </div>
       <div className="overflow-hidden relative mt-20">
         <div className="flex gap-12 whitespace-nowrap animate-marquee-left">
           {displayItems.length > 0 ? (
             displayItems.map((item, index) => (
-              <TestimonialCard key={`${item.id}-${index}`} item={item} />
+              <TestimonialCard key={`${item.id}-${index}`} item={item} t={t} />
             ))
           ) : (
             <p className="w-full text-center text-gray-500">
-              Belum ada testimoni.
+              {t.empty}
             </p>
           )}
         </div>

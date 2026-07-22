@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export interface QuizQuestion {
     id: string;
@@ -14,7 +14,13 @@ interface QuizComponentProps {
     lessonId: number;
     lessonTitle: string;
     questions: QuizQuestion[];
-    onFinish: (score: number) => void;
+    onFinish?: (score: number) => void;
+    submitUrl?: string;
+    backHref?: string;
+    backLabel?: string;
+    timeLimitSeconds?: number;
+    scoreVariant?: "percentage" | "points";
+    allowRetry?: boolean;
 }
 
 type Phase = "quiz" | "results";
@@ -24,58 +30,161 @@ export default function QuizComponent({
     lessonTitle,
     questions,
     onFinish,
+    submitUrl,
+    backHref = "./",
+    backLabel = "Kembali ke Kursus",
+    timeLimitSeconds,
+    scoreVariant = "percentage",
+    allowRetry = true,
 }: QuizComponentProps) {
     const [phase, setPhase] = useState<Phase>("quiz");
     const [currentIdx, setCurrentIdx] = useState(0);
     const [selectedAnswers, setSelectedAnswers] = useState<(number | null)[]>(
         Array(questions.length).fill(null)
     );
+    const [responseTimes, setResponseTimes] = useState<(number | null)[]>(
+        Array(questions.length).fill(null)
+    );
+    const [remainingSeconds, setRemainingSeconds] = useState(timeLimitSeconds ?? 0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [finalScore, setFinalScore] = useState(0);
     const [error, setError] = useState("");
+    const questionStartedAtRef = useRef(Date.now());
 
     const current = questions[currentIdx];
     const selected = selectedAnswers[currentIdx];
     const isLast = currentIdx === questions.length - 1;
-    const answeredCount = selectedAnswers.filter((a) => a !== null).length;
+    const isTimedQuiz = Boolean(timeLimitSeconds && timeLimitSeconds > 0);
+    const currentCompleted = isTimedQuiz ? responseTimes[currentIdx] !== null : selected !== null;
+    const answeredCount = isTimedQuiz
+        ? responseTimes.filter((time) => time !== null).length
+        : selectedAnswers.filter((answer) => answer !== null).length;
+
+    useEffect(() => {
+        if (!isTimedQuiz || phase !== "quiz" || questions.length === 0 || !timeLimitSeconds) return;
+
+        if (responseTimes[currentIdx] !== null) {
+            setRemainingSeconds(0);
+            return;
+        }
+
+        questionStartedAtRef.current = Date.now();
+        setRemainingSeconds(timeLimitSeconds);
+
+        const interval = window.setInterval(() => {
+            const elapsedSeconds = (Date.now() - questionStartedAtRef.current) / 1000;
+            const nextRemaining = Math.max(0, timeLimitSeconds - elapsedSeconds);
+            setRemainingSeconds(Math.ceil(nextRemaining));
+
+            if (elapsedSeconds >= timeLimitSeconds) {
+                setResponseTimes((prev) => {
+                    if (prev[currentIdx] !== null) return prev;
+                    const next = [...prev];
+                    next[currentIdx] = timeLimitSeconds;
+                    return next;
+                });
+                window.clearInterval(interval);
+            }
+        }, 250);
+
+        return () => window.clearInterval(interval);
+    }, [currentIdx, isTimedQuiz, phase, questions.length, responseTimes, timeLimitSeconds]);
 
     const handleSelect = (optionIdx: number) => {
         if (phase === "results") return;
+        if (isTimedQuiz && responseTimes[currentIdx] !== null) return;
+
         setSelectedAnswers((prev) => {
             const next = [...prev];
             next[currentIdx] = optionIdx;
             return next;
         });
+
+        if (isTimedQuiz && timeLimitSeconds) {
+            const elapsedSeconds = Math.min(
+                timeLimitSeconds,
+                Math.max(0, (Date.now() - questionStartedAtRef.current) / 1000)
+            );
+
+            setResponseTimes((prev) => {
+                const next = [...prev];
+                next[currentIdx] = elapsedSeconds;
+                return next;
+            });
+        }
+    };
+
+    const getLocalQuestionScore = (isCorrect: boolean, responseTime: number) => {
+        if (!isCorrect) return 0;
+        if (responseTime < 4) return 20;
+        if (responseTime <= 8) return 17;
+        return 15;
     };
 
     const handleSubmit = async () => {
         const correct = selectedAnswers.filter(
-            (answer, i) => answer === questions[i].correctIndex
+            (answer, i) =>
+                answer === questions[i].correctIndex &&
+                (!isTimedQuiz || (responseTimes[i] ?? Infinity) <= (timeLimitSeconds ?? Infinity))
         ).length;
-        const score = Math.round((correct / questions.length) * 100);
+        const normalizedResponseTimes = responseTimes.map((time) => time ?? timeLimitSeconds ?? 0);
+        const score = scoreVariant === "points"
+            ? selectedAnswers.reduce<number>((total, answer, index) => {
+                const responseTime = normalizedResponseTimes[index];
+                const isCorrect =
+                    answer === questions[index].correctIndex &&
+                    (!isTimedQuiz || responseTime <= (timeLimitSeconds ?? Infinity));
+                return total + getLocalQuestionScore(isCorrect, responseTime);
+            }, 0)
+            : Math.round((correct / questions.length) * 100);
+        let submittedScore = score;
+
         setFinalScore(score);
         setIsSubmitting(true);
+        setError("");
 
         try {
-            await fetch(`/api/lessons/${lessonId}/quiz`, {
+            const response = await fetch(submitUrl ?? `/api/lessons/${lessonId}/quiz`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ score }),
+                body: JSON.stringify({
+                    score,
+                    totalQuestions: questions.length,
+                    correctAnswers: correct,
+                    questionIds: questions.map((question) => question.id),
+                    selectedAnswers,
+                    responseTimes: normalizedResponseTimes,
+                }),
             });
-        } catch {
-            // Non-blocking — results still shown
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(data.details ?? data.error ?? "Gagal menyimpan nilai");
+            }
+
+            const data = await response.json().catch(() => ({}));
+            const savedScore = Number(data.attempt?.score ?? data.grade?.score);
+            if (Number.isFinite(savedScore)) {
+                submittedScore = savedScore;
+                setFinalScore(savedScore);
+            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "";
+            setError(message || "Nilai belum tersimpan. Coba submit ulang jika koneksi sudah stabil.");
         } finally {
             setIsSubmitting(false);
         }
 
         setPhase("results");
-        onFinish(score);
+        onFinish?.(submittedScore);
     };
 
     const handleRetry = () => {
         setPhase("quiz");
         setCurrentIdx(0);
         setSelectedAnswers(Array(questions.length).fill(null));
+        setResponseTimes(Array(questions.length).fill(null));
+        setRemainingSeconds(timeLimitSeconds ?? 0);
         setFinalScore(0);
     };
 
@@ -89,8 +198,12 @@ export default function QuizComponent({
 
     // ── Results Screen ─────────────────────────────────────────────────────────
     if (phase === "results") {
-        const correct = selectedAnswers.filter((a, i) => a === questions[i].correctIndex).length;
+        const correct = selectedAnswers.filter((answer, i) =>
+            answer === questions[i].correctIndex &&
+            (!isTimedQuiz || (responseTimes[i] ?? Infinity) <= (timeLimitSeconds ?? Infinity))
+        ).length;
         const passed = finalScore >= 70;
+        const isPointScore = scoreVariant === "points";
 
         return (
             <div className="flex flex-col items-center justify-center min-h-full p-8 text-center">
@@ -103,17 +216,22 @@ export default function QuizComponent({
                     }`}
                 >
                     {finalScore}
-                    <span className="text-lg">%</span>
+                    {!isPointScore && <span className="text-lg">%</span>}
                 </div>
 
                 <h2 className="text-2xl font-bold text-neutral-90 mb-1">
-                    {passed ? "Lulus! 🎉" : "Belum Lulus"}
+                    {isPointScore ? "Skor Kuis Harian" : passed ? "Lulus! 🎉" : "Belum Lulus"}
                 </h2>
                 <p className="text-neutral-50 text-sm mb-2">
                     Kamu menjawab {correct} dari {questions.length} soal dengan benar
                 </p>
-                {!passed && (
+                {!isPointScore && !passed && (
                     <p className="text-xs text-neutral-40 mb-6">Nilai minimum lulus: 70%. Kamu bisa mencoba lagi!</p>
+                )}
+                {error && (
+                    <p className="mb-4 rounded-lg bg-error-10 px-4 py-2 text-xs font-semibold text-error-base">
+                        {error}
+                    </p>
                 )}
 
                 {/* Answer review */}
@@ -121,7 +239,10 @@ export default function QuizComponent({
                     <p className="text-xs font-semibold text-neutral-40 uppercase tracking-wider">Review Jawaban</p>
                     {questions.map((q, i) => {
                         const userAnswer = selectedAnswers[i];
-                        const isCorrect = userAnswer === q.correctIndex;
+                        const timedOut = isTimedQuiz && userAnswer === null && responseTimes[i] !== null;
+                        const isCorrect =
+                            userAnswer === q.correctIndex &&
+                            (!isTimedQuiz || (responseTimes[i] ?? Infinity) <= (timeLimitSeconds ?? Infinity));
                         return (
                             <div
                                 key={q.id}
@@ -131,7 +252,11 @@ export default function QuizComponent({
                             >
                                 <p className="font-medium text-neutral-80 jp-text mb-2">{i + 1}. {q.question}</p>
                                 <p className={`text-xs ${isCorrect ? "text-success-base" : "text-error-base"} font-semibold`}>
-                                    {isCorrect ? "✓ Benar" : `✗ Jawaban kamu: ${userAnswer !== null ? q.options[userAnswer] : "—"}`}
+                                    {isCorrect
+                                        ? "✓ Benar"
+                                        : timedOut
+                                            ? "✗ Waktu habis"
+                                            : `✗ Jawaban kamu: ${userAnswer !== null ? q.options[userAnswer] : "—"}`}
                                 </p>
                                 {!isCorrect && (
                                     <p className="text-xs text-success-base mt-0.5">
@@ -147,15 +272,17 @@ export default function QuizComponent({
                 </div>
 
                 <div className="flex gap-3 mt-6">
-                    <button
-                        id="btn-quiz-retry"
-                        onClick={handleRetry}
-                        className="btn-outline text-sm px-6 py-2.5"
-                    >
-                        Coba Lagi
-                    </button>
-                    <a href="./" className="btn text-sm px-6 py-2.5">
-                        Kembali ke Kursus
+                    {allowRetry && (
+                        <button
+                            id="btn-quiz-retry"
+                            onClick={handleRetry}
+                            className="btn-outline text-sm px-6 py-2.5"
+                        >
+                            Coba Lagi
+                        </button>
+                    )}
+                    <a href={backHref} className="btn text-sm px-6 py-2.5">
+                        {backLabel}
                     </a>
                 </div>
             </div>
@@ -177,6 +304,14 @@ export default function QuizComponent({
                         style={{ width: `${((currentIdx + 1) / questions.length) * 100}%` }}
                     />
                 </div>
+                {isTimedQuiz && (
+                    <div className="mt-3 flex items-center justify-between rounded-lg bg-neutral-0 px-3 py-2 text-xs font-semibold text-neutral-60">
+                        <span>Batas waktu soal</span>
+                        <span className={remainingSeconds <= 5 ? "text-error-base" : "text-primary-base"}>
+                            {responseTimes[currentIdx] !== null ? "Selesai" : `${remainingSeconds} detik`}
+                        </span>
+                    </div>
+                )}
             </div>
 
             {/* Question */}
@@ -192,6 +327,7 @@ export default function QuizComponent({
                             key={optIdx}
                             id={`quiz-option-${optIdx}`}
                             onClick={() => handleSelect(optIdx)}
+                            disabled={isTimedQuiz && currentCompleted}
                             className={`w-full flex items-center gap-3 p-4 rounded-xl border text-left text-sm transition-all ${
                                 selected === optIdx
                                     ? "border-primary-base bg-primary-10 text-primary-base font-semibold"
@@ -235,7 +371,8 @@ export default function QuizComponent({
                 ) : (
                     <button
                         onClick={() => setCurrentIdx((i) => Math.min(questions.length - 1, i + 1))}
-                        className="btn text-sm px-4 py-2.5"
+                        disabled={isTimedQuiz && !currentCompleted}
+                        className="btn text-sm px-4 py-2.5 disabled:opacity-50"
                     >
                         Berikutnya →
                     </button>

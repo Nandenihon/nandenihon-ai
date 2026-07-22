@@ -2,18 +2,26 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-const uploadUrl = process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || "https://nandenihon.com";
+const uploadUrl = process.env.NEXT_PUBLIC_UPLOAD_BASE_URL;
+const legacyUploadHosts = new Set(["nandenihon.com", "www.nandenihon.com"]);
 
-function createUploadImagePattern(value: string | undefined) {
+function createUploadImagePattern(value: string | undefined, pathname?: string) {
   return value
     ? (() => {
       try {
         const url = new URL(value);
+        const patternPathname =
+          pathname || `${url.pathname.replace(/\/$/, "") || ""}/**`;
+
+        if (legacyUploadHosts.has(url.hostname)) {
+          return null;
+        }
+
         return {
           protocol: url.protocol.replace(":", "") as "http" | "https",
           hostname: url.hostname,
           port: url.port,
-          pathname: "/uploads/**",
+          pathname: patternPathname,
         };
       } catch {
         return null;
@@ -23,7 +31,7 @@ function createUploadImagePattern(value: string | undefined) {
 }
 
 const uploadImagePatterns = [
-  createUploadImagePattern(apiUrl),
+  createUploadImagePattern(apiUrl, "/uploads/**"),
   createUploadImagePattern(uploadUrl),
 ].filter((pattern): pattern is NonNullable<typeof pattern> => Boolean(pattern));
 
@@ -51,11 +59,21 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "blog.nandenihon.com",
+        pathname: "/wp-content/uploads/**",
+      },
+      {
+        protocol: "https",
         hostname: "drive.google.com",
       },
       {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "pub-3100e4c32b054e6598de798c71120dc1.r2.dev",
+        pathname: "/**",
       },
       ...uploadImagePatterns,
     ],

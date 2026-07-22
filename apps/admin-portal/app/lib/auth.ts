@@ -1,10 +1,15 @@
 import type { UserSession } from "@repo/types";
 
-const _rawJwtSecret = process.env.JWT_SECRET;
-if (!_rawJwtSecret) {
-    throw new Error("JWT_SECRET environment variable is not set. Please define it in your .env.local file.");
+function getJwtSecret(): string {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        throw new Error(
+            "JWT_SECRET environment variable is not set. Please define it in your .env.local file."
+        );
+    }
+    return secret;
 }
-const JWT_SECRET: string = _rawJwtSecret;
+
 const COOKIE_NAME = "nn_admin_session";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days in seconds
 
@@ -50,10 +55,10 @@ function base64UrlToBuffer(str: string): Uint8Array {
     return bytes;
 }
 
-async function getCryptoKey(secret: string): Promise<CryptoKey> {
+async function getCryptoKey(): Promise<CryptoKey> {
     return crypto.subtle.importKey(
         "raw",
-        encoder.encode(secret),
+        encoder.encode(getJwtSecret()),
         { name: "HMAC", hash: { name: "SHA-256" } },
         false,
         ["sign", "verify"]
@@ -70,7 +75,7 @@ export async function signToken(payload: UserSession): Promise<string> {
         JSON.stringify({ ...payload, iat: now, exp: now + COOKIE_MAX_AGE })
     );
     const data = encoder.encode(`${header}.${claims}`);
-    const key = await getCryptoKey(JWT_SECRET);
+    const key = await getCryptoKey();
     const signatureBuffer = await crypto.subtle.sign("HMAC", key, data);
     const signature = bufferToBase64Url(signatureBuffer);
     return `${header}.${claims}.${signature}`;
@@ -86,7 +91,7 @@ export async function verifyToken(token: string): Promise<UserSession | null> {
 
         const [header, claims, signature] = parts;
         const data = encoder.encode(`${header}.${claims}`);
-        const key = await getCryptoKey(JWT_SECRET);
+        const key = await getCryptoKey();
         const signatureBytes = base64UrlToBuffer(signature);
         
         const isValid = await crypto.subtle.verify("HMAC", key, signatureBytes as unknown as BufferSource, data as unknown as BufferSource);

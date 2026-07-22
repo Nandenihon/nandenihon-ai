@@ -1,7 +1,12 @@
 import ContactField from "./ContactField";
 import ContactTextarea from "./ContactTextarea";
+import type { LandingTranslations } from "@/lib/i18n";
 
-export default function ContactForm() {
+type ContactFormProps = {
+  t: LandingTranslations["contactPage"];
+};
+
+export default function ContactForm({ t }: ContactFormProps) {
   return (
     <div className="flex w-full flex-col gap-6 pt-8 pb-8">
       <div className="flex w-full flex-col gap-4 md:flex-row">
@@ -25,8 +30,8 @@ export default function ContactForm() {
               />
             </svg>
           }
-          label="Nama Kamu"
-          placeholder="masukan nama kamu"
+          label={t.nameLabel}
+          placeholder={t.namePlaceholder}
         />
 
         <ContactField
@@ -49,23 +54,23 @@ export default function ContactForm() {
               />
             </svg>
           }
-          label="Email Kamu"
-          placeholder="masukan email kamu"
+          label={t.emailLabel}
+          placeholder={t.emailPlaceholder}
         />
       </div>
 
       <ContactField
-        label="Subject"
-        placeholder="Apa yang ingin kamu sampaikan"
+        label={t.subjectLabel}
+        placeholder={t.subjectPlaceholder}
       />
 
       <ContactTextarea
-        label="Apa Pesan Kamu?"
-        placeholder="Apa yang ingin kamu sampaikan"
+        label={t.messageLabel}
+        placeholder={t.messagePlaceholder}
       />
 
       <button className="h-[52px] w-full rounded-md bg-blue-600 px-6 py-2 text-white md:w-[160px]">
-        Kirim Pesan
+        {t.submit}
       </button>
     </div>
   );

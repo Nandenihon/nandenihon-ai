@@ -131,6 +131,18 @@ export default function TeamPage() {
                                 {member.jlpt_level && (
                                     <span className="self-center text-xs bg-primary-10 text-primary-base px-2.5 py-1 rounded-full font-medium">{member.jlpt_level}</span>
                                 )}
+                                {member.team_group && (
+                                    <span className="self-center text-xs bg-secondary-10 text-secondary-base px-2.5 py-1 rounded-full font-medium">{member.team_group}</span>
+                                )}
+                                {member.last_education && (
+                                    <div className="flex items-center gap-2 justify-center">
+                                        <svg className="w-4 h-4 text-neutral-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M22 10L12 5 2 10l10 5 10-5z" />
+                                            <path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5" />
+                                        </svg>
+                                        <span className="text-xs">Pendidikan: {member.last_education}</span>
+                                    </div>
+                                )}
                                 {member.email && (
                                     <div className="flex items-center gap-2 justify-center">
                                         <svg className="w-4 h-4 text-neutral-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

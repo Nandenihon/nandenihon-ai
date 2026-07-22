@@ -4,6 +4,61 @@
 /* Enable Noto Sans JP for Japanese character rendering */
 :root {
     --font-jp: "Noto Sans JP", "Noto Sans", sans-serif;
+    --portal-ink: #14213d;
+    --portal-muted: #64748b;
+    --portal-surface: rgba(255, 255, 255, 0.88);
+}
+
+.student-shell {
+    background:
+        radial-gradient(circle at 8% 0%, rgba(37, 99, 235, 0.10), transparent 27rem),
+        radial-gradient(circle at 92% 18%, rgba(249, 168, 212, 0.13), transparent 24rem),
+        #f7f9fd;
+}
+
+.portal-card {
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 1.25rem;
+    background: var(--portal-surface);
+    box-shadow: 0 12px 35px rgba(30, 64, 175, 0.065);
+    backdrop-filter: blur(14px);
+}
+
+.portal-card-interactive {
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.portal-card-interactive:hover {
+    transform: translateY(-3px);
+    border-color: rgba(37, 99, 235, 0.28);
+    box-shadow: 0 18px 45px rgba(30, 64, 175, 0.12);
+}
+
+.portal-focus:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.3);
+    outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .portal-card-interactive { transition: none; }
+    .portal-card-interactive:hover { transform: none; }
+}
+
+.form-control {
+    width: 100%;
+    border: 1px solid var(--color-neutral-20);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: var(--color-neutral-80);
+    background: white;
+    outline: none;
+    transition: border-color 150ms, box-shadow 150ms;
+}
+
+.form-control:focus {
+    border-color: var(--color-primary-base);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary-base) 20%, transparent);
 }
 
 /* Japanese text blocks */

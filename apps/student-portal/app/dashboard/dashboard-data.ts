@@ -2,8 +2,11 @@ import "server-only";
 
 import {
     ensureLmsTables,
+    findLatestDailyQuizAttempt,
+    getDailyQuizAttemptLeaderboard,
     getStudentDashboard,
     queryMySQL,
+    type DailyQuizAttempt,
     type RowDataPacket,
     type StudentDashboard,
 } from "@repo/database";
@@ -32,19 +35,22 @@ interface GradeRow extends RowDataPacket {
     course_title: string;
 }
 
-interface LeaderboardRow extends RowDataPacket {
-    student_id: number;
-    student_name: string;
-    best_score: number;
-    attempts: number;
-}
-
 export async function getStudentDashboardSafe(studentId: number): Promise<StudentDashboard> {
     try {
         await ensureLmsTables();
         return await getStudentDashboard(studentId);
     } catch {
         return { enrolledCourses: [], overallProgressPercent: 0 };
+    }
+}
+
+export async function getLatestDailyQuizAttemptSafe(
+    studentId: number
+): Promise<DailyQuizAttempt | null> {
+    try {
+        return await findLatestDailyQuizAttempt(studentId);
+    } catch {
+        return null;
     }
 }
 
@@ -80,28 +86,7 @@ export async function getStudentGrades(studentId: number, limit = 20): Promise<S
 
 export async function getDailyQuizLeaderboard(limit = 10): Promise<LeaderboardItem[]> {
     try {
-        const rows = await queryMySQL<LeaderboardRow[]>(
-            `SELECT
-                qg.student_id,
-                COALESCE(u.username, u.email) AS student_name,
-                MAX(qg.score) AS best_score,
-                COUNT(*) AS attempts
-             FROM quiz_grades qg
-             JOIN users u ON u.id = qg.student_id
-             WHERE DATE(qg.submitted_at) = CURDATE()
-             GROUP BY qg.student_id, u.username, u.email
-             ORDER BY best_score DESC, attempts ASC, student_name ASC
-             LIMIT ?`,
-            [limit]
-        );
-
-        return rows.map((row, index) => ({
-            rank: index + 1,
-            studentId: row.student_id,
-            studentName: row.student_name,
-            bestScore: Number(row.best_score),
-            attempts: Number(row.attempts),
-        }));
+        return await getDailyQuizAttemptLeaderboard(limit);
     } catch {
         return [];
     }

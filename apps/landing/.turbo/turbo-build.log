@@ -2,61 +2,266 @@
 > landing@0.1.0 build
 > next build
 
-SyntaxError: Expected ',' or '}' after property value in JSON at position 232267 (line 6727 column 1)
-    at JSON.parse (<anonymous>)
 ▲ Next.js 16.1.4 (Turbopack)
 - Environments: .env.local
 
   Creating an optimized production build ...
-SyntaxError: Expected ',' or '}' after property value in JSON at position 232267 (line 6727 column 1)
-    at JSON.parse (<anonymous>)
-
------
-[1m[31mFATAL[39m[0m: An unexpected Turbopack error occurred. A panic log has been written to /var/folders/st/c_lzb74n21b1pq98_0w6rjlr0000gn/T/next-panic-1264f21f050af3d19332f0deeccdb3e9.log.
-
-To help make Turbopack better, report this error by clicking here: https://github.com/vercel/next.js/discussions/new?category=turbopack-error-report&title=Turbopack%20Error%3A%20Failed%20to%20write%20app%20endpoint%20%2Fpage&body=Turbopack%20version%3A%20%60v16.1.0-canary.19-88-gda605e0c4%60%0ANext.js%20version%3A%20%600.0.0%60%0A%0AError%20message%3A%0A%60%60%60%0ATurbopack%20Error%3A%20Failed%20to%20write%20app%20endpoint%20%2Fpage%0A%60%60%60&labels=Turbopack,Turbopack%20Panic%20Backtrace
------
-
-
-> Build error occurred
-Error [TurbopackInternalError]: Failed to write app endpoint /page
-
-Caused by:
-- [project]/apps/landing/app/globals.css [app-client] (css)
-- creating new process
-- node process exited before we could connect to it with exit status: 0
-
-Debug info:
-- Execution of get_all_written_entrypoints_with_issues_operation failed
-- Execution of EntrypointsOperation::new failed
-- Execution of all_entrypoints_write_to_disk_operation failed
-- Execution of Project::emit_all_output_assets failed
-- Execution of *emit_assets failed
-- Execution of all_assets_from_entries_operation failed
-- Execution of *all_assets_from_entries failed
-- Execution of output_assets_operation failed
-- Execution of <AppEndpoint as Endpoint>::output failed
-- Failed to write app endpoint /page
-- Execution of AppEndpoint::output failed
-- Execution of whole_app_module_graph_operation failed
-- Execution of *ModuleGraph::from_single_graph failed
-- Execution of SingleModuleGraph::new_with_entries failed
-- [project]/apps/landing/app/globals.css [app-client] (css)
-- Execution of primary_chunkable_referenced_modules failed
-- Execution of <CssModuleAsset as Module>::references failed
-- Execution of parse_css failed
-- Execution of <PostCssTransformedAsset as Asset>::content failed
-- Execution of PostCssTransformedAsset::process failed
-- Execution of evaluate_webpack_loader failed
-- creating new process
-- node process exited before we could connect to it with exit status: 0
-  Process output:
-  
-  Process error output:
-    at <unknown> (TurbopackInternalError: Failed to write app endpoint /page) {
-  type: 'TurbopackInternalError',
-  location: undefined
+✓ Compiled successfully in 2.3s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+News triggers were not created because the MySQL user lacks trigger/binlog privileges. Falling back to sync-on-read.
+  Generating static pages using 7 workers (0/62) ...
+Error occurred prerendering page "/article/formulir-pendaftaran-webinar". Read more: https://nextjs.org/docs/messages/prerender-error
+Error occurred prerendering page "/article/mengenal-gaya-hidup-kebersihan-di-jepang-yang-sudah-mengakar-sejak-dini". Read more: https://nextjs.org/docs/messages/prerender-error
+Error: PROCEDURE sync_news_post already exists
+    at o (.next/server/chunks/ssr/_e4005859._.js:1:5285)
+    at async v (.next/server/chunks/ssr/_e4005859._.js:1:6168)
+    at async (.next/server/chunks/ssr/_e4005859._.js:230:529) {
+  code: 'ER_SP_ALREADY_EXISTS',
+  errno: 1304,
+  sqlState: '42000',
+  sqlMessage: 'PROCEDURE sync_news_post already exists',
+  sql: '\n' +
+    '        CREATE PROCEDURE sync_news_post(IN source_post_id BIGINT UNSIGNED)\n' +
+    '        BEGIN\n' +
+    '            IF EXISTS (\n' +
+    '                SELECT 1\n' +
+    '                FROM `wp_posts`\n' +
+    '                WHERE ID = source_post_id\n' +
+    "                    AND post_type = 'post'\n" +
+    "                    AND post_status = 'publish'\n" +
+    '            ) THEN\n' +
+    '                INSERT INTO news (\n' +
+    '                    wp_post_id,\n' +
+    '                    slug,\n' +
+    '                    title,\n' +
+    '                    excerpt,\n' +
+    '                    content,\n' +
+    '                    status,\n' +
+    '                    type,\n' +
+    '                    author_id,\n' +
+    '                    author_name,\n' +
+    '                    category_id,\n' +
+    '                    category_name,\n' +
+    '                    category_slug,\n' +
+    '                    categories,\n' +
+    '                    featured_image_id,\n' +
+    '                    featured_image_url,\n' +
+    '                    source_url,\n' +
+    '                    published_at,\n' +
+    '                    modified_at\n' +
+    '                )\n' +
+    '                SELECT\n' +
+    '                    p.ID,\n' +
+    '                    p.post_name,\n' +
+    '                    p.post_title,\n' +
+    "                    NULLIF(p.post_excerpt, ''),\n" +
+    '                    p.post_content,\n' +
+    '                    p.post_status,\n' +
+    '                    p.post_type,\n' +
+    '                    p.post_author,\n' +
+    '                    u.display_name,\n' +
+    '                    (\n' +
+    '                        SELECT t.term_id\n' +
+    '                        FROM `wp_term_relationships` tr\n' +
+    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
+    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
+    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
+    '                        ORDER BY t.term_id ASC\n' +
+    '                        LIMIT 1\n' +
+    '                    ),\n' +
+    '                    (\n' +
+    '                        SELECT t.name\n' +
+    '                        FROM `wp_term_relationships` tr\n' +
+    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
+    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
+    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
+    '                        ORDER BY t.term_id ASC\n' +
+    '                        LIMIT 1\n' +
+    '                    ),\n' +
+    '                    (\n' +
+    '                        SELECT t.slug\n' +
+    '                        FROM `wp_term_relationships` tr\n' +
+    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
+    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
+    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
+    '                        ORDER BY t.term_id ASC\n' +
+    '                        LIMIT 1\n' +
+    '                    ),\n' +
+    '                    (\n' +
+    "                        SELECT GROUP_CONCAT(t.name ORDER BY t.name SEPARATOR ', ')\n" +
+    '                        FROM `wp_term_relationships` tr\n' +
+    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
+    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
+    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
+    '                    ),\n' +
+    "                    CAST(NULLIF(pm.meta_value, '') AS UNSIGNED),\n" +
+    '                    attachment.guid,\n' +
+    '                    CONCAT(\n' +
+    "                        COALESCE((SELECT option_value FROM `wp_options` WHERE option_name = 'home' LIMIT 1), ''),\n" +
+    "                        '/blog/',\n" +
+    '                        p.post_name,\n' +
+    "                        '/'\n" +
+    '                    ),\n' +
+    '                    p.post_date,\n' +
+    '                    p.post_modified\n' +
+    '                FROM `wp_posts` p\n' +
+    '                LEFT JOIN `wp_users` u ON u.ID = p.post_author\n' +
+    "                LEFT JOIN `wp_postmeta` pm ON pm.post_id = p.ID AND pm.meta_key = '_thumbnail_id'\n" +
+    "                LEFT JOIN `wp_posts` attachment ON attachment.ID = CAST(NULLIF(pm.meta_value, '') AS UNSIGNED)\n" +
+    '                WHERE p.ID = source_post_id\n' +
+    '                ON DUPLICATE KEY UPDATE\n' +
+    '                    slug = VALUES(slug),\n' +
+    '                    title = VALUES(title),\n' +
+    '                    excerpt = VALUES(excerpt),\n' +
+    '                    content = VALUES(content),\n' +
+    '                    status = VALUES(status),\n' +
+    '                    type = VALUES(type),\n' +
+    '                    author_id = VALUES(author_id),\n' +
+    '                    author_name = VALUES(author_name),\n' +
+    '                    category_id = VALUES(category_id),\n' +
+    '                    category_name = VALUES(category_name),\n' +
+    '                    category_slug = VALUES(category_slug),\n' +
+    '                    categories = VALUES(categories),\n' +
+    '                    featured_image_id = VALUES(featured_image_id),\n' +
+    '                    featured_image_url = VALUES(featured_image_url),\n' +
+    '                    source_url = VALUES(source_url),\n' +
+    '                    published_at = VALUES(published_at),\n' +
+    '                    modified_at = VALUES(modified_at),\n' +
+    '                    synced_at = CURRENT_TIMESTAMP;\n' +
+    '            ELSE\n' +
+    '                DELETE FROM news WHERE wp_post_id = source_post_id;\n' +
+    '            END IF;\n' +
+    '        END\n' +
+    '    ',
+  digest: '950790084'
 }
+Export encountered an error on /article/[slug]/page: /article/formulir-pendaftaran-webinar, exiting the build.
+Error: PROCEDURE sync_news_post already exists
+    at o (.next/server/chunks/ssr/_e4005859._.js:1:5285)
+    at async v (.next/server/chunks/ssr/_e4005859._.js:1:6168)
+    at async (.next/server/chunks/ssr/_e4005859._.js:230:529) {
+  code: 'ER_SP_ALREADY_EXISTS',
+  errno: 1304,
+  sqlState: '42000',
+  sqlMessage: 'PROCEDURE sync_news_post already exists',
+  sql: '\n' +
+    '        CREATE PROCEDURE sync_news_post(IN source_post_id BIGINT UNSIGNED)\n' +
+    '        BEGIN\n' +
+    '            IF EXISTS (\n' +
+    '                SELECT 1\n' +
+    '                FROM `wp_posts`\n' +
+    '                WHERE ID = source_post_id\n' +
+    "                    AND post_type = 'post'\n" +
+    "                    AND post_status = 'publish'\n" +
+    '            ) THEN\n' +
+    '                INSERT INTO news (\n' +
+    '                    wp_post_id,\n' +
+    '                    slug,\n' +
+    '                    title,\n' +
+    '                    excerpt,\n' +
+    '                    content,\n' +
+    '                    status,\n' +
+    '                    type,\n' +
+    '                    author_id,\n' +
+    '                    author_name,\n' +
+    '                    category_id,\n' +
+    '                    category_name,\n' +
+    '                    category_slug,\n' +
+    '                    categories,\n' +
+    '                    featured_image_id,\n' +
+    '                    featured_image_url,\n' +
+    '                    source_url,\n' +
+    '                    published_at,\n' +
+    '                    modified_at\n' +
+    '                )\n' +
+    '                SELECT\n' +
+    '                    p.ID,\n' +
+    '                    p.post_name,\n' +
+    '                    p.post_title,\n' +
+    "                    NULLIF(p.post_excerpt, ''),\n" +
+    '                    p.post_content,\n' +
+    '                    p.post_status,\n' +
+    '                    p.post_type,\n' +
+    '                    p.post_author,\n' +
+    '                    u.display_name,\n' +
+    '                    (\n' +
+    '                        SELECT t.term_id\n' +
+    '                        FROM `wp_term_relationships` tr\n' +
+    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
+    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
+    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
+    '                        ORDER BY t.term_id ASC\n' +
+    '                        LIMIT 1\n' +
+    '                    ),\n' +
+    '                    (\n' +
+    '                        SELECT t.name\n' +
+    '                        FROM `wp_term_relationships` tr\n' +
+    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
+    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
+    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
+    '                        ORDER BY t.term_id ASC\n' +
+    '                        LIMIT 1\n' +
+    '                    ),\n' +
+    '                    (\n' +
+    '                        SELECT t.slug\n' +
+    '                        FROM `wp_term_relationships` tr\n' +
+    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
+    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
+    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
+    '                        ORDER BY t.term_id ASC\n' +
+    '                        LIMIT 1\n' +
+    '                    ),\n' +
+    '                    (\n' +
+    "                        SELECT GROUP_CONCAT(t.name ORDER BY t.name SEPARATOR ', ')\n" +
+    '                        FROM `wp_term_relationships` tr\n' +
+    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
+    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
+    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
+    '                    ),\n' +
+    "                    CAST(NULLIF(pm.meta_value, '') AS UNSIGNED),\n" +
+    '                    attachment.guid,\n' +
+    '                    CONCAT(\n' +
+    "                        COALESCE((SELECT option_value FROM `wp_options` WHERE option_name = 'home' LIMIT 1), ''),\n" +
+    "                        '/blog/',\n" +
+    '                        p.post_name,\n' +
+    "                        '/'\n" +
+    '                    ),\n' +
+    '                    p.post_date,\n' +
+    '                    p.post_modified\n' +
+    '                FROM `wp_posts` p\n' +
+    '                LEFT JOIN `wp_users` u ON u.ID = p.post_author\n' +
+    "                LEFT JOIN `wp_postmeta` pm ON pm.post_id = p.ID AND pm.meta_key = '_thumbnail_id'\n" +
+    "                LEFT JOIN `wp_posts` attachment ON attachment.ID = CAST(NULLIF(pm.meta_value, '') AS UNSIGNED)\n" +
+    '                WHERE p.ID = source_post_id\n' +
+    '                ON DUPLICATE KEY UPDATE\n' +
+    '                    slug = VALUES(slug),\n' +
+    '                    title = VALUES(title),\n' +
+    '                    excerpt = VALUES(excerpt),\n' +
+    '                    content = VALUES(content),\n' +
+    '                    status = VALUES(status),\n' +
+    '                    type = VALUES(type),\n' +
+    '                    author_id = VALUES(author_id),\n' +
+    '                    author_name = VALUES(author_name),\n' +
+    '                    category_id = VALUES(category_id),\n' +
+    '                    category_name = VALUES(category_name),\n' +
+    '                    category_slug = VALUES(category_slug),\n' +
+    '                    categories = VALUES(categories),\n' +
+    '                    featured_image_id = VALUES(featured_image_id),\n' +
+    '                    featured_image_url = VALUES(featured_image_url),\n' +
+    '                    source_url = VALUES(source_url),\n' +
+    '                    published_at = VALUES(published_at),\n' +
+    '                    modified_at = VALUES(modified_at),\n' +
+    '                    synced_at = CURRENT_TIMESTAMP;\n' +
+    '            ELSE\n' +
+    '                DELETE FROM news WHERE wp_post_id = source_post_id;\n' +
+    '            END IF;\n' +
+    '        END\n' +
+    '    ',
+  digest: '950790084'
+}
+Export encountered an error on /article/[slug]/page: /article/mengenal-gaya-hidup-kebersihan-di-jepang-yang-sudah-mengakar-sejak-dini, exiting the build.
+⨯ Next.js build worker exited with code: 1 and signal: null
 npm error Lifecycle script `build` failed with error:
 npm error code 1
 npm error path /Applications/nandenihon-ai/apps/landing

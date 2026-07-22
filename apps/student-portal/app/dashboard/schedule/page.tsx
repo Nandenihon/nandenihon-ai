@@ -12,8 +12,9 @@ export default async function SchedulePage() {
     return (
         <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
             <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-40">Jadwal</p>
-                <h1 className="text-2xl font-bold text-neutral-90">Schedule Belajar</h1>
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary-base">Agenda</p>
+                <h1 className="text-2xl font-bold text-neutral-90">Jadwal Belajar</h1>
+                <p className="mt-1 text-sm text-neutral-50">Atur ritme belajar dan lanjutkan materi tepat waktu.</p>
             </div>
 
             <section className="card divide-y divide-neutral-10 overflow-hidden">

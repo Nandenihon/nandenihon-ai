@@ -15,6 +15,7 @@ export interface Team {
     team_group: string | null;
     division: string | null;
     jlpt_level: string | null;
+    last_education: string | null;
     domicile: string | null;
     instagram: string | null;
     motto: string | null;
@@ -35,6 +36,7 @@ export interface CreateTeamInput {
     team_group?: string;
     division?: string;
     jlpt_level?: string;
+    last_education?: string;
     domicile?: string;
     instagram?: string;
     motto?: string;
@@ -55,6 +57,7 @@ export interface UpdateTeamInput {
     team_group?: string;
     division?: string;
     jlpt_level?: string;
+    last_education?: string;
     domicile?: string;
     instagram?: string;
     motto?: string;

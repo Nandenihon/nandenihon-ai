@@ -39,7 +39,7 @@ export const TeamCard = ({
           href={instagramUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#94A3B8] hover:text-[#E4405F] transition-colors duration-300"
+          className="text-[#94A3B8] hover:text-[#E4405F] transition-colors duration-300 social-pop"
           aria-label={`${name}'s Instagram`}
         >
           <svg
@@ -62,7 +62,7 @@ export const TeamCard = ({
           href={linkedinUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#94A3B8] hover:text-[#0077B5] transition-colors duration-300"
+          className="text-[#94A3B8] hover:text-[#0077B5] transition-colors duration-300 social-pop"
           aria-label={`${name}'s LinkedIn`}
         >
           <svg
