@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
             values
         );
         await queryMySQL(
-            "UPDATE student_email_otps_v2 SET consumed_at = CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '+07:00') WHERE id = ?",
+            "UPDATE student_email_otps SET consumed_at = CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '+07:00') WHERE id = ?",
             [pending.id]
         );
 
