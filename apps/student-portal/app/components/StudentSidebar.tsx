@@ -3,23 +3,33 @@
 import { usePathname } from "next/navigation";
 import { NandeNihonLogo } from "@repo/ui";
 import Link from "next/link";
+import {
+    BackpackIcon, BarChartIcon, CalendarIcon, ChatBubbleIcon, CheckCircledIcon,
+    DashboardIcon, QuestionMarkCircledIcon, ReaderIcon, StarIcon,
+} from "@radix-ui/react-icons";
 
 const primaryItems = [
-    { href: "/dashboard", label: "Beranda", icon: "grid" },
-    { href: "/dashboard/attendance", label: "Absensi", icon: "check" },
-    { href: "/dashboard/grades", label: "Nilai", icon: "chart" },
-    { href: "/dashboard/ebooks", label: "E-Book", icon: "book", mobile: false },
-    { href: "/dashboard/schedule", label: "Jadwal", icon: "calendar" },
+    { href: "/dashboard", label: "Beranda", icon: DashboardIcon },
+    { href: "/dashboard/class-catalog", label: "Katalog Kelas", icon: BackpackIcon },
+    { href: "/dashboard/assignments", label: "Tugas", icon: CheckCircledIcon },
+    { href: "/dashboard/attendance", label: "Absensi", icon: CheckCircledIcon },
+    { href: "/dashboard/grades", label: "Nilai", icon: BarChartIcon },
+    { href: "/dashboard/ebooks", label: "E-Book", icon: ReaderIcon, mobile: false },
+    { href: "/dashboard/schedule", label: "Jadwal", icon: CalendarIcon },
 ];
 
 const activityItems = [
-    { href: "/dashboard/daily-quiz", label: "Quiz", icon: "question" },
-    { href: "/dashboard/daily-quiz/leaderboard", label: "Leaderboard", icon: "trophy", mobile: false },
-    { href: "/dashboard/forum", label: "Forum Diskusi", icon: "chat", mobile: false },
+    { href: "/dashboard/daily-quiz", label: "Quiz", icon: QuestionMarkCircledIcon },
+    { href: "/dashboard/daily-quiz/leaderboard", label: "Leaderboard", icon: StarIcon, mobile: false },
+    { href: "/dashboard/forum", label: "Forum Diskusi", icon: ChatBubbleIcon, mobile: false },
 ];
 
-function MenuIcon({ name }: { name: string }) {
+function MenuIcon({ name }: { name: string | React.ComponentType<{ className?: string }> }) {
     const common = "w-4 h-4";
+    if (typeof name !== "string") {
+        const Icon = name;
+        return <Icon className={common} aria-hidden="true" />;
+    }
 
     if (name === "check") {
         return (
@@ -91,7 +101,7 @@ function MenuIcon({ name }: { name: string }) {
     );
 }
 
-function SidebarLink({ item }: { item: { href: string; label: string; icon: string; mobile?: boolean } }) {
+function SidebarLink({ item }: { item: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; mobile?: boolean } }) {
     const pathname = usePathname();
     const isActive = item.href === "/dashboard" || item.href === "/dashboard/daily-quiz"
         ? pathname === item.href

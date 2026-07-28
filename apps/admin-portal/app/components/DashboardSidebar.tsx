@@ -59,6 +59,39 @@ const navItems: NavItem[] = [
         ],
     },
     {
+        id: "enrollment-classes",
+        label: "Portal Kelas",
+        href: "/dashboard/enrollment-classes",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+                <path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5z" />
+            </svg>
+        ),
+    },
+    {
+        id: "admissions",
+        label: "Admission Queue",
+        href: "/dashboard/admissions",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 11l3 3L22 4" />
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+            </svg>
+        ),
+    },
+    {
+        id: "assignments",
+        label: "Tugas & Nilai",
+        href: "/dashboard/assignments",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 11l3 3L22 4" />
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+            </svg>
+        ),
+    },
+    {
         id: "seminars",
         label: "Seminar",
         href: "/dashboard/seminars",
@@ -215,9 +248,9 @@ const navItems: NavItem[] = [
 ];
 
 const roleAllowedItems: Record<string, string[]> = {
-    super_admin: ["dashboard", "students", "classes", "seminars", "counseling", "questions", "testimonials", "team", "gallery", "merchandise", "news", "settings", "users", "tool-requests", "attendance", "class-prep"],
-    admin: ["dashboard", "students", "classes", "seminars", "counseling", "questions", "testimonials", "team", "gallery", "merchandise", "news", "settings", "users", "tool-requests", "attendance", "class-prep"],
-    "admin-class": ["dashboard", "tool-requests", "attendance", "class-prep"],
+    super_admin: ["dashboard", "students", "enrollment-classes", "seminars", "counseling", "questions", "testimonials", "team", "gallery", "merchandise", "news", "settings", "users", "tool-requests", "attendance", "class-prep"],
+    admin: ["dashboard", "students", "enrollment-classes", "seminars", "counseling", "questions", "testimonials", "team", "gallery", "merchandise", "news", "settings", "users", "tool-requests", "attendance", "class-prep"],
+    "admin-class": ["dashboard", "enrollment-classes", "tool-requests", "attendance", "class-prep"],
     helpdesk: ["dashboard", "tool-requests"],
 };
 

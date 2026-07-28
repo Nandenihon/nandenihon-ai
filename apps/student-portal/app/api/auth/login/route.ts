@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { queryMySQL, type RowDataPacket } from "@repo/database";
 import { signToken, COOKIE_NAME, COOKIE_MAX_AGE } from "@/app/lib/auth";
 import crypto from "crypto";
+import {
+    ensureRegistrationTables,
+    findPreStudentByEmail,
+    normalizeEmail,
+    passwordMatches,
+    toPreStudentSessionId,
+} from "@/app/lib/registration";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,7 +25,8 @@ function md5(str: string): string {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { email, password } = body;
+        const email = normalizeEmail(body.email);
+        const password = String(body.password ?? "");
 
         if (!email || !password) {
             return NextResponse.json(
@@ -27,9 +35,33 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        await ensureRegistrationTables();
+        const preStudent = await findPreStudentByEmail(email);
+        if (preStudent?.registration_completed_at && preStudent.email_verified_at && preStudent.password_hash) {
+            if (!passwordMatches(password, preStudent.password_hash)) {
+                return NextResponse.json({ error: "Email atau password salah" }, { status: 401 });
+            }
+            const session = {
+                id: preStudent.promoted_user_id || toPreStudentSessionId(preStudent.id),
+                name: preStudent.nickname || preStudent.full_name,
+                email: preStudent.email,
+                role: "student" as const,
+            };
+            const response = NextResponse.json({ user: session, message: "Login berhasil" });
+            response.cookies.set(COOKIE_NAME, await signToken(session), {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: COOKIE_MAX_AGE,
+                path: "/",
+            });
+            return response;
+        }
+
+        // Legacy student accounts remain readable during the migration period.
         const users = await queryMySQL<RowDataPacket[]>(
             "SELECT * FROM users WHERE email = ? LIMIT 1",
-            [String(email).toLowerCase()]
+            [email]
         );
 
         if (!users || users.length === 0) {

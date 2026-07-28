@@ -12,6 +12,7 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "type-check": "turbo type-check",
+    "test:enrollment": "node --experimental-strip-types --test packages/database/test/enrollment-domain.test.ts",
     "dev:landing": "turbo dev --filter=landing",
     "dev:student": "turbo dev --filter=student-portal",
     "dev:admin": "turbo dev --filter=admin-portal"

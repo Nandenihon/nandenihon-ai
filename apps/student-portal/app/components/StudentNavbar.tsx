@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ChevronDownIcon } from "@radix-ui/react-icons";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import type { UserSession } from "@repo/types";
@@ -19,7 +20,7 @@ export default function StudentNavbar() {
         const loadUser = () => fetch("/api/profile")
             .then((r) => r.json())
             .then((data) => {
-                if (data.profile) setUser({ id: data.profile.id, name: data.profile.name, email: data.profile.email, role: "student", avatarUrl: data.profile.avatar_url });
+                if (data.profile) setUser({ id: data.profile.id, name: data.profile.nickname || data.profile.name, email: data.profile.email, role: "student", avatarUrl: data.profile.avatar_url });
             })
             .catch(() => {});
         void loadUser();
@@ -81,7 +82,7 @@ export default function StudentNavbar() {
                     <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-primary-base to-primary-80 text-sm font-bold text-white shadow-md shadow-primary-base/20">
                         {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
                     </span>
-                    <svg className={`h-4 w-4 text-neutral-40 transition-transform ${menuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                    <ChevronDownIcon className={`h-4 w-4 text-neutral-40 transition-transform ${menuOpen ? "rotate-180" : ""}`} aria-hidden="true" />
                 </button>
 
                 {menuOpen && (

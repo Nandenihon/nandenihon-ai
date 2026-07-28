@@ -42,6 +42,17 @@ const lecturerNavItems: NavItem[] = [
         ],
     },
     {
+        id: "lecturer-classes",
+        label: "Kelas & Enrollment",
+        href: "/dashboard/lecturer/classes",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+                <path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5z" />
+            </svg>
+        ),
+    },
+    {
         id: "lecturer-students",
         label: "Progres Siswa",
         href: "/dashboard/lecturer/students",

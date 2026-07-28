@@ -2,11 +2,24 @@
 
 import { useEffect, useState } from "react";
 
-type Profile = { id: number; name: string; email: string; phone: string | null; bio: string | null; avatar_url: string | null; created_at: string };
+type Profile = {
+    id: number;
+    name: string;
+    nickname: string;
+    email: string;
+    phone: string | null;
+    domicile: string | null;
+    motivation: string | null;
+    japanese_level: string | null;
+    avatar_url: string | null;
+    created_at: string;
+};
 
 export default function ProfilePage() {
     const [profile, setProfile] = useState<Profile | null>(null);
-    const [form, setForm] = useState({ name: "", phone: "", bio: "" });
+    const [form, setForm] = useState({
+        name: "", nickname: "", phone: "", domicile: "", motivation: "", japaneseLevel: "",
+    });
     const [editing, setEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -18,7 +31,14 @@ export default function ProfilePage() {
             const data = await response.json();
             if (!response.ok) throw new Error(data.error);
             setProfile(data.profile);
-            setForm({ name: data.profile.name ?? "", phone: data.profile.phone ?? "", bio: data.profile.bio ?? "" });
+            setForm({
+                name: data.profile.name ?? "",
+                nickname: data.profile.nickname ?? "",
+                phone: data.profile.phone ?? "",
+                domicile: data.profile.domicile ?? "",
+                motivation: data.profile.motivation ?? "",
+                japaneseLevel: data.profile.japanese_level ?? "",
+            });
         }).catch(() => setNotice({ type: "error", text: "Profil tidak dapat dimuat." })).finally(() => setLoading(false));
     }, []);
 
@@ -28,7 +48,15 @@ export default function ProfilePage() {
             const response = await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error);
-            setProfile((current) => current ? { ...current, ...form } : current);
+            setProfile((current) => current ? {
+                ...current,
+                name: form.name,
+                nickname: form.nickname,
+                phone: form.phone,
+                domicile: form.domicile,
+                motivation: form.motivation,
+                japanese_level: form.japaneseLevel,
+            } : current);
             setEditing(false); setNotice({ type: "success", text: data.message });
             window.dispatchEvent(new Event("profile-updated"));
         } catch (error) { setNotice({ type: "error", text: error instanceof Error ? error.message : "Gagal menyimpan profil" }); }
@@ -77,7 +105,7 @@ export default function ProfilePage() {
                             <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={uploadingAvatar} onChange={uploadAvatar} />
                         </label>
                     </div>
-                    <div><span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold">Pelajar Nande Nihon</span><h1 className="mt-3 text-2xl font-black sm:text-3xl">{profile?.name || "Siswa"}</h1><p className="mt-1 text-sm text-blue-100">{profile?.email}</p></div>
+                    <div><span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold">Pelajar Nande Nihon</span><h1 className="mt-3 text-2xl font-black sm:text-3xl">{profile?.nickname || profile?.name || "Siswa"}</h1><p className="mt-1 text-sm text-blue-100">{profile?.email}</p></div>
                     <div className="sm:ml-auto sm:text-right"><label className="portal-focus inline-flex min-h-10 cursor-pointer items-center rounded-xl bg-white px-4 text-xs font-extrabold text-primary-90 shadow-md"><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" disabled={uploadingAvatar} onChange={uploadAvatar} />{uploadingAvatar ? "Mengunggah..." : profile?.avatar_url ? "Ganti foto" : "Tambah foto"}</label>{profile?.avatar_url && <button type="button" disabled={uploadingAvatar} onClick={removeAvatar} className="mt-2 block w-full text-xs font-semibold text-blue-100 hover:text-white">Hapus foto</button>}<p className="mt-2 text-[10px] text-blue-200">JPG, PNG, atau WebP · maks. 5 MB</p></div>
                 </div>
             </section>
@@ -88,11 +116,14 @@ export default function ProfilePage() {
                 <div className="mb-6 flex items-center justify-between"><div><h2 className="text-lg font-extrabold text-[#14213d]">Informasi profil</h2><p className="mt-1 text-sm text-neutral-50">Informasi yang digunakan di ruang belajar.</p></div>{!editing && <button onClick={() => setEditing(true)} className="btn-outline min-h-11 px-4 py-2 text-sm">Edit profil</button>}</div>
                 <form onSubmit={saveProfile} className="grid gap-5 sm:grid-cols-2">
                     <ProfileField label="Nama lengkap"><input className="form-control" disabled={!editing} required minLength={2} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></ProfileField>
+                    <ProfileField label="Nama panggilan"><input className="form-control" disabled={!editing} required maxLength={100} value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} /></ProfileField>
                     <ProfileField label="Email"><input className="form-control bg-neutral-0" disabled value={profile?.email ?? ""} /><span className="mt-1 block text-xs text-neutral-40">Email terverifikasi tidak dapat diubah di sini.</span></ProfileField>
                     <ProfileField label="Nomor telepon"><input className="form-control" disabled={!editing} inputMode="tel" placeholder="+62 812 3456 7890" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></ProfileField>
+                    <ProfileField label="Domisili"><input className="form-control" disabled={!editing} required value={form.domicile} onChange={(e) => setForm({ ...form, domicile: e.target.value })} /></ProfileField>
+                    <ProfileField label="Level bahasa Jepang"><select className="form-control" disabled={!editing} required value={form.japaneseLevel} onChange={(e) => setForm({ ...form, japaneseLevel: e.target.value })}><option value="">Pilih level</option><option value="BEGINNER">Pemula</option>{["N5", "N4", "N3", "N2", "N1"].map((level) => <option key={level} value={level}>{level}</option>)}</select></ProfileField>
                     <ProfileField label="Bergabung sejak"><input className="form-control bg-neutral-0" disabled value={profile?.created_at ? new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(new Date(profile.created_at)) : "–"} /></ProfileField>
-                    <div className="sm:col-span-2"><ProfileField label="Tentang saya"><textarea className="form-control min-h-28 resize-y" disabled={!editing} maxLength={500} placeholder="Ceritakan sedikit tentang tujuan belajarmu..." value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} /><span className="mt-1 block text-right text-xs text-neutral-40">{form.bio.length}/500</span></ProfileField></div>
-                    {editing && <div className="flex gap-3 sm:col-span-2"><button type="submit" disabled={saving} className="btn min-h-11 px-5 py-2.5 text-sm">{saving ? "Menyimpan..." : "Simpan perubahan"}</button><button type="button" onClick={() => { setEditing(false); setForm({ name: profile?.name ?? "", phone: profile?.phone ?? "", bio: profile?.bio ?? "" }); }} className="btn-outline min-h-11 px-5 py-2.5 text-sm">Batal</button></div>}
+                    <div className="sm:col-span-2"><ProfileField label="Motivasi belajar"><textarea className="form-control min-h-28 resize-y" disabled={!editing} minLength={10} maxLength={2000} placeholder="Ceritakan tujuan belajarmu..." value={form.motivation} onChange={(e) => setForm({ ...form, motivation: e.target.value })} /><span className="mt-1 block text-right text-xs text-neutral-40">{form.motivation.length}/2000</span></ProfileField></div>
+                    {editing && <div className="flex gap-3 sm:col-span-2"><button type="submit" disabled={saving} className="btn min-h-11 px-5 py-2.5 text-sm">{saving ? "Menyimpan..." : "Simpan perubahan"}</button><button type="button" onClick={() => { setEditing(false); setForm({ name: profile?.name ?? "", nickname: profile?.nickname ?? "", phone: profile?.phone ?? "", domicile: profile?.domicile ?? "", motivation: profile?.motivation ?? "", japaneseLevel: profile?.japanese_level ?? "" }); }} className="btn-outline min-h-11 px-5 py-2.5 text-sm">Batal</button></div>}
                 </form>
             </section>
         </div>
