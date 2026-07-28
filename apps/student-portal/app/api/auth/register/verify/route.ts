@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { queryMySQL, type RowDataPacket, type ResultSetHeader } from "@repo/database";
-import { COOKIE_MAX_AGE, COOKIE_NAME, signToken } from "@/app/lib/auth";
+import { queryMySQL } from "@repo/database";
 import {
     OTP_MAX_ATTEMPTS,
     OTP_TTL_MINUTES,
-    ensureOtpTable,
+    REGISTRATION_COOKIE_NAME,
+    createRegistrationToken,
+    ensureRegistrationTables,
     findLatestOtp,
-    findUserByEmail,
+    findPreStudentByEmail,
     normalizeEmail,
     otpMatches,
 } from "@/app/lib/registration";
@@ -23,17 +24,17 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Kode OTP harus terdiri dari 6 angka" }, { status: 400 });
         }
 
-        await ensureOtpTable();
-        if (await findUserByEmail(email)) {
+        await ensureRegistrationTables();
+        const preStudent = await findPreStudentByEmail(email);
+        if (!preStudent) return NextResponse.json({ error: "Pendaftaran tidak ditemukan" }, { status: 404 });
+        if (preStudent.registration_completed_at) {
             return NextResponse.json({ error: "Email sudah terdaftar. Silakan login." }, { status: 409 });
         }
 
         const pending = await findLatestOtp(email);
         if (!pending) return NextResponse.json({ error: "Kode OTP tidak ditemukan. Kirim kode baru." }, { status: 404 });
-        // Use the GMT+7 send time as the source of truth. This avoids legacy
-        // expires_at values written under a different MySQL session timezone.
         const ageSeconds = Math.floor(Date.now() / 1000) - Number(pending.sent_at_epoch);
-        if (Number.isFinite(ageSeconds) && ageSeconds > OTP_TTL_MINUTES * 60) {
+        if (ageSeconds > OTP_TTL_MINUTES * 60) {
             return NextResponse.json({ error: "Kode OTP sudah kedaluwarsa. Kirim kode baru." }, { status: 410 });
         }
         if (pending.attempts >= OTP_MAX_ATTEMPTS) {
@@ -44,48 +45,23 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Kode OTP salah" }, { status: 400 });
         }
 
-        const columns = await queryMySQL<RowDataPacket[]>("SHOW COLUMNS FROM users");
-        const names = new Set(columns.map((column) => String(column.Field)));
-        const displayColumn = names.has("name") ? "name" : names.has("username") ? "username" : null;
-        const insertColumns = ["email", "password", "role"];
-        const values: Array<string | number> = [email, pending.password_hash, "student"];
-        if (displayColumn) {
-            insertColumns.unshift(displayColumn);
-            values.unshift(pending.name);
-        }
-        if (names.has("is_active")) {
-            insertColumns.push("is_active");
-            values.push(1);
-        }
+        await queryMySQL("UPDATE pre_students SET email_verified_at = COALESCE(email_verified_at, CURRENT_TIMESTAMP) WHERE id = ?", [preStudent.id]);
+        await queryMySQL("UPDATE student_email_otps SET consumed_at = CURRENT_TIMESTAMP WHERE id = ?", [pending.id]);
 
-        const escapedColumns = insertColumns.map((column) => `\`${column}\``).join(", ");
-        const placeholders = insertColumns.map(() => "?").join(", ");
-        const result = await queryMySQL<ResultSetHeader>(
-            `INSERT INTO users (${escapedColumns}) VALUES (${placeholders})`,
-            values
-        );
-        await queryMySQL(
-            "UPDATE student_email_otps SET consumed_at = CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '+07:00') WHERE id = ?",
-            [pending.id]
-        );
-
-        const session = { id: result.insertId, name: pending.name, email, role: "student" as const };
-        const token = await signToken(session);
-        const response = NextResponse.json({ message: "Pendaftaran berhasil", user: session });
-        response.cookies.set(COOKIE_NAME, token, {
+        const response = NextResponse.json({
+            message: "Email berhasil diverifikasi",
+            profile: { fullName: preStudent.full_name, email: preStudent.email },
+        });
+        response.cookies.set(REGISTRATION_COOKIE_NAME, createRegistrationToken(preStudent.id, email), {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
-            maxAge: COOKIE_MAX_AGE,
+            maxAge: 30 * 60,
             path: "/",
         });
         return response;
     } catch (error) {
-        const code = (error as { code?: string }).code;
-        if (code === "ER_DUP_ENTRY") {
-            return NextResponse.json({ error: "Email sudah terdaftar. Silakan login." }, { status: 409 });
-        }
         console.error("Verify registration OTP error:", error);
-        return NextResponse.json({ error: "Pendaftaran gagal. Coba lagi nanti." }, { status: 500 });
+        return NextResponse.json({ error: "Verifikasi gagal. Coba lagi nanti." }, { status: 500 });
     }
 }

@@ -11,6 +11,7 @@
         "setup-daily-quiz": "npx tsx scripts/setup-daily-quiz.ts"
     },
     "dependencies": {
+        "@radix-ui/react-icons": "^1.3.2",
         "@repo/database": "*",
         "@repo/types": "*",
         "@repo/ui": "*",

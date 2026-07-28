@@ -22,6 +22,7 @@ interface MySQLConfig {
 
 interface MySQLCache {
     pool: Pool | null;
+    connectionPromise: Promise<Pool> | null;
     sshClient: Client | null;
     server: net.Server | null;
     localPort: number | null;
@@ -29,6 +30,7 @@ interface MySQLCache {
 
 interface ConnectionError {
     code?: string;
+    level?: string;
     message?: string;
     fatal?: boolean;
 }
@@ -39,6 +41,7 @@ declare global {
 
 const cached: MySQLCache = global.mysqlCache || {
     pool: null,
+    connectionPromise: null,
     sshClient: null,
     server: null,
     localPort: null,
@@ -52,6 +55,7 @@ function markConnectionClosed(client?: Client, server?: net.Server): void {
     const pool = cached.pool;
     cached.pool = null;
     cached.localPort = null;
+    cached.connectionPromise = null;
 
     if (!client || cached.sshClient === client) {
         cached.sshClient = null;
@@ -72,6 +76,7 @@ function isRetryableConnectionError(error: unknown): boolean {
 
     return Boolean(
         connectionError.fatal ||
+            connectionError.level === "client-timeout" ||
             connectionError.code === "PROTOCOL_CONNECTION_LOST" ||
             connectionError.code === "ECONNRESET" ||
             connectionError.code === "ECONNREFUSED" ||
@@ -79,6 +84,8 @@ function isRetryableConnectionError(error: unknown): boolean {
             message.includes("Connection lost") ||
             message.includes("Not connected") ||
             message.includes("connect ETIMEDOUT")
+            || message.includes("waiting for handshake")
+            || message.includes("SSH connection timed out")
     );
 }
 
@@ -197,7 +204,7 @@ function getSshConnectConfig(config: MySQLConfig) {
         host: config.ssh.host,
         port: config.ssh.port,
         username: config.ssh.username,
-        readyTimeout: 10000,
+        readyTimeout: parseInt(process.env.SSH_READY_TIMEOUT_MS || "30000", 10),
     };
 
     if (config.ssh.privateKey) {
@@ -222,7 +229,7 @@ async function createSshForwardStream(config: MySQLConfig): Promise<{ client: Cl
             settled = true;
             sshClient.end();
             reject(new Error("SSH connection timed out"));
-        }, 12000);
+        }, parseInt(process.env.SSH_READY_TIMEOUT_MS || "30000", 10) + 2000);
 
         const fail = (error: Error) => {
             if (settled) {
@@ -396,10 +403,12 @@ export async function connectMySQL(): Promise<Pool> {
     if (cached.pool) {
         return cached.pool;
     }
+    if (cached.connectionPromise) {
+        return cached.connectionPromise;
+    }
 
     const config = getConfig();
-
-    try {
+    cached.connectionPromise = (async () => {
         if (shouldUseSshStream(config)) {
             throw new Error("connectMySQL pool is not available when MYSQL_CONNECTION_MODE=ssh-stream");
         }
@@ -445,10 +454,16 @@ export async function connectMySQL(): Promise<Pool> {
         });
 
         return cached.pool;
+    })();
+
+    try {
+        return await cached.connectionPromise;
     } catch (error) {
         // Clean up on error
         await closeMySQLConnection();
         throw error;
+    } finally {
+        cached.connectionPromise = null;
     }
 }
 
@@ -513,6 +528,7 @@ export async function getConnection(): Promise<PoolConnection> {
  * Close MySQL connection and SSH tunnel
  */
 export async function closeMySQLConnection(): Promise<void> {
+    cached.connectionPromise = null;
     if (cached.pool) {
         await cached.pool.end().catch(() => undefined);
         cached.pool = null;
