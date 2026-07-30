@@ -3,14 +3,10 @@
 import { useEffect, useState, useCallback } from "react";
 import type { User, UserRole } from "@repo/types";
 
-const ROLES: UserRole[] = ["super_admin", "admin", "teacher", "student", "admin-class", "helpdesk", "lecture", "medkom", "riset_jurnal", "admin_1", "admin_2"];
+const ROLES: UserRole[] = ["super_admin", "lecture", "medkom", "riset_jurnal", "admin_1", "admin_2", "student"];
 const ROLE_LABELS: Record<string, string> = {
     super_admin: "Super Admin",
-    admin: "Admin",
-    teacher: "Pengajar",
     student: "Siswa",
-    "admin-class": "Admin Kelas",
-    helpdesk: "Helpdesk",
     lecture: "Lecture",
     medkom: "Medkom",
     riset_jurnal: "Riset & Jurnal",
@@ -19,11 +15,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 const ROLE_COLORS: Record<string, string> = {
     super_admin: "bg-error-10 text-error-base",
-    admin: "bg-primary-10 text-primary-base",
-    teacher: "bg-success-10 text-success-base",
     student: "bg-neutral-10 text-neutral-50",
-    "admin-class": "bg-info-10 text-info-base",
-    helpdesk: "bg-secondary-10 text-secondary-80",
     lecture: "bg-success-10 text-success-base",
     medkom: "bg-secondary-10 text-secondary-80",
     riset_jurnal: "bg-tertiary-10 text-tertiary-base",
@@ -45,16 +37,16 @@ function UserModal({ isOpen, mode, user, onClose, onSave }: {
     onClose: () => void;
     onSave: (data: UserFormData) => Promise<void>;
 }) {
-    const [form, setForm] = useState<UserFormData>({ name: "", email: "", password: "", role: "admin" });
+    const [form, setForm] = useState<UserFormData>({ name: "", email: "", password: "", role: "admin_1" });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [showPass, setShowPass] = useState(false);
 
     useEffect(() => {
         if (mode === "edit" && user) {
-            setForm({ name: user.name || "", email: user.email || "", password: "", role: user.role || "admin" });
+            setForm({ name: user.name || "", email: user.email || "", password: "", role: user.role || "admin_1" });
         } else {
-            setForm({ name: "", email: "", password: "", role: "admin" });
+            setForm({ name: "", email: "", password: "", role: "admin_1" });
         }
         setError("");
     }, [mode, user, isOpen]);

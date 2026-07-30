@@ -9,7 +9,7 @@ export async function GET(request: NextRequest, context: Context) {
     if (!actor) return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
     const classId = Number((await context.params).id);
     const data = await findPortalClass(classId);
-    if (!data || (actor.role === "teacher" && !await teacherCanManageClass(actor.id, classId))) {
+    if (!data || (actor.role === "lecture" && !await teacherCanManageClass(actor.id, classId))) {
         return NextResponse.json({ error: "Kelas tidak ditemukan" }, { status: 404 });
     }
     return NextResponse.json({ data });
@@ -20,12 +20,12 @@ export async function PATCH(request: NextRequest, context: Context) {
     if (!actor) return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
     const classId = Number((await context.params).id);
     const existing = await findPortalClass(classId);
-    if (!existing || (actor.role === "teacher" && !await teacherCanManageClass(actor.id, classId))) {
+    if (!existing || (actor.role === "lecture" && !await teacherCanManageClass(actor.id, classId))) {
         return NextResponse.json({ error: "Kelas tidak ditemukan" }, { status: 404 });
     }
     try {
         const body = await request.json();
-        if (actor.role === "teacher") delete body.ownerTeacherId;
+        if (actor.role === "lecture") delete body.ownerTeacherId;
         const data = await updatePortalClass(classId, body, actor.id);
         return NextResponse.json({ data });
     } catch (error) {

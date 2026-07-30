@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
         search: params.get("search") || undefined,
         status: params.get("status") || undefined,
         level: params.get("level") || undefined,
-        teacherId: actor.role === "teacher" ? actor.id : Number(params.get("teacherId")) || undefined,
+        teacherId: actor.role === "lecture" ? actor.id : Number(params.get("teacherId")) || undefined,
     });
     return NextResponse.json({ data: classes });
 }
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     const actor = await requireEnrollmentActor(request, CLASS_MANAGER_ROLES);
     if (!actor) return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
-    if (!["super_admin", "admin", "admin-class"].includes(actor.role)) {
+    if (!["super_admin", "admin_2"].includes(actor.role)) {
         return NextResponse.json({ error: "Hanya admin yang dapat membuat kelas" }, { status: 403 });
     }
     try {

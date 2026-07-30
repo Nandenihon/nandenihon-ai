@@ -3,9 +3,8 @@ import { verifyToken, COOKIE_NAME } from "@/app/lib/auth";
 
 /**
  * Next.js Middleware — protects /dashboard/* routes
- * - admin / super_admin  → /dashboard  (full access)
- * - teacher              → /dashboard/lecturer (lecturer-only pages)
- * - student              → redirected to login (students use student-portal)
+ * - super_admin and the other staff roles → /dashboard (page-level access is filtered by role, see DashboardSidebar)
+ * - student                               → redirected to login (students use student-portal)
  * Redirects to login if no valid session cookie found.
  */
 export async function proxy(request: NextRequest) {
@@ -34,14 +33,6 @@ export async function proxy(request: NextRequest) {
             return response;
         }
 
-        // Teachers can ONLY access /dashboard/lecturer/*
-        if (session.role === "teacher") {
-            const isLecturerPath = pathname.startsWith("/dashboard/lecturer");
-            if (!isLecturerPath) {
-                return NextResponse.redirect(new URL("/dashboard/lecturer", request.url));
-            }
-        }
-
         // Inject user info into request headers (available in server components/route handlers)
         const requestHeaders = new Headers(request.headers);
         requestHeaders.set("x-user-id", String(session.id));
@@ -57,9 +48,6 @@ export async function proxy(request: NextRequest) {
         if (token) {
             const session = await verifyToken(token);
             if (session) {
-                if (session.role === "teacher") {
-                    return NextResponse.redirect(new URL("/dashboard/lecturer", request.url));
-                }
                 if (session.role !== "student") {
                     return NextResponse.redirect(new URL("/dashboard", request.url));
                 }

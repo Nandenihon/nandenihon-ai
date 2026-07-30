@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/class-prep
  * Save or update class preparation status.
- * - Allowed: admin-class, admin, super_admin
+ * - Allowed: super_admin only (no other current role has this feature)
  */
 export async function POST(request: NextRequest) {
     const session = await getSession(request);
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Tidak terautentikasi" }, { status: 401 });
     }
 
-    if (!["admin-class", "admin", "super_admin"].includes(session.role)) {
+    if (!["super_admin"].includes(session.role)) {
         return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
     }
 

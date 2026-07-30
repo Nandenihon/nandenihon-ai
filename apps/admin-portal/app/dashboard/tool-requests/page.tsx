@@ -174,8 +174,8 @@ export default function ToolRequestsPage() {
         }
     };
 
-    const isClassAdmin = session?.role === "admin-class" || session?.role === "admin" || session?.role === "super_admin";
-    const isHelpdesk = session?.role === "helpdesk" || session?.role === "admin" || session?.role === "super_admin";
+    const canCreateRequest = ["super_admin", "admin_1", "admin_2"].includes(session?.role || "");
+    const canRespondToRequest = ["super_admin", "admin_1", "admin_2"].includes(session?.role || "");
 
     return (
         <div className="flex flex-col gap-6">
@@ -185,7 +185,7 @@ export default function ToolRequestsPage() {
                     <h2 className="text-xl font-bold text-neutral-90">Request Tool Pembelajaran</h2>
                     <p className="text-sm text-neutral-50">Kebutuhan alat bantu/fasilitas pembelajaran kelas</p>
                 </div>
-                {isClassAdmin && (
+                {canCreateRequest && (
                     <button
                         onClick={handleCreateRequest}
                         className="flex items-center gap-2 bg-primary-base text-absolute-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary-80 transition-all"
@@ -293,7 +293,7 @@ export default function ToolRequestsPage() {
                                         </td>
                                         <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex items-center justify-end gap-2">
-                                                {req.status === "pending" && isClassAdmin && req.requester_id === session?.id && (
+                                                {req.status === "pending" && canCreateRequest && req.requester_id === session?.id && (
                                                     <>
                                                         <button
                                                             onClick={() => handleEditRequest(req)}
@@ -309,7 +309,7 @@ export default function ToolRequestsPage() {
                                                         </button>
                                                     </>
                                                 )}
-                                                {req.status === "pending" && isHelpdesk && (
+                                                {req.status === "pending" && canRespondToRequest && (
                                                     <button
                                                         onClick={() => handleRespondClick(req)}
                                                         className="text-xs font-semibold text-success-base bg-success-10 hover:bg-success-20 px-3 py-1.5 rounded-lg transition-all"

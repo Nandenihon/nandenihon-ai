@@ -29,11 +29,7 @@ const breadcrumbMap: Record<string, string> = {
 
 const roleLabels: Record<string, string> = {
     super_admin: "Super Admin",
-    admin: "Admin",
-    teacher: "Pengajar",
     student: "Siswa",
-    "admin-class": "Admin Kelas",
-    helpdesk: "Helpdesk",
     lecture: "Lecture",
     medkom: "Medkom",
     riset_jurnal: "Riset & Jurnal",

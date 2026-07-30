@@ -23,7 +23,7 @@ export default function DashboardLayout({
             .then((r) => r.json())
             .then((data) => {
                 const role = data.user?.role;
-                if (!role || role === "teacher") return;
+                if (!role) return;
 
                 const allowed = roleAllowedItems[role] || ["dashboard"];
                 const isAllowed = allowed.some((id) => {

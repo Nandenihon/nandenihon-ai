@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     if (!actor) return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
     const params = request.nextUrl.searchParams;
     const classId = Number(params.get("classId")) || undefined;
-    if (actor.role === "teacher" && (!classId || !await teacherCanManageClass(actor.id, classId))) {
+    if (actor.role === "lecture" && (!classId || !await teacherCanManageClass(actor.id, classId))) {
         return NextResponse.json({ error: "Anda bukan pengajar kelas ini" }, { status: 403 });
     }
     const data = await listApplications({

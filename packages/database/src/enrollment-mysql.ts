@@ -592,7 +592,7 @@ export async function listClassTeachers(classId: number) {
 export async function assignClassTeacher(classId: number, teacherId: number, actorId: number, role: "owner" | "teacher" | "assistant" = "teacher") {
     await ensureEnrollmentTables();
     const users = await queryMySQL<RowDataPacket[]>(
-        "SELECT id, username, email, role FROM users WHERE id = ? AND role = 'teacher' AND is_active = 1 LIMIT 1",
+        "SELECT id, username, email, role FROM users WHERE id = ? AND role = 'lecture' AND is_active = 1 LIMIT 1",
         [teacherId]
     );
     if (!users[0]) throw new Error("TEACHER_NOT_FOUND");
@@ -635,7 +635,7 @@ export async function removeClassTeacher(classId: number, teacherId: number, act
 export async function listAvailableTeachers(search?: string) {
     await ensureEnrollmentTables();
     const params: unknown[] = [];
-    let where = "WHERE role = 'teacher' AND is_active = 1";
+    let where = "WHERE role = 'lecture' AND is_active = 1";
     if (search) {
         where += " AND (username LIKE ? OR email LIKE ?)";
         params.push(`%${search}%`, `%${search}%`);
