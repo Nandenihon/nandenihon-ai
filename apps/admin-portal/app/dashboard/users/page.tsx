@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import type { User, UserRole } from "@repo/types";
 
-const ROLES: UserRole[] = ["super_admin", "admin", "teacher", "student", "admin-class", "helpdesk"];
+const ROLES: UserRole[] = ["super_admin", "admin", "teacher", "student", "admin-class", "helpdesk", "lecture", "medkom", "riset_jurnal", "admin_1", "admin_2"];
 const ROLE_LABELS: Record<string, string> = {
     super_admin: "Super Admin",
     admin: "Admin",
@@ -11,6 +11,11 @@ const ROLE_LABELS: Record<string, string> = {
     student: "Siswa",
     "admin-class": "Admin Kelas",
     helpdesk: "Helpdesk",
+    lecture: "Lecture",
+    medkom: "Medkom",
+    riset_jurnal: "Riset & Jurnal",
+    admin_1: "Admin 1",
+    admin_2: "Admin 2",
 };
 const ROLE_COLORS: Record<string, string> = {
     super_admin: "bg-error-10 text-error-base",
@@ -19,6 +24,11 @@ const ROLE_COLORS: Record<string, string> = {
     student: "bg-neutral-10 text-neutral-50",
     "admin-class": "bg-info-10 text-info-base",
     helpdesk: "bg-secondary-10 text-secondary-80",
+    lecture: "bg-success-10 text-success-base",
+    medkom: "bg-secondary-10 text-secondary-80",
+    riset_jurnal: "bg-tertiary-10 text-tertiary-base",
+    admin_1: "bg-warning-10 text-warning-base",
+    admin_2: "bg-info-10 text-info-base",
 };
 
 interface UserFormData {

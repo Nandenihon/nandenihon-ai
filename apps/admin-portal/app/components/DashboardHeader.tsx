@@ -34,6 +34,11 @@ const roleLabels: Record<string, string> = {
     student: "Siswa",
     "admin-class": "Admin Kelas",
     helpdesk: "Helpdesk",
+    lecture: "Lecture",
+    medkom: "Medkom",
+    riset_jurnal: "Riset & Jurnal",
+    admin_1: "Admin 1",
+    admin_2: "Admin 2",
 };
 
 export default function DashboardHeader({ onMenuClick }: { onMenuClick?: () => void }) {

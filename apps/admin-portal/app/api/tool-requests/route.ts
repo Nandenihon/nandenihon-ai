@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Tidak terautentikasi" }, { status: 401 });
     }
 
-    if (!["admin-class", "admin", "super_admin"].includes(session.role)) {
+    if (!["admin-class", "admin", "super_admin", "admin_1", "admin_2"].includes(session.role)) {
         return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
     }
 

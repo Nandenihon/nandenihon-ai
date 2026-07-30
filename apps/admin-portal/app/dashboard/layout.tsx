@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import DashboardSidebar from "../components/DashboardSidebar";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import DashboardSidebar, { roleAllowedItems, navItemHrefs } from "../components/DashboardSidebar";
 import DashboardHeader from "../components/DashboardHeader";
 
 export default function DashboardLayout({
@@ -10,6 +11,31 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const pathname = usePathname();
+    const router = useRouter();
+
+    // Enforce role-based page access (sidebar only hides links; this actually blocks navigation).
+    // The lecturer area has its own sidebar/session rules, so it's left alone here.
+    useEffect(() => {
+        if (pathname.startsWith("/dashboard/lecturer")) return;
+
+        fetch("/api/auth/me")
+            .then((r) => r.json())
+            .then((data) => {
+                const role = data.user?.role;
+                if (!role || role === "teacher") return;
+
+                const allowed = roleAllowedItems[role] || ["dashboard"];
+                const isAllowed = allowed.some((id) => {
+                    const href = navItemHrefs[id];
+                    if (!href) return false;
+                    return href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(href);
+                });
+
+                if (!isAllowed) router.replace("/dashboard");
+            })
+            .catch(() => {});
+    }, [pathname, router]);
 
     return (
         <div className="flex min-h-screen bg-neutral-10 overflow-x-hidden relative">

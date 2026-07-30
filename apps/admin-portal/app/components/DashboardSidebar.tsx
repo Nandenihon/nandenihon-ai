@@ -247,12 +247,30 @@ const navItems: NavItem[] = [
     },
 ];
 
-const roleAllowedItems: Record<string, string[]> = {
-    super_admin: ["dashboard", "students", "enrollment-classes", "seminars", "counseling", "questions", "testimonials", "team", "gallery", "merchandise", "news", "settings", "users", "tool-requests", "attendance", "class-prep"],
-    admin: ["dashboard", "students", "enrollment-classes", "seminars", "counseling", "questions", "testimonials", "team", "gallery", "merchandise", "news", "settings", "users", "tool-requests", "attendance", "class-prep"],
+// Every current nav item id — Super Admin (and the legacy generic "admin" role) get all of them.
+const ALL_NAV_IDS = navItems.map((item) => item.id);
+
+export const roleAllowedItems: Record<string, string[]> = {
+    super_admin: ALL_NAV_IDS,
+    admin: ALL_NAV_IDS,
+    // Lecture: Siswa, Kelas, Soal & Ujian, Tugas
+    lecture: ["dashboard", "students", "classes", "enrollment-classes", "questions", "assignments"],
+    // Medkom: Galeri, Testimoni, Tim, Merchandise
+    medkom: ["dashboard", "gallery", "testimonials", "team", "merchandise"],
+    // Riset & Jurnal: Berita & Artikel
+    riset_jurnal: ["dashboard", "news"],
+    // Admin 2: Siswa, Kelas, Soal & Ujian, Request Tool, Absensi Kelas
+    admin_2: ["dashboard", "students", "classes", "enrollment-classes", "questions", "tool-requests", "attendance"],
+    // Admin 1: Tim, Seminar, Request Tool, Merchandise, Manajemen User
+    admin_1: ["dashboard", "team", "seminars", "tool-requests", "merchandise", "users"],
     "admin-class": ["dashboard", "enrollment-classes", "tool-requests", "attendance", "class-prep"],
     helpdesk: ["dashboard", "tool-requests"],
 };
+
+// id -> href lookup, reused by the dashboard layout guard to check page-level access.
+export const navItemHrefs: Record<string, string> = Object.fromEntries(
+    navItems.map((item) => [item.id, item.href])
+);
 
 export default function DashboardSidebar() {
     const pathname = usePathname();

@@ -36,7 +36,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
         // Check if responder action (helpdesk, admin, super_admin)
         if (body.status && ["approved", "rejected"].includes(body.status)) {
-            if (!["helpdesk", "admin", "super_admin"].includes(session.role)) {
+            if (!["helpdesk", "admin", "super_admin", "admin_1", "admin_2"].includes(session.role)) {
                 return NextResponse.json({ error: "Hanya helpdesk dan admin yang dapat merespon request" }, { status: 403 });
             }
 
