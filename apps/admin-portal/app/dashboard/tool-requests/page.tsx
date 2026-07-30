@@ -174,7 +174,8 @@ export default function ToolRequestsPage() {
         }
     };
 
-    const isClassAdmin = session?.role === "admin-class" || session?.role === "admin" || session?.role === "super_admin";
+    const isClassAdmin = ["super_admin", "admin_1", "admin_2"].includes(session?.role || "");
+    const isHelpdesk = ["super_admin", "admin_1", "admin_2"].includes(session?.role || "");
 
     return (
         <div className="flex flex-col gap-6">
