@@ -34,10 +34,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         const toolRequest = currentReq[0];
         const body = await request.json();
 
-        // Check if responder action (super_admin, admin_1, admin_2)
+        // Check if responder action (super_admin)
         if (body.status && ["approved", "rejected"].includes(body.status)) {
             if (!["super_admin", "admin_1", "admin_2"].includes(session.role)) {
-                return NextResponse.json({ error: "Hanya admin yang dapat merespon request" }, { status: 403 });
+                return NextResponse.json({ error: "Hanya admin 1 dan super admin yang dapat merespon request" }, { status: 403 });
             }
 
             await queryMySQL<ResultSetHeader>(
@@ -53,7 +53,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         }
 
         // Otherwise it is an edit action (requester edit)
-        if (toolRequest.requester_id !== session.id && !["super_admin", "admin_1", "admin_2"].includes(session.role)) {
+        if (toolRequest.requester_id !== session.id && !["admin", "super_admin"].includes(session.role)) {
             return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
         }
 
@@ -107,7 +107,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
         const toolRequest = currentReq[0];
 
-        if (toolRequest.requester_id !== session.id && !["super_admin", "admin_1", "admin_2"].includes(session.role)) {
+        if (toolRequest.requester_id !== session.id && !["admin", "super_admin"].includes(session.role)) {
             return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
         }
 
