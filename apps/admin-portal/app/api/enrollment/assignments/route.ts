@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     if (!actor) return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
     return NextResponse.json({
         data: await listAssignmentsForTeacher(
-            actor.role === "teacher" ? actor.id : null,
+            actor.role === "lecture" ? actor.id : null,
             Number(request.nextUrl.searchParams.get("classId")) || undefined
         ),
     });

@@ -9,7 +9,8 @@
         "lint": "eslint .",
         "type-check": "tsc --noEmit",
         "setup-enrollment": "tsx --env-file=.env.local scripts/setup-enrollment.ts",
-        "create-admin": "node ../../create-admin-user.mjs"
+        "create-admin": "node ../../create-admin-user.mjs",
+        "migrate-roles": "node ../../migrate-user-roles.mjs"
     },
     "dependencies": {
         "@radix-ui/react-icons": "^1.3.2",

@@ -34,10 +34,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         const toolRequest = currentReq[0];
         const body = await request.json();
 
-        // Check if responder action (helpdesk, admin, super_admin)
+        // Check if responder action (super_admin)
         if (body.status && ["approved", "rejected"].includes(body.status)) {
-            if (!["helpdesk", "admin", "super_admin"].includes(session.role)) {
-                return NextResponse.json({ error: "Hanya helpdesk dan admin yang dapat merespon request" }, { status: 403 });
+            if (!["super_admin", "admin_1", "admin_2"].includes(session.role)) {
+                return NextResponse.json({ error: "Hanya admin 1 dan super admin yang dapat merespon request" }, { status: 403 });
             }
 
             await queryMySQL<ResultSetHeader>(

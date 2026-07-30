@@ -7,5 +7,5 @@ export async function requireEnrollmentActor(request: NextRequest, roles: string
     return session && roles.includes(session.role) ? session : null;
 }
 
-export const CLASS_MANAGER_ROLES = ["super_admin", "admin", "admin-class", "teacher"];
-export const REVIEWER_ROLES = ["super_admin", "admin", "admin-class"];
+export const CLASS_MANAGER_ROLES = ["super_admin", "lecture", "admin_2"];
+export const REVIEWER_ROLES = ["super_admin", "admin_2"];

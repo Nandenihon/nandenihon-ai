@@ -13,7 +13,7 @@ export async function POST(request: NextRequest, context: Context) {
     const action = String(body.action ?? "");
     if (!ACTIONS.has(action)) return NextResponse.json({ error: "Action tidak valid" }, { status: 400 });
     const existing = await findPortalClass(classId);
-    if (!existing || (actor.role === "teacher" && !await teacherCanManageClass(actor.id, classId))) {
+    if (!existing || (actor.role === "lecture" && !await teacherCanManageClass(actor.id, classId))) {
         return NextResponse.json({ error: "Kelas tidak ditemukan" }, { status: 404 });
     }
     try {

@@ -86,7 +86,7 @@ export default function ToolRequestsPage() {
             .then((data) => {
                 if (data.user) setSession(data.user);
             })
-            .catch(() => {});
+            .catch(() => { });
 
         fetchRequests();
     }, [page, fetchRequests]);
@@ -122,7 +122,7 @@ export default function ToolRequestsPage() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Gagal mengirim request");
-            
+
             setIsRequestModalOpen(false);
             fetchRequests();
         } catch (err) {
@@ -164,7 +164,7 @@ export default function ToolRequestsPage() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Gagal menyimpan respon");
-            
+
             setIsRespondModalOpen(false);
             fetchRequests();
         } catch (err) {
@@ -174,8 +174,8 @@ export default function ToolRequestsPage() {
         }
     };
 
-    const isClassAdmin = session?.role === "admin-class" || session?.role === "admin" || session?.role === "super_admin";
-    const isHelpdesk = session?.role === "helpdesk" || session?.role === "admin" || session?.role === "super_admin";
+    const isClassAdmin = ["super_admin", "admin_1", "admin_2"].includes(session?.role || "");
+    const isHelpdesk = ["super_admin", "admin_1", "admin_2"].includes(session?.role || "");
 
     return (
         <div className="flex flex-col gap-6">
@@ -253,9 +253,8 @@ export default function ToolRequestsPage() {
                                         <td className="px-5 py-4">
                                             <div className="flex flex-col gap-1 min-w-0">
                                                 <span className="text-sm font-semibold text-neutral-80 truncate" title={req.tool_name}>{req.tool_name}</span>
-                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded w-max truncate ${
-                                                    req.category === "Zoom Link" ? "bg-info-10 text-info-base" : "bg-neutral-10 text-neutral-60"
-                                                }`}>
+                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded w-max truncate ${req.category === "Zoom Link" ? "bg-info-10 text-info-base" : "bg-neutral-10 text-neutral-60"
+                                                    }`}>
                                                     {req.category}
                                                 </span>
                                             </div>

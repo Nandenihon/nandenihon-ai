@@ -25,9 +25,9 @@ export function hasRole(session: UserSession | null, roles: string[]): boolean {
 /**
  * Roles that can perform write operations (create/update/delete)
  */
-export const WRITE_ROLES = ["super_admin", "admin"];
+export const WRITE_ROLES = ["super_admin"];
 
 /**
  * Roles that have admin-level full access
  */
-export const ADMIN_ROLES = ["super_admin", "admin"];
+export const ADMIN_ROLES = ["super_admin"];

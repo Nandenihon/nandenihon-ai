@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
             id: user.id,
             name: user.name || user.username || user.display_name || user.full_name || "User",
             email: user.email,
-            role: user.role || "admin",
+            role: user.role || "admin_1",
         };
 
         const token = await signToken(session);

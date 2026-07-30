@@ -12,16 +12,16 @@ async function requireAdminSession(request: NextRequest) {
     if (!token) return null;
     const session = await verifyToken(token);
     if (!session) return null;
-    if (!["super_admin", "admin"].includes(session.role)) return null;
+    if (!["super_admin", "admin", "admin_1"].includes(session.role)) return null;
     return session;
 }
 
 const DEFAULT_PAGE_SIZE = 10;
 const USER_SELECT = "SELECT id, username AS name, email, role, created_at, updated_at FROM users";
-const VALID_ROLES = new Set(["super_admin", "admin", "teacher", "student", "admin-class", "helpdesk"]);
+const VALID_ROLES = new Set(["super_admin", "student", "lecture", "medkom", "riset_jurnal", "admin_1", "admin_2"]);
 
 function normalizeRole(role: unknown): string {
-    if (role === "teachers") return "teacher";
+    if (role === "lecture") return "lecture";
     if (role === "staff") return "admin";
     return typeof role === "string" ? role : "";
 }

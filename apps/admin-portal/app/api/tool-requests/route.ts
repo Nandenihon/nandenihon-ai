@@ -10,9 +10,7 @@ async function getSession(request: NextRequest) {
 
 /**
  * GET /api/tool-requests
- * Retrieve learning tool requests.
- * - Class admins see their own requests.
- * - Helpdesk/Admin/Super Admin see all requests.
+ * Retrieve learning tool requests (any authenticated staff session sees all requests).
  */
 export async function GET(request: NextRequest) {
     const session = await getSession(request);
@@ -36,15 +34,8 @@ export async function GET(request: NextRequest) {
         let countQuery = "SELECT COUNT(*) as total FROM learning_tool_requests r";
         const params: unknown[] = [];
 
-        // Filter for admin-class
-        if (session.role === "admin-class") {
-            query += " WHERE r.requester_id = ?";
-            countQuery += " WHERE r.requester_id = ?";
-            params.push(session.id);
-        }
-
         query += " ORDER BY r.created_at DESC LIMIT ? OFFSET ?";
-        
+
         const countRes = await queryMySQL<RowDataPacket[]>(countQuery, params);
         const total = countRes[0]?.total || 0;
 
@@ -69,7 +60,7 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/tool-requests
  * Submit a new learning tool request.
- * - Allowed: admin-class, admin, super_admin
+ * - Allowed: admin, super_admin, admin_1, admin_2
  */
 export async function POST(request: NextRequest) {
     const session = await getSession(request);
@@ -77,7 +68,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Tidak terautentikasi" }, { status: 401 });
     }
 
-    if (!["admin-class", "admin", "super_admin"].includes(session.role)) {
+    if (!["admin", "super_admin", "admin_1", "admin_2"].includes(session.role)) {
         return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
     }
 
