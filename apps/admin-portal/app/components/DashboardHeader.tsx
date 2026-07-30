@@ -60,7 +60,7 @@ export default function DashboardHeader({ onMenuClick }: { onMenuClick?: () => v
             .then((data) => {
                 if (data.user) setUser(data.user);
             })
-            .catch(() => {});
+            .catch(() => { });
     }, []);
 
     const handleLogout = async () => {
@@ -94,30 +94,30 @@ export default function DashboardHeader({ onMenuClick }: { onMenuClick?: () => v
                         {breadcrumbs.map((crumb, i) => (
                             <span key={crumb.href} className="flex items-center gap-1.5">
                                 {i > 0 && (
-                                <svg
-                                    className="w-3 h-3 text-neutral-30"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
+                                    <svg
+                                        className="w-3 h-3 text-neutral-30"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    >
+                                        <polyline points="9 18 15 12 9 6" />
+                                    </svg>
+                                )}
+                                <span
+                                    className={
+                                        crumb.isLast
+                                            ? "text-primary-base font-medium"
+                                            : "text-neutral-40"
+                                    }
                                 >
-                                    <polyline points="9 18 15 12 9 6" />
-                                </svg>
-                            )}
-                            <span
-                                className={
-                                    crumb.isLast
-                                        ? "text-primary-base font-medium"
-                                        : "text-neutral-40"
-                                }
-                            >
-                                {crumb.label}
+                                    {crumb.label}
+                                </span>
                             </span>
-                        </span>
-                    ))}
-                </nav>
+                        ))}
+                    </nav>
+                </div>
             </div>
-        </div>
 
             {/* Right - Search + Notifications + Avatar */}
             <div className="flex items-center gap-3">

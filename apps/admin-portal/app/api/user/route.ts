@@ -12,7 +12,7 @@ async function requireAdminSession(request: NextRequest) {
     if (!token) return null;
     const session = await verifyToken(token);
     if (!session) return null;
-    if (!["super_admin", "admin_1"].includes(session.role)) return null;
+    if (!["super_admin", "admin", "admin_1"].includes(session.role)) return null;
     return session;
 }
 
@@ -21,7 +21,8 @@ const USER_SELECT = "SELECT id, username AS name, email, role, created_at, updat
 const VALID_ROLES = new Set(["super_admin", "student", "lecture", "medkom", "riset_jurnal", "admin_1", "admin_2"]);
 
 function normalizeRole(role: unknown): string {
-    if (role === "teacher" || role === "teachers") return "lecture";
+    if (role === "lecture") return "lecture";
+    if (role === "staff") return "admin";
     return typeof role === "string" ? role : "";
 }
 

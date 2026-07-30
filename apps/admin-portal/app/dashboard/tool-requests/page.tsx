@@ -86,7 +86,7 @@ export default function ToolRequestsPage() {
             .then((data) => {
                 if (data.user) setSession(data.user);
             })
-            .catch(() => {});
+            .catch(() => { });
 
         fetchRequests();
     }, [page, fetchRequests]);
@@ -122,7 +122,7 @@ export default function ToolRequestsPage() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Gagal mengirim request");
-            
+
             setIsRequestModalOpen(false);
             fetchRequests();
         } catch (err) {
@@ -164,7 +164,7 @@ export default function ToolRequestsPage() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Gagal menyimpan respon");
-            
+
             setIsRespondModalOpen(false);
             fetchRequests();
         } catch (err) {
@@ -174,8 +174,7 @@ export default function ToolRequestsPage() {
         }
     };
 
-    const canCreateRequest = ["super_admin", "admin_1", "admin_2"].includes(session?.role || "");
-    const canRespondToRequest = ["super_admin", "admin_1", "admin_2"].includes(session?.role || "");
+    const isClassAdmin = session?.role === "admin-class" || session?.role === "admin" || session?.role === "super_admin";
 
     return (
         <div className="flex flex-col gap-6">
@@ -185,7 +184,7 @@ export default function ToolRequestsPage() {
                     <h2 className="text-xl font-bold text-neutral-90">Request Tool Pembelajaran</h2>
                     <p className="text-sm text-neutral-50">Kebutuhan alat bantu/fasilitas pembelajaran kelas</p>
                 </div>
-                {canCreateRequest && (
+                {isClassAdmin && (
                     <button
                         onClick={handleCreateRequest}
                         className="flex items-center gap-2 bg-primary-base text-absolute-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary-80 transition-all"
@@ -253,9 +252,8 @@ export default function ToolRequestsPage() {
                                         <td className="px-5 py-4">
                                             <div className="flex flex-col gap-1 min-w-0">
                                                 <span className="text-sm font-semibold text-neutral-80 truncate" title={req.tool_name}>{req.tool_name}</span>
-                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded w-max truncate ${
-                                                    req.category === "Zoom Link" ? "bg-info-10 text-info-base" : "bg-neutral-10 text-neutral-60"
-                                                }`}>
+                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded w-max truncate ${req.category === "Zoom Link" ? "bg-info-10 text-info-base" : "bg-neutral-10 text-neutral-60"
+                                                    }`}>
                                                     {req.category}
                                                 </span>
                                             </div>
@@ -293,7 +291,7 @@ export default function ToolRequestsPage() {
                                         </td>
                                         <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex items-center justify-end gap-2">
-                                                {req.status === "pending" && canCreateRequest && req.requester_id === session?.id && (
+                                                {req.status === "pending" && isClassAdmin && req.requester_id === session?.id && (
                                                     <>
                                                         <button
                                                             onClick={() => handleEditRequest(req)}
@@ -309,7 +307,7 @@ export default function ToolRequestsPage() {
                                                         </button>
                                                     </>
                                                 )}
-                                                {req.status === "pending" && canRespondToRequest && (
+                                                {req.status === "pending" && isHelpdesk && (
                                                     <button
                                                         onClick={() => handleRespondClick(req)}
                                                         className="text-xs font-semibold text-success-base bg-success-10 hover:bg-success-20 px-3 py-1.5 rounded-lg transition-all"
