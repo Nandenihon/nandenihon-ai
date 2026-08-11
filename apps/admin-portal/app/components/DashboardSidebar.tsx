@@ -44,6 +44,18 @@ const navItems: NavItem[] = [
         ],
     },
     {
+        id: "pre-students",
+        label: "Pra-Siswa",
+        href: "/dashboard/pre-students",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21v-1a8 8 0 0116 0v1" />
+                <path d="M9 21v-4M15 21v-4" strokeDasharray="2 2" />
+            </svg>
+        ),
+    },
+    {
         id: "classes",
         label: "Kelas",
         href: "/dashboard/classes",
@@ -263,14 +275,14 @@ const ALL_NAV_IDS = navItems.map((item) => item.id);
 
 export const roleAllowedItems: Record<string, string[]> = {
     super_admin: ALL_NAV_IDS,
-    // Lecture: Siswa, Kelas, Soal & Ujian, Tugas
-    lecture: ["dashboard", "students", "classes", "enrollment-classes", "questions", "assignments"],
+    // Lecture: Siswa, Pra-Siswa, Kelas, Soal & Ujian, Tugas
+    lecture: ["dashboard", "students", "pre-students", "classes", "enrollment-classes", "questions", "assignments"],
     // Medkom: Galeri, Testimoni, Tim, Merchandise
     medkom: ["dashboard", "gallery", "testimonials", "team", "merchandise"],
     // Riset & Jurnal: Berita & Artikel
     riset_jurnal: ["dashboard", "news"],
-    // Admin 2: Siswa, Kelas, Soal & Ujian, Request Tool, Absensi Kelas, Verifikasi Pembayaran
-    admin_2: ["dashboard", "students", "classes", "enrollment-classes", "questions", "tool-requests", "attendance", "test-payments"],
+    // Admin 2: Siswa, Pra-Siswa, Kelas, Soal & Ujian, Request Tool, Absensi Kelas, Verifikasi Pembayaran
+    admin_2: ["dashboard", "students", "pre-students", "classes", "enrollment-classes", "questions", "tool-requests", "attendance", "test-payments"],
     // Admin 1: Tim, Seminar, Request Tool, Merchandise, Manajemen User
     admin_1: ["dashboard", "team", "seminars", "tool-requests", "merchandise", "users"],
 };

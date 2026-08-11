@@ -729,3 +729,124 @@ export async function verifyPayment(paymentId: number, actorId: number) {
         connection.release();
     }
 }
+
+export type PreStudentOverviewStatus = "pre_student" | "student";
+
+export interface ListPreStudentsOptions {
+    search?: string;
+    status?: PreStudentOverviewStatus;
+    passStatus?: AttemptPassStatus;
+    paymentStatus?: PaymentStatus;
+    page?: number;
+    pageSize?: number;
+}
+
+/**
+ * Admin overview: pre_students joined with their current role (promoted or
+ * still pending) plus their latest test attempt and latest payment, one row
+ * per candidate. Attempts/payments are keyed by `promoted_user_id`, which is
+ * now set eagerly at registration (see registration.ts `ensurePreStudentUserId`).
+ */
+export async function listPreStudentsOverview(options: ListPreStudentsOptions = {}) {
+    await ensureAdmissionTestTables();
+    const page = Math.max(1, options.page ?? 1);
+    const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 20));
+    const offset = (page - 1) * pageSize;
+
+    const where: string[] = [];
+    const params: unknown[] = [];
+    if (options.search) {
+        where.push("(ps.full_name LIKE ? OR ps.nickname LIKE ? OR ps.email LIKE ? OR ps.phone_number LIKE ?)");
+        const term = `%${options.search}%`;
+        params.push(term, term, term, term);
+    }
+    if (options.status === "student") where.push("u.role = 'student'");
+    else if (options.status === "pre_student") where.push("(u.role IS NULL OR u.role = 'pre_student')");
+    if (options.passStatus) { where.push("latest_attempt.pass_status = ?"); params.push(options.passStatus); }
+    if (options.paymentStatus) { where.push("latest_payment.status = ?"); params.push(options.paymentStatus); }
+    const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+    const joins = `
+        LEFT JOIN users u ON u.id = ps.promoted_user_id
+        LEFT JOIN (
+            SELECT a.user_id, a.score, a.pass_status, a.submitted_at, c.name AS class_name, c.code AS class_code, t.title AS test_title,
+                   ROW_NUMBER() OVER (PARTITION BY a.user_id ORDER BY a.created_at DESC) AS rn
+            FROM class_test_attempts a
+            JOIN enrollment_classes c ON c.id = a.class_id
+            JOIN class_tests t ON t.id = a.test_id
+        ) latest_attempt ON latest_attempt.user_id = ps.promoted_user_id AND latest_attempt.rn = 1
+        LEFT JOIN (
+            SELECT user_id, COUNT(*) AS total_attempts, SUM(pass_status = 'passed') AS passed_attempts
+            FROM class_test_attempts GROUP BY user_id
+        ) attempt_counts ON attempt_counts.user_id = ps.promoted_user_id
+        LEFT JOIN (
+            SELECT p.user_id, p.status, p.amount, p.created_at, c.name AS class_name,
+                   ROW_NUMBER() OVER (PARTITION BY p.user_id ORDER BY p.created_at DESC) AS rn
+            FROM class_test_payments p
+            JOIN enrollment_classes c ON c.id = p.class_id
+        ) latest_payment ON latest_payment.user_id = ps.promoted_user_id AND latest_payment.rn = 1
+    `;
+
+    const countRows = await queryMySQL<RowDataPacket[]>(
+        `SELECT COUNT(*) AS total FROM pre_students ps ${joins} ${whereClause}`,
+        params
+    );
+    const total = Number(countRows[0]?.total || 0);
+
+    const rows = await queryMySQL<RowDataPacket[]>(
+        `SELECT ps.id, ps.full_name, ps.nickname, ps.email, ps.phone_number, ps.domicile, ps.japanese_level,
+                ps.avatar_url, ps.email_verified_at, ps.registration_completed_at, ps.promoted_user_id, ps.created_at,
+                COALESCE(u.role, 'pre_student') AS current_role,
+                latest_attempt.score AS latest_score, latest_attempt.pass_status AS latest_pass_status,
+                latest_attempt.class_name AS latest_class_name, latest_attempt.class_code AS latest_class_code,
+                latest_attempt.test_title AS latest_test_title, latest_attempt.submitted_at AS latest_attempt_at,
+                COALESCE(attempt_counts.total_attempts, 0) AS total_attempts,
+                COALESCE(attempt_counts.passed_attempts, 0) AS passed_attempts,
+                latest_payment.status AS latest_payment_status, latest_payment.amount AS latest_payment_amount,
+                latest_payment.class_name AS latest_payment_class_name, latest_payment.created_at AS latest_payment_at
+         FROM pre_students ps
+         ${joins}
+         ${whereClause}
+         ORDER BY ps.created_at DESC
+         LIMIT ? OFFSET ?`,
+        [...params, pageSize, offset]
+    );
+
+    return { data: rows, total, page, pageSize, totalPages: Math.max(1, Math.ceil(total / pageSize)) };
+}
+
+export async function findPreStudentDetail(preStudentId: number) {
+    await ensureAdmissionTestTables();
+    const rows = await queryMySQL<RowDataPacket[]>(
+        `SELECT ps.*, COALESCE(u.role, 'pre_student') AS current_role, u.username AS user_display_name
+         FROM pre_students ps
+         LEFT JOIN users u ON u.id = ps.promoted_user_id
+         WHERE ps.id = ? LIMIT 1`,
+        [preStudentId]
+    );
+    const profile = rows[0];
+    if (!profile) return null;
+
+    const userId = profile.promoted_user_id ? Number(profile.promoted_user_id) : null;
+    const [attempts, payments] = userId
+        ? await Promise.all([
+            queryMySQL<RowDataPacket[]>(
+                `SELECT a.*, t.title AS test_title, c.name AS class_name, c.code AS class_code
+                 FROM class_test_attempts a
+                 JOIN class_tests t ON t.id = a.test_id
+                 JOIN enrollment_classes c ON c.id = a.class_id
+                 WHERE a.user_id = ? ORDER BY a.created_at DESC`,
+                [userId]
+            ),
+            queryMySQL<RowDataPacket[]>(
+                `SELECT p.*, c.name AS class_name, c.code AS class_code
+                 FROM class_test_payments p
+                 JOIN enrollment_classes c ON c.id = p.class_id
+                 WHERE p.user_id = ? ORDER BY p.created_at DESC`,
+                [userId]
+            ),
+        ])
+        : [[], []];
+
+    return { profile, attempts, payments };
+}
