@@ -3,10 +3,10 @@ import { queryMySQL, type ResultSetHeader } from "@repo/database";
 import { COOKIE_MAX_AGE, COOKIE_NAME, signToken } from "@/app/lib/auth";
 import {
     REGISTRATION_COOKIE_NAME,
+    ensurePreStudentUserId,
     ensureRegistrationTables,
     findPreStudentByEmail,
     hashPassword,
-    toPreStudentSessionId,
     verifyRegistrationToken,
 } from "@/app/lib/registration";
 
@@ -45,20 +45,28 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Pendaftaran sudah diselesaikan. Silakan login." }, { status: 409 });
         }
 
+        const passwordHash = hashPassword(password);
         const result = await queryMySQL<ResultSetHeader>(
             `UPDATE pre_students
              SET full_name = ?, nickname = ?, phone_number = ?, domicile = ?, motivation = ?,
                  japanese_level = ?, password_hash = ?, registration_completed_at = CURRENT_TIMESTAMP
              WHERE id = ? AND registration_completed_at IS NULL`,
-            [fullName, nickname, phoneNumber, domicile, motivation, japaneseLevel, hashPassword(password), preStudent.id]
+            [fullName, nickname, phoneNumber, domicile, motivation, japaneseLevel, passwordHash, preStudent.id]
         );
         if (result.affectedRows !== 1) return NextResponse.json({ error: "Pendaftaran sudah diselesaikan" }, { status: 409 });
 
+        const userId = await ensurePreStudentUserId({
+            preStudentId: preStudent.id,
+            nickname,
+            email: preStudent.email,
+            passwordHash,
+        });
+
         const session = {
-            id: toPreStudentSessionId(preStudent.id),
+            id: userId,
             name: nickname,
             email: preStudent.email,
-            role: "student" as const,
+            role: "pre_student" as const,
         };
         const response = NextResponse.json({ message: "Pendaftaran berhasil", user: session });
         response.cookies.set(COOKIE_NAME, await signToken(session), {

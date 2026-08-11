@@ -3,11 +3,12 @@ import { queryMySQL, type RowDataPacket } from "@repo/database";
 import { signToken, COOKIE_NAME, COOKIE_MAX_AGE } from "@/app/lib/auth";
 import crypto from "crypto";
 import {
+    ensurePreStudentUserId,
     ensureRegistrationTables,
     findPreStudentByEmail,
+    findUserRoleById,
     normalizeEmail,
     passwordMatches,
-    toPreStudentSessionId,
 } from "@/app/lib/registration";
 
 export const runtime = "nodejs";
@@ -19,8 +20,9 @@ function md5(str: string): string {
 
 /**
  * POST /api/auth/login
- * Authenticates a student using email + MD5 password from the shared `users` table.
- * Only users with role = 'student' are allowed.
+ * Authenticates a student or pre-student. Pre-student/student accounts verify
+ * against `pre_students.password_hash`; legacy `users` rows fall back to MD5.
+ * Only role = 'student' or 'pre_student' may log into this portal.
  */
 export async function POST(request: NextRequest) {
     try {
@@ -41,11 +43,23 @@ export async function POST(request: NextRequest) {
             if (!passwordMatches(password, preStudent.password_hash)) {
                 return NextResponse.json({ error: "Email atau password salah" }, { status: 401 });
             }
+
+            // Accounts registered before the users-row-on-registration change may not
+            // have promoted_user_id set yet — backfill it here on first login.
+            const userId = preStudent.promoted_user_id
+                || (await ensurePreStudentUserId({
+                    preStudentId: preStudent.id,
+                    nickname: preStudent.nickname || preStudent.full_name,
+                    email: preStudent.email,
+                    passwordHash: preStudent.password_hash,
+                }));
+            const role = (await findUserRoleById(userId)) === "student" ? "student" : "pre_student";
+
             const session = {
-                id: preStudent.promoted_user_id || toPreStudentSessionId(preStudent.id),
+                id: userId,
                 name: preStudent.nickname || preStudent.full_name,
                 email: preStudent.email,
-                role: "student" as const,
+                role: role as "student" | "pre_student",
             };
             const response = NextResponse.json({ user: session, message: "Login berhasil" });
             response.cookies.set(COOKIE_NAME, await signToken(session), {

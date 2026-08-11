@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import AssignmentManager from "./AssignmentManager";
+import TestManager from "./TestManager";
 
-type Tab = "overview" | "admissions" | "assignments" | "roster";
+type Tab = "overview" | "admissions" | "tests" | "assignments" | "roster";
 type ClassItem = { id: number; code: string; name: string; description: string; level: string; program: string; schedule: string; status: string; capacity: number; occupied_seats: number; available_seats: number; start_at: string; end_at: string };
 type Teacher = { teacher_id: number; name: string; email: string; role: string };
 type Application = { id: number; status: string; full_name: string; nickname: string; email: string; japanese_level: string; submitted_at: string };
@@ -86,6 +87,7 @@ export default function ClassWorkspace({ classId, teacherMode = false }: { class
                 {([
                     ["overview", "Ringkasan & Pengajar"],
                     ["admissions", `Admission Queue (${applications.length})`],
+                    ["tests", "Tes Penempatan"],
                     ["assignments", "Tugas & Nilai"],
                     ["roster", `Roster (${members.length})`],
                 ] as [Tab, string][]).map(([value, label]) => (
@@ -98,6 +100,7 @@ export default function ClassWorkspace({ classId, teacherMode = false }: { class
                 <div className="mt-5 grid gap-3 md:grid-cols-2">{teachers.map((teacher) => <article key={teacher.teacher_id} className="flex items-center justify-between rounded-xl border border-neutral-10 p-4"><div><p className="font-bold">{teacher.name}</p><p className="text-sm text-neutral-50">{teacher.email}</p><span className="mt-1 inline-block rounded-full bg-primary-10 px-2 py-1 text-xs font-bold text-primary-base">{teacher.role}</span></div>{!teacherMode && teacher.role !== "owner" && <button onClick={() => removeTeacher(teacher.teacher_id)} className="text-sm font-semibold text-error-base">Hapus</button>}</article>)}</div>
             </section>}
             {tab === "admissions" && <section className="space-y-3">{applications.length === 0 ? <div className="rounded-2xl bg-white p-10 text-center text-neutral-50">Belum ada aplikasi untuk kelas ini.</div> : applications.map((application) => <article key={application.id} className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm sm:flex-row sm:items-center"><div className="flex-1"><span className="rounded-full bg-neutral-10 px-3 py-1 text-xs font-bold">{application.status}</span><h3 className="mt-2 text-lg font-bold">{application.full_name} ({application.nickname})</h3><p className="text-sm text-neutral-50">{application.email} · {application.japanese_level}</p></div>{!teacherMode && ["submitted", "under_review"].includes(application.status) && <div className="flex gap-2">{application.status === "submitted" && <Action onClick={() => decide(application.id, "review")}>Review</Action>}<Action onClick={() => decide(application.id, "accept")}>Accept</Action><Action danger onClick={() => decide(application.id, "reject")}>Reject</Action></div>}</article>)}</section>}
+            {tab === "tests" && <TestManager classId={classId} />}
             {tab === "assignments" && <AssignmentManager classId={classId} />}
             {tab === "roster" && <section className="rounded-2xl bg-white p-6 shadow-sm"><h2 className="text-xl font-bold">Roster aktif</h2><div className="mt-4 divide-y">{members.map((member) => <div key={member.id} className="flex justify-between py-4"><div><p className="font-bold">{member.name}</p><p className="text-sm text-neutral-50">{member.email}</p></div><div className="text-right"><span className="text-sm font-bold">{member.status}</span><p className="text-xs text-neutral-40">{new Date(member.joined_at).toLocaleDateString("id-ID")}</p></div></div>)}</div></section>}
         </div>

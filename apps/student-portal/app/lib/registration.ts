@@ -1,20 +1,10 @@
 import crypto from "crypto";
-import { queryMySQL, type RowDataPacket } from "@repo/database";
+import { queryMySQL, type ResultSetHeader, type RowDataPacket } from "@repo/database";
 
 export const OTP_TTL_MINUTES = 10;
 export const OTP_RESEND_SECONDS = 60;
 export const OTP_MAX_ATTEMPTS = 5;
 export const REGISTRATION_COOKIE_NAME = "nn_student_registration";
-
-// Existing LMS tables use positive `users.id` values. Keep pre-student sessions
-// in a separate numeric namespace so an equal id can never expose legacy data.
-export function toPreStudentSessionId(preStudentId: number): number {
-    return -Math.abs(preStudentId);
-}
-
-export function fromPreStudentSessionId(sessionId: number): number | null {
-    return sessionId < 0 ? Math.abs(sessionId) : null;
-}
 
 export type PreStudentRow = RowDataPacket & {
     id: number;
@@ -166,6 +156,35 @@ export async function ensureRegistrationTables(): Promise<void> {
     if (!names.has("expires_at_epoch")) {
         await queryMySQL("ALTER TABLE student_email_otps ADD COLUMN expires_at_epoch BIGINT UNSIGNED NULL AFTER sent_at_epoch");
     }
+}
+
+/**
+ * Ensures a pre-student has a row in the shared `users` table (role = 'pre_student')
+ * and that `pre_students.promoted_user_id` points to it. Called eagerly at
+ * registration, and lazily on login for accounts registered before this existed.
+ */
+export async function ensurePreStudentUserId(input: {
+    preStudentId: number;
+    nickname: string;
+    email: string;
+    passwordHash: string;
+}): Promise<number> {
+    const existingUsers = await queryMySQL<RowDataPacket[]>("SELECT id FROM users WHERE email = ? LIMIT 1", [input.email]);
+    let userId = existingUsers[0] ? Number(existingUsers[0].id) : 0;
+    if (!userId) {
+        const result = await queryMySQL<ResultSetHeader>(
+            "INSERT INTO users (username, email, password, role, is_active) VALUES (?, ?, ?, 'pre_student', 1)",
+            [input.nickname, input.email, input.passwordHash]
+        );
+        userId = result.insertId;
+    }
+    await queryMySQL("UPDATE pre_students SET promoted_user_id = ? WHERE id = ?", [userId, input.preStudentId]);
+    return userId;
+}
+
+export async function findUserRoleById(userId: number): Promise<string | null> {
+    const rows = await queryMySQL<RowDataPacket[]>("SELECT role FROM users WHERE id = ? LIMIT 1", [userId]);
+    return rows[0] ? String(rows[0].role) : null;
 }
 
 export async function findPreStudentByEmail(email: string): Promise<PreStudentRow | null> {

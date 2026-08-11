@@ -5,12 +5,11 @@ import { NandeNihonLogo } from "@repo/ui";
 import Link from "next/link";
 import {
     BackpackIcon, BarChartIcon, CalendarIcon, ChatBubbleIcon, CheckCircledIcon,
-    DashboardIcon, QuestionMarkCircledIcon, ReaderIcon, StarIcon,
+    ClockIcon, DashboardIcon, IdCardIcon, QuestionMarkCircledIcon, ReaderIcon, StarIcon,
 } from "@radix-ui/react-icons";
 
 const primaryItems = [
     { href: "/dashboard", label: "Beranda", icon: DashboardIcon },
-    { href: "/dashboard/class-catalog", label: "Katalog Kelas", icon: BackpackIcon },
     { href: "/dashboard/assignments", label: "Tugas", icon: CheckCircledIcon },
     { href: "/dashboard/attendance", label: "Absensi", icon: CheckCircledIcon },
     { href: "/dashboard/grades", label: "Nilai", icon: BarChartIcon },
@@ -22,6 +21,14 @@ const activityItems = [
     { href: "/dashboard/daily-quiz", label: "Quiz", icon: QuestionMarkCircledIcon },
     { href: "/dashboard/daily-quiz/leaderboard", label: "Leaderboard", icon: StarIcon, mobile: false },
     { href: "/dashboard/forum", label: "Forum Diskusi", icon: ChatBubbleIcon, mobile: false },
+];
+
+// Pre-students may only pick a class, take its test, review history, and pay once passed.
+const preStudentItems = [
+    { href: "/dashboard", label: "Beranda", icon: DashboardIcon },
+    { href: "/dashboard/class-catalog", label: "Pilih Kelas & Tes", icon: BackpackIcon },
+    { href: "/dashboard/tests/history", label: "Riwayat Tes", icon: ClockIcon },
+    { href: "/dashboard/payment", label: "Pembayaran", icon: IdCardIcon },
 ];
 
 function MenuIcon({ name }: { name: string | React.ComponentType<{ className?: string }> }) {
@@ -123,7 +130,33 @@ function SidebarLink({ item }: { item: { href: string; label: string; icon: Reac
     );
 }
 
-export default function StudentSidebar() {
+export default function StudentSidebar({ role = "student" }: { role?: "student" | "pre_student" }) {
+    if (role === "pre_student") {
+        return (
+            <aside className="lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:flex-shrink-0 lg:flex-col lg:border-r lg:border-white/80 lg:bg-white/80 lg:backdrop-blur-xl">
+                <div className="hidden h-16 items-center gap-3 border-b border-neutral-10 px-5 lg:flex">
+                    <div className="rounded-xl bg-primary-base p-1.5">
+                        <NandeNihonLogo variant="favicon" colorMode="white" className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-bold text-neutral-90">Calon Siswa</p>
+                        <p className="text-xs text-neutral-40 jp-text">入学テスト</p>
+                    </div>
+                </div>
+
+                <div className="fixed inset-x-3 bottom-3 z-50 flex justify-around rounded-2xl border border-white/80 bg-white/90 p-2 shadow-[0_16px_45px_rgba(15,23,42,0.18)] backdrop-blur-xl lg:static lg:flex-1 lg:block lg:space-y-6 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-4 lg:shadow-none">
+                    <nav aria-label="Navigasi utama" className="contents lg:block lg:space-y-1">
+                        {preStudentItems.map((item) => (
+                            <SidebarLink key={item.href} item={item} />
+                        ))}
+                    </nav>
+                </div>
+
+                <div className="hidden border-t border-neutral-10 px-5 py-4 text-xs leading-relaxed text-neutral-40 lg:block">Lulus tes penempatan untuk membuka akses penuh.<br /><span className="jp-text text-primary-base">頑張って！</span></div>
+            </aside>
+        );
+    }
+
     return (
         <aside className="lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:flex-shrink-0 lg:flex-col lg:border-r lg:border-white/80 lg:bg-white/80 lg:backdrop-blur-xl">
             <div className="hidden h-16 items-center gap-3 border-b border-neutral-10 px-5 lg:flex">

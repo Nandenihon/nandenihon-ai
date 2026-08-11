@@ -463,7 +463,11 @@ async function promoteCandidate(connection: PoolConnection, preStudentId: number
     const [candidateRows] = await connection.query<RowDataPacket[]>("SELECT * FROM pre_students WHERE id = ? FOR UPDATE", [preStudentId]);
     const candidate = candidateRows[0];
     if (!candidate) throw new Error("CANDIDATE_NOT_FOUND");
-    if (candidate.promoted_user_id) return Number(candidate.promoted_user_id);
+    if (candidate.promoted_user_id) {
+        // Candidate may already have a 'pre_student' users row created at registration.
+        await connection.query("UPDATE users SET role = 'student' WHERE id = ? AND role = 'pre_student'", [candidate.promoted_user_id]);
+        return Number(candidate.promoted_user_id);
+    }
     const [existingUsers] = await connection.query<RowDataPacket[]>("SELECT id FROM users WHERE email = ? LIMIT 1", [candidate.email]);
     let userId = existingUsers[0] ? Number(existingUsers[0].id) : 0;
     if (!userId) {

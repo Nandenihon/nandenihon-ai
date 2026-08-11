@@ -34,7 +34,7 @@ function getProxiedAvatarUrl(value: unknown) {
 export async function GET(request: NextRequest) {
     try {
         const session = await getProfileSession(request);
-        if (!session || session.role !== "student") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        if (!session || (session.role !== "student" && session.role !== "pre_student")) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         const preStudentId = await resolvePreStudentId(session.id, session.email);
         if (preStudentId) {
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
     try {
         const session = await getProfileSession(request);
-        if (!session || session.role !== "student") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        if (!session || (session.role !== "student" && session.role !== "pre_student")) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const body = await request.json();
         const name = String(body.name ?? "").trim();
         const nickname = String(body.nickname ?? "").trim();

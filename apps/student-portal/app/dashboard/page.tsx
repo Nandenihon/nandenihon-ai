@@ -39,11 +39,45 @@ function SectionHeading({ title, description, href }: { title: string; descripti
     );
 }
 
+function PreStudentHome({ firstName }: { firstName: string }) {
+    return (
+        <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-8 sm:py-8">
+            <section className="relative overflow-hidden rounded-[1.75rem] bg-[#142d63] px-6 py-9 text-white shadow-[0_24px_60px_rgba(20,45,99,0.25)] sm:px-9">
+                <p className="mb-2 text-sm font-semibold text-primary-20">こんにちは, {firstName}! 👋</p>
+                <h1 className="text-2xl font-extrabold leading-tight sm:text-3xl">Selamat datang, calon siswa Nande Nihon</h1>
+                <p className="mt-3 max-w-xl text-sm leading-relaxed text-blue-100">
+                    Pilih kelas yang kamu minati dan kerjakan tes penempatannya. Jika lolos, kamu akan diarahkan ke halaman pembayaran.
+                </p>
+                <Link href="/dashboard/class-catalog" className="portal-focus mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-primary-90 shadow-lg transition-transform hover:-translate-y-0.5">
+                    Pilih kelas &amp; mulai tes →
+                </Link>
+            </section>
+            <section className="grid gap-4 sm:grid-cols-2">
+                <Link href="/dashboard/tests/history" className="portal-card portal-card-interactive portal-focus p-5">
+                    <p className="text-2xl" aria-hidden="true">📝</p>
+                    <p className="mt-2 font-bold text-neutral-80">Riwayat Tes</p>
+                    <p className="mt-1 text-xs text-neutral-50">Lihat semua tes yang sudah kamu kerjakan, termasuk yang belum lolos.</p>
+                </Link>
+                <Link href="/dashboard/payment" className="portal-card portal-card-interactive portal-focus p-5">
+                    <p className="text-2xl" aria-hidden="true">💳</p>
+                    <p className="mt-2 font-bold text-neutral-80">Pembayaran</p>
+                    <p className="mt-1 text-xs text-neutral-50">Sudah lolos tes? Upload bukti pembayaran di sini.</p>
+                </Link>
+            </section>
+        </div>
+    );
+}
+
 export default async function StudentDashboardPage() {
     const headersList = await headers();
     const studentName = headersList.get("x-user-name") ?? "Siswa";
     const studentId = Number(headersList.get("x-user-id") ?? "0");
+    const role = headersList.get("x-user-role");
     const firstName = studentName.split(" ")[0];
+
+    if (role === "pre_student") {
+        return <PreStudentHome firstName={firstName} />;
+    }
 
     const dashboard: StudentDashboard = await getStudentDashboardSafe(studentId);
     const recentGrades = await getStudentGrades(studentId, 3);

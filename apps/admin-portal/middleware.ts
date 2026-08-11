@@ -7,7 +7,7 @@ import { verifyToken, COOKIE_NAME } from "@/app/lib/auth";
  * - student                               → redirected to login (students use student-portal)
  * Redirects to login if no valid session cookie found.
  */
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Protect all dashboard routes
@@ -26,8 +26,8 @@ export async function proxy(request: NextRequest) {
             return response;
         }
 
-        // Students have no access to admin portal
-        if (session.role === "student") {
+        // Students and pre-students have no access to admin portal
+        if (session.role === "student" || session.role === "pre_student") {
             const response = NextResponse.redirect(new URL("/", request.url));
             response.cookies.delete(COOKIE_NAME);
             return response;
@@ -48,7 +48,7 @@ export async function proxy(request: NextRequest) {
         if (token) {
             const session = await verifyToken(token);
             if (session) {
-                if (session.role !== "student") {
+                if (session.role !== "student" && session.role !== "pre_student") {
                     return NextResponse.redirect(new URL("/dashboard", request.url));
                 }
             }

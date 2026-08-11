@@ -92,6 +92,17 @@ const navItems: NavItem[] = [
         ),
     },
     {
+        id: "test-payments",
+        label: "Verifikasi Pembayaran",
+        href: "/dashboard/test-payments",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="2" y="5" width="20" height="14" rx="2" />
+                <path d="M2 10h20" />
+            </svg>
+        ),
+    },
+    {
         id: "seminars",
         label: "Seminar",
         href: "/dashboard/seminars",
@@ -258,8 +269,8 @@ export const roleAllowedItems: Record<string, string[]> = {
     medkom: ["dashboard", "gallery", "testimonials", "team", "merchandise"],
     // Riset & Jurnal: Berita & Artikel
     riset_jurnal: ["dashboard", "news"],
-    // Admin 2: Siswa, Kelas, Soal & Ujian, Request Tool, Absensi Kelas
-    admin_2: ["dashboard", "students", "classes", "enrollment-classes", "questions", "tool-requests", "attendance"],
+    // Admin 2: Siswa, Kelas, Soal & Ujian, Request Tool, Absensi Kelas, Verifikasi Pembayaran
+    admin_2: ["dashboard", "students", "classes", "enrollment-classes", "questions", "tool-requests", "attendance", "test-payments"],
     // Admin 1: Tim, Seminar, Request Tool, Merchandise, Manajemen User
     admin_1: ["dashboard", "team", "seminars", "tool-requests", "merchandise", "users"],
 };
