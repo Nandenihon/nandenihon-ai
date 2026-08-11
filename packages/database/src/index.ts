@@ -24,10 +24,14 @@ export {
     addStudentAnswer,
     finishStudentTest,
     replaceQuestions,
+    insertQuestions,
+    parseQuestionCsv,
     type QuizStudent,
     type QuizQuestion,
     type QuizAnswer,
     type QuizLevel,
+    type ParsedQuizQuestionInput,
+    type ParsedQuizQuestionFile,
 } from "./quiz-mysql";
 
 export {
@@ -166,16 +170,8 @@ export {
 
 export {
     ensureAdmissionTestTables,
-    createClassTest,
-    updateClassTest,
-    publishClassTest,
-    closeClassTest,
-    findClassTestById,
-    listTestsForTeacher,
-    listPublishedTestsForClass,
-    listQuestionsForTest,
-    replaceTestQuestions,
-    parseQuestionCsv,
+    getClassTestInfo,
+    findLatestAttemptForClass,
     startAttempt,
     recordAnswer,
     finishAttempt,
@@ -189,12 +185,10 @@ export {
     verifyPayment,
     listPreStudentsOverview,
     findPreStudentDetail,
-    type ClassTestStatus,
     type AttemptStatus,
     type AttemptPassStatus,
     type PaymentStatus,
-    type ClassTestQuestionInput,
-    type ParsedQuestionFileResult,
+    type ClassTestInfo,
     type PreStudentOverviewStatus,
     type ListPreStudentsOptions,
 } from "./admission-test-mysql";

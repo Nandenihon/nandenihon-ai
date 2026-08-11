@@ -8,12 +8,15 @@ type ClassItem = {
     schedule: string; capacity: number; occupied_seats: number; available_seats: number;
     enrollment_open_at: string; enrollment_close_at: string; start_at: string; end_at: string;
     status: string; enrollment_closed: number; owner_teacher_id: number; teacher_name: string | null;
+    test_pass_score: number;
 };
 type TeacherOption = { id: number; name: string; email: string };
 
+const TEST_LEVELS = ["N5 Basic", "N5 Menengah", "N5 Lanjutan", "N4"];
+
 const EMPTY = {
-    code: "", name: "", description: "", level: "N5", program: "", schedule: "", capacity: 20,
-    enrollmentOpenAt: "", enrollmentCloseAt: "", startAt: "", endAt: "", ownerTeacherId: "",
+    code: "", name: "", description: "", level: TEST_LEVELS[0], program: "", schedule: "", capacity: 20,
+    enrollmentOpenAt: "", enrollmentCloseAt: "", startAt: "", endAt: "", ownerTeacherId: "", testPassScore: 60,
 };
 
 export default function EnrollmentClassManager({ teacherMode = false }: { teacherMode?: boolean }) {
@@ -59,7 +62,12 @@ export default function EnrollmentClassManager({ teacherMode = false }: { teache
         try {
             const response = await fetch("/api/enrollment/classes", {
                 method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...form, capacity: Number(form.capacity), ownerTeacherId: Number(form.ownerTeacherId) || undefined }),
+                body: JSON.stringify({
+                    ...form,
+                    capacity: Number(form.capacity),
+                    ownerTeacherId: Number(form.ownerTeacherId) || undefined,
+                    testPassScore: Number(form.testPassScore),
+                }),
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error);
@@ -91,9 +99,10 @@ export default function EnrollmentClassManager({ teacherMode = false }: { teache
                 <form onSubmit={create} className="grid gap-4 rounded-2xl bg-white p-6 shadow-sm md:grid-cols-2">
                     <Input label="Kode unik" value={form.code} onChange={(value) => setForm({ ...form, code: value })} />
                     <Input label="Nama kelas" value={form.name} onChange={(value) => setForm({ ...form, name: value })} />
-                    <Input label="Level" value={form.level} onChange={(value) => setForm({ ...form, level: value })} />
+                    <label className="text-sm font-semibold text-neutral-70">Level soal test<select required className="mt-2 w-full rounded-xl border border-neutral-20 px-4 py-3" value={form.level} onChange={(event) => setForm({ ...form, level: event.target.value })}>{TEST_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}</select></label>
                     <Input label="Program" value={form.program} onChange={(value) => setForm({ ...form, program: value })} />
                     <Input label="Kapasitas" type="number" value={String(form.capacity)} onChange={(value) => setForm({ ...form, capacity: Number(value) })} />
+                    <Input label="Nilai kelulusan (%)" type="number" value={String(form.testPassScore)} onChange={(value) => setForm({ ...form, testPassScore: Number(value) })} />
                     <label className="text-sm font-semibold text-neutral-70">Owner teacher<select required className="mt-2 w-full rounded-xl border border-neutral-20 px-4 py-3" value={form.ownerTeacherId} onChange={(event) => setForm({ ...form, ownerTeacherId: event.target.value })}><option value="">Pilih pengajar</option>{teacherOptions.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name} — {teacher.email}</option>)}</select></label>
                     <Input label="Enrollment dibuka" type="datetime-local" value={form.enrollmentOpenAt} onChange={(value) => setForm({ ...form, enrollmentOpenAt: value })} />
                     <Input label="Enrollment ditutup" type="datetime-local" value={form.enrollmentCloseAt} onChange={(value) => setForm({ ...form, enrollmentCloseAt: value })} />
@@ -114,7 +123,7 @@ export default function EnrollmentClassManager({ teacherMode = false }: { teache
                         <article key={item.id} className="rounded-2xl bg-white p-5 shadow-sm">
                             <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold text-primary-base">{item.code} · {item.level}</p><h2 className="mt-1 text-lg font-bold text-neutral-90">{item.name}</h2></div><span className="rounded-full bg-neutral-10 px-3 py-1 text-xs font-semibold">{item.status}</span></div>
                             <p className="mt-3 line-clamp-2 text-sm text-neutral-60">{item.description}</p>
-                            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-neutral-40">Teacher</dt><dd className="font-semibold">{item.teacher_name || `#${item.owner_teacher_id}`}</dd></div><div><dt className="text-neutral-40">Seat</dt><dd className="font-semibold">{item.occupied_seats}/{item.capacity}</dd></div><div><dt className="text-neutral-40">Jadwal</dt><dd className="font-semibold">{item.schedule}</dd></div><div><dt className="text-neutral-40">Enrollment</dt><dd className="font-semibold">{item.enrollment_closed ? "Ditutup" : "Dibuka"}</dd></div></dl>
+                            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-neutral-40">Teacher</dt><dd className="font-semibold">{item.teacher_name || `#${item.owner_teacher_id}`}</dd></div><div><dt className="text-neutral-40">Seat</dt><dd className="font-semibold">{item.occupied_seats}/{item.capacity}</dd></div><div><dt className="text-neutral-40">Jadwal</dt><dd className="font-semibold">{item.schedule}</dd></div><div><dt className="text-neutral-40">Enrollment</dt><dd className="font-semibold">{item.enrollment_closed ? "Ditutup" : "Dibuka"}</dd></div><div><dt className="text-neutral-40">Nilai kelulusan</dt><dd className="font-semibold">{item.test_pass_score}%</dd></div></dl>
                             <div className="mt-5 flex flex-wrap gap-2">
                                 <Link className="rounded-lg bg-primary-base px-3 py-2 text-xs font-semibold text-white" href={teacherMode ? `/dashboard/lecturer/classes/${item.id}` : `/dashboard/enrollment-classes/${item.id}`}>Buka workspace</Link>
                                 {item.status === "draft" && <Action onClick={() => transition(item.id, "publish")}>Publish</Action>}

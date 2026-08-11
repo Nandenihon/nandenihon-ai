@@ -6,7 +6,7 @@ import Link from "next/link";
 type Attempt = {
     id: number; status: string; score: number; pass_status: string;
     started_at: string; submitted_at: string | null;
-    test_title: string; class_name: string; class_code: string;
+    class_name: string; class_code: string;
 };
 
 const PASS_STATUS_LABEL: Record<string, { label: string; className: string }> = {
@@ -52,8 +52,8 @@ export default function TestHistoryPage() {
                         return (
                             <article key={attempt.id} className="portal-card flex items-center justify-between gap-4 p-5">
                                 <div className="min-w-0">
-                                    <p className="text-xs font-bold text-primary-base">{attempt.class_code} · {attempt.class_name}</p>
-                                    <p className="truncate font-bold text-neutral-80">{attempt.test_title}</p>
+                                    <p className="text-xs font-bold text-primary-base">{attempt.class_code}</p>
+                                    <p className="truncate font-bold text-neutral-80">Tes Penempatan {attempt.class_name}</p>
                                     <p className="text-xs text-neutral-40">
                                         {new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(new Date(attempt.submitted_at ?? attempt.started_at))}
                                     </p>

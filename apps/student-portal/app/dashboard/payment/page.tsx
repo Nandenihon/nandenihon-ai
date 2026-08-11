@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 type PassedAttempt = {
-    id: number; test_title: string; class_name: string; class_code: string; score: number;
+    id: number; class_name: string; class_code: string; score: number;
 };
 type Payment = {
     id: number; status: "pending" | "verified" | "rejected"; amount: number;
@@ -77,7 +77,7 @@ export default function PaymentPage() {
                     <div>
                         <p className="text-xs font-bold text-primary-base">{passedAttempt.class_code}</p>
                         <h2 className="text-lg font-black text-[#14213d]">{passedAttempt.class_name}</h2>
-                        <p className="text-sm text-neutral-50">Lolos tes &quot;{passedAttempt.test_title}&quot; dengan skor {passedAttempt.score}%</p>
+                        <p className="text-sm text-neutral-50">Lolos tes penempatan dengan skor {passedAttempt.score}%</p>
                     </div>
 
                     <div className="flex flex-col items-center rounded-2xl bg-neutral-5 p-6 text-center">

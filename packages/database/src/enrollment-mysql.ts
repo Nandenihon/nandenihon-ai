@@ -17,6 +17,9 @@ export interface PortalClassInput {
     startAt: string;
     endAt: string;
     ownerTeacherId: number;
+    testPassScore?: number;
+    testTimeLimitMinutes?: number;
+    testQuestionCount?: number;
 }
 
 type ApplicationRow = RowDataPacket & {
@@ -210,6 +213,11 @@ export async function ensureEnrollmentTables(): Promise<void> {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     await addColumnIfMissing("pre_students", "promoted_user_id", "promoted_user_id BIGINT UNSIGNED NULL AFTER registration_completed_at");
+    // Admission test config, per class. Questions are drawn from the shared `questions`
+    // bank (see quiz-mysql.ts) filtered by this class's `level` — see admission-test-mysql.ts.
+    await addColumnIfMissing("enrollment_classes", "test_pass_score", "test_pass_score INT UNSIGNED NOT NULL DEFAULT 60 AFTER level");
+    await addColumnIfMissing("enrollment_classes", "test_time_limit_minutes", "test_time_limit_minutes INT UNSIGNED NOT NULL DEFAULT 30 AFTER test_pass_score");
+    await addColumnIfMissing("enrollment_classes", "test_question_count", "test_question_count INT UNSIGNED NOT NULL DEFAULT 25 AFTER test_time_limit_minutes");
 }
 
 export async function createPortalClass(input: PortalClassInput, actorId: number) {
@@ -217,10 +225,12 @@ export async function createPortalClass(input: PortalClassInput, actorId: number
     const result = await queryMySQL<ResultSetHeader>(
         `INSERT INTO enrollment_classes
          (code, name, description, level, program, schedule, capacity,
-          enrollment_open_at, enrollment_close_at, start_at, end_at, owner_teacher_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          enrollment_open_at, enrollment_close_at, start_at, end_at, owner_teacher_id,
+          test_pass_score, test_time_limit_minutes, test_question_count)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [input.code.toUpperCase(), input.name, input.description, input.level, input.program, input.schedule,
-            input.capacity, input.enrollmentOpenAt, input.enrollmentCloseAt, input.startAt, input.endAt, input.ownerTeacherId]
+            input.capacity, input.enrollmentOpenAt, input.enrollmentCloseAt, input.startAt, input.endAt, input.ownerTeacherId,
+            input.testPassScore ?? 60, input.testTimeLimitMinutes ?? 30, input.testQuestionCount ?? 25]
     );
     await queryMySQL("INSERT INTO class_teachers (class_id, teacher_id, role) VALUES (?, ?, 'owner')", [result.insertId, input.ownerTeacherId]);
     await queryMySQL("INSERT INTO class_groups (class_id, name) VALUES (?, ?)", [result.insertId, `${input.name} — Main Group`]);
@@ -274,7 +284,8 @@ export async function updatePortalClass(classId: number, input: Partial<PortalCl
         code: "code", name: "name", description: "description", level: "level", program: "program",
         schedule: "schedule", capacity: "capacity", enrollmentOpenAt: "enrollment_open_at",
         enrollmentCloseAt: "enrollment_close_at", startAt: "start_at", endAt: "end_at",
-        ownerTeacherId: "owner_teacher_id",
+        ownerTeacherId: "owner_teacher_id", testPassScore: "test_pass_score",
+        testTimeLimitMinutes: "test_time_limit_minutes", testQuestionCount: "test_question_count",
     };
     const fields: string[] = [];
     const values: unknown[] = [];

@@ -2,7 +2,10 @@ import { queryMySQL, type ResultSetHeader, type RowDataPacket } from "./mysql-co
 
 export type TestStatus = "not_started" | "in_progress" | "completed";
 export type PassStatus = "pending" | "passed" | "failed";
-export type QuizLevel = "N5" | "N4";
+// "N5"/"N4" are kept for the legacy public landing-site quiz (apps/landing/app/class/*),
+// which still only ever passes those two literal levels. The other three are the
+// canonical levels used by the admin question bank / class-linked test flow.
+export type QuizLevel = "N5" | "N4" | "N5 Basic" | "N5 Menengah" | "N5 Lanjutan";
 
 export interface QuizAnswer {
     id: number;
@@ -40,6 +43,7 @@ export interface QuizQuestion {
     text: string;
     options: string[];
     correctAnswer: string;
+    points: number;
     timeLimit: number;
     category: string | null;
     level: QuizLevel;
@@ -82,6 +86,7 @@ interface QuestionRow extends RowDataPacket {
     text: string;
     options: string;
     correct_answer: string;
+    points: number;
     time_limit: number;
     category: string | null;
     level: QuizLevel;
@@ -124,6 +129,7 @@ function mapQuestion(row: QuestionRow): QuizQuestion {
         text: row.text,
         options,
         correctAnswer: row.correct_answer,
+        points: Number(row.points ?? 1),
         timeLimit: row.time_limit,
         category: row.category,
         level: row.level,
@@ -156,8 +162,19 @@ function mapStudent(row: StudentRow, answers: QuizAnswer[] = []): QuizStudent {
     };
 }
 
+let quizTablesEnsured = false;
+
 export async function ensureQuizTables(): Promise<void> {
-    return;
+    if (quizTablesEnsured) return;
+    const pointsColumn = await queryMySQL<RowDataPacket[]>("SHOW COLUMNS FROM questions LIKE 'points'");
+    if (pointsColumn.length === 0) {
+        await queryMySQL("ALTER TABLE questions ADD COLUMN points INT UNSIGNED NOT NULL DEFAULT 1 AFTER correct_answer");
+    }
+    const levelColumn = await queryMySQL<RowDataPacket[]>("SHOW COLUMNS FROM questions LIKE 'level'");
+    if (levelColumn[0] && String(levelColumn[0].Type).toLowerCase().startsWith("enum")) {
+        await queryMySQL("ALTER TABLE questions MODIFY COLUMN level VARCHAR(50) NOT NULL");
+    }
+    quizTablesEnsured = true;
 }
 
 async function getAnswersByStudentId(studentId: number): Promise<QuizAnswer[]> {
@@ -368,6 +385,7 @@ export async function replaceQuestions(questions: Array<{
     text: string;
     options: string[];
     correctAnswer: string;
+    points?: number;
     timeLimit: number;
     category?: string;
     level: QuizLevel;
@@ -377,12 +395,13 @@ export async function replaceQuestions(questions: Array<{
 
     for (const question of questions) {
         await queryMySQL<ResultSetHeader>(
-            `INSERT INTO questions (text, options, correct_answer, time_limit, category, level)
-             VALUES (?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO questions (text, options, correct_answer, points, time_limit, category, level)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [
                 question.text,
                 JSON.stringify(question.options),
                 question.correctAnswer,
+                question.points ?? 1,
                 question.timeLimit,
                 question.category || null,
                 question.level,
@@ -391,4 +410,113 @@ export async function replaceQuestions(questions: Array<{
     }
 
     return questions.length;
+}
+
+/** Appends questions to the bank without touching existing rows (unlike replaceQuestions). */
+export async function insertQuestions(questions: Array<ParsedQuizQuestionInput & { level: QuizLevel }>): Promise<number> {
+    await ensureQuizTables();
+    for (const question of questions) {
+        await queryMySQL<ResultSetHeader>(
+            `INSERT INTO questions (text, options, correct_answer, points, time_limit, category, level)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+                question.text,
+                JSON.stringify(question.options),
+                question.correctAnswer,
+                question.points,
+                question.timeLimit,
+                question.category || null,
+                question.level,
+            ]
+        );
+    }
+    return questions.length;
+}
+
+const CORRECT_OPTIONS = ["A", "B", "C", "D"] as const;
+const REQUIRED_CSV_HEADERS = ["question", "option_a", "option_b", "option_c", "option_d", "correct_option"];
+
+export interface ParsedQuizQuestionInput {
+    text: string;
+    options: string[];
+    correctAnswer: string;
+    points: number;
+    timeLimit: number;
+    category?: string;
+}
+
+export interface ParsedQuizQuestionFile {
+    questions: ParsedQuizQuestionInput[];
+    errors: string[];
+}
+
+function parseCsvLine(line: string): string[] {
+    const cells: string[] = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i += 1) {
+        const char = line[i];
+        if (inQuotes) {
+            if (char === '"') {
+                if (line[i + 1] === '"') { current += '"'; i += 1; } else { inQuotes = false; }
+            } else {
+                current += char;
+            }
+        } else if (char === '"') {
+            inQuotes = true;
+        } else if (char === ",") {
+            cells.push(current);
+            current = "";
+        } else {
+            current += char;
+        }
+    }
+    cells.push(current);
+    return cells.map((cell) => cell.trim());
+}
+
+/**
+ * CSV format (UTF-8, header row required; prepare in Excel then "Save As" .csv):
+ * question,option_a,option_b,option_c,option_d,correct_option,points,time_limit,category
+ * `points`, `time_limit`, and `category` are optional (default 1, 30, empty).
+ */
+export function parseQuestionCsv(content: string): ParsedQuizQuestionFile {
+    const lines = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n").filter((line) => line.trim().length > 0);
+    if (lines.length === 0) return { questions: [], errors: ["File kosong"] };
+
+    const header = parseCsvLine(lines[0]).map((cell) => cell.toLowerCase());
+    const missingHeaders = REQUIRED_CSV_HEADERS.filter((name) => !header.includes(name));
+    if (missingHeaders.length) {
+        return { questions: [], errors: [`Header wajib tidak ditemukan: ${missingHeaders.join(", ")}`] };
+    }
+
+    const columnIndex = (name: string) => header.indexOf(name);
+    const questions: ParsedQuizQuestionInput[] = [];
+    const errors: string[] = [];
+
+    for (let rowIndex = 1; rowIndex < lines.length; rowIndex += 1) {
+        const cells = parseCsvLine(lines[rowIndex]);
+        const rowLabel = `Baris ${rowIndex + 1}`;
+        const text = cells[columnIndex("question")] ?? "";
+        const options = ["option_a", "option_b", "option_c", "option_d"].map((name) => cells[columnIndex(name)] ?? "");
+        const correctAnswer = (cells[columnIndex("correct_option")] ?? "").toUpperCase();
+        const pointsIndex = columnIndex("points");
+        const pointsRaw = pointsIndex >= 0 ? cells[pointsIndex] : "";
+        const points = pointsRaw && Number.isFinite(Number(pointsRaw)) ? Number(pointsRaw) : 1;
+        const timeLimitIndex = columnIndex("time_limit");
+        const timeLimitRaw = timeLimitIndex >= 0 ? cells[timeLimitIndex] : "";
+        const timeLimit = timeLimitRaw && Number.isFinite(Number(timeLimitRaw)) ? Number(timeLimitRaw) : 30;
+        const categoryIndex = columnIndex("category");
+        const category = categoryIndex >= 0 ? cells[categoryIndex] : "";
+
+        if (!text.trim()) { errors.push(`${rowLabel}: kolom question kosong`); continue; }
+        if (options.some((option) => !option.trim())) { errors.push(`${rowLabel}: salah satu opsi jawaban kosong`); continue; }
+        if (!CORRECT_OPTIONS.includes(correctAnswer as (typeof CORRECT_OPTIONS)[number])) {
+            errors.push(`${rowLabel}: correct_option harus A, B, C, atau D`);
+            continue;
+        }
+        questions.push({ text, options, correctAnswer, points, timeLimit, category: category || undefined });
+    }
+
+    return { questions, errors };
 }

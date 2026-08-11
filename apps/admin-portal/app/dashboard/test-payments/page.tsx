@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 type Payment = {
     id: number; amount: number; proof_url: string; status: string;
-    score: number; test_title: string; class_name: string; class_code: string;
+    score: number; class_name: string; class_code: string;
     applicant_name: string; applicant_email: string; created_at: string;
 };
 

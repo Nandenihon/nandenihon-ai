@@ -2,67 +2,29 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getConnection, queryMySQL } from "./mysql-connection";
 import { ensureAssignmentTables } from "./assignment-mysql";
 
-export type ClassTestStatus = "draft" | "published" | "closed";
 export type AttemptStatus = "in_progress" | "completed";
 export type AttemptPassStatus = "pending" | "passed" | "failed";
 export type PaymentStatus = "pending" | "verified" | "rejected";
 
 const RETAKE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
-const CORRECT_OPTIONS = ["A", "B", "C", "D"] as const;
 
-export interface ClassTestQuestionInput {
-    text: string;
-    options: string[];
-    correctAnswer: string;
-    points?: number;
-}
-
-export interface ParsedQuestionFileResult {
-    questions: ClassTestQuestionInput[];
-    errors: string[];
-}
-
+/**
+ * Admission test attempts/answers/payments. Unlike the earlier design, there is
+ * no separate "class_tests" entity — a class's test is fully determined by its
+ * `enrollment_classes.level` (which questions are drawn from the shared
+ * `questions` bank managed on the "Soal Test" admin page) plus its
+ * `test_pass_score` / `test_time_limit_minutes` / `test_question_count` columns
+ * (see enrollment-mysql.ts). This keeps one shared question bank per level
+ * instead of requiring a teacher to author a distinct question set per class.
+ */
 export async function ensureAdmissionTestTables(): Promise<void> {
     await ensureAssignmentTables();
     await queryMySQL(`
-        CREATE TABLE IF NOT EXISTS class_tests (
-            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            class_id BIGINT UNSIGNED NOT NULL,
-            title VARCHAR(255) NOT NULL,
-            instructions TEXT NULL,
-            pass_score INT UNSIGNED NOT NULL DEFAULT 60,
-            time_limit_minutes INT UNSIGNED NOT NULL DEFAULT 30,
-            status ENUM('draft','published','closed') NOT NULL DEFAULT 'draft',
-            source_file_name VARCHAR(255) NULL,
-            source_file_url VARCHAR(1000) NULL,
-            created_by BIGINT UNSIGNED NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            INDEX idx_class_tests_class_status (class_id, status),
-            CONSTRAINT fk_class_tests_class FOREIGN KEY (class_id) REFERENCES enrollment_classes(id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-    await queryMySQL(`
-        CREATE TABLE IF NOT EXISTS class_test_questions (
-            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            test_id BIGINT UNSIGNED NOT NULL,
-            text TEXT NOT NULL,
-            options JSON NOT NULL,
-            correct_answer VARCHAR(10) NOT NULL,
-            points INT UNSIGNED NOT NULL DEFAULT 1,
-            position INT UNSIGNED NOT NULL DEFAULT 0,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            INDEX idx_class_test_questions_test (test_id, position),
-            CONSTRAINT fk_class_test_questions_test FOREIGN KEY (test_id) REFERENCES class_tests(id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-    await queryMySQL(`
         CREATE TABLE IF NOT EXISTS class_test_attempts (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            test_id BIGINT UNSIGNED NOT NULL,
             class_id BIGINT UNSIGNED NOT NULL,
             user_id BIGINT UNSIGNED NOT NULL,
+            question_ids JSON NOT NULL,
             status ENUM('in_progress','completed') NOT NULL DEFAULT 'in_progress',
             score INT UNSIGNED NOT NULL DEFAULT 0,
             pass_status ENUM('pending','passed','failed') NOT NULL DEFAULT 'pending',
@@ -71,8 +33,8 @@ export async function ensureAdmissionTestTables(): Promise<void> {
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             INDEX idx_class_test_attempts_user (user_id, created_at),
-            INDEX idx_class_test_attempts_test (test_id),
-            CONSTRAINT fk_class_test_attempts_test FOREIGN KEY (test_id) REFERENCES class_tests(id)
+            INDEX idx_class_test_attempts_class (class_id),
+            CONSTRAINT fk_class_test_attempts_class FOREIGN KEY (class_id) REFERENCES enrollment_classes(id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     await queryMySQL(`
@@ -84,7 +46,8 @@ export async function ensureAdmissionTestTables(): Promise<void> {
             is_correct TINYINT(1) NOT NULL DEFAULT 0,
             answered_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             UNIQUE KEY uq_class_test_attempt_question (attempt_id, question_id),
-            CONSTRAINT fk_class_test_answers_attempt FOREIGN KEY (attempt_id) REFERENCES class_test_attempts(id)
+            CONSTRAINT fk_class_test_answers_attempt FOREIGN KEY (attempt_id) REFERENCES class_test_attempts(id),
+            CONSTRAINT fk_class_test_answers_question FOREIGN KEY (question_id) REFERENCES questions(id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     await queryMySQL(`
@@ -107,6 +70,16 @@ export async function ensureAdmissionTestTables(): Promise<void> {
     `);
 }
 
+function parseIdArray(raw: unknown): number[] {
+    if (Array.isArray(raw)) return raw.map(Number);
+    try {
+        const parsed = JSON.parse(String(raw));
+        return Array.isArray(parsed) ? parsed.map(Number) : [];
+    } catch {
+        return [];
+    }
+}
+
 function parseOptions(raw: unknown): string[] {
     if (Array.isArray(raw)) return raw.map(String);
     try {
@@ -117,308 +90,63 @@ function parseOptions(raw: unknown): string[] {
     }
 }
 
-function mapQuestionRow(row: RowDataPacket) {
-    return {
-        id: Number(row.id),
-        testId: Number(row.test_id),
-        text: String(row.text),
-        options: parseOptions(row.options),
-        correctAnswer: String(row.correct_answer),
-        points: Number(row.points),
-        position: Number(row.position),
-    };
+export interface ClassTestInfo {
+    id: number;
+    code: string;
+    name: string;
+    level: string | null;
+    status: string;
+    testPassScore: number;
+    testTimeLimitMinutes: number;
+    testQuestionCount: number;
+    availableQuestions: number;
 }
 
-export async function createClassTest(input: {
-    classId: number;
-    createdBy: number;
-    title: string;
-    instructions?: string;
-    passScore?: number;
-    timeLimitMinutes?: number;
-}) {
-    await ensureAdmissionTestTables();
-    const result = await queryMySQL<ResultSetHeader>(
-        `INSERT INTO class_tests (class_id, title, instructions, pass_score, time_limit_minutes, created_by)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [
-            input.classId,
-            input.title,
-            input.instructions || null,
-            input.passScore ?? 60,
-            input.timeLimitMinutes ?? 30,
-            input.createdBy,
-        ]
-    );
-    return result.insertId;
-}
-
-export async function updateClassTest(
-    testId: number,
-    input: {
-        title?: string;
-        instructions?: string;
-        passScore?: number;
-        timeLimitMinutes?: number;
-        sourceFileName?: string;
-        sourceFileUrl?: string;
-    }
-) {
-    await ensureAdmissionTestTables();
-    const test = await findClassTestById(testId);
-    if (!test) throw new Error("TEST_NOT_FOUND");
-    await queryMySQL(
-        `UPDATE class_tests SET
-            title = COALESCE(?, title),
-            instructions = COALESCE(?, instructions),
-            pass_score = COALESCE(?, pass_score),
-            time_limit_minutes = COALESCE(?, time_limit_minutes),
-            source_file_name = COALESCE(?, source_file_name),
-            source_file_url = COALESCE(?, source_file_url)
-         WHERE id = ?`,
-        [
-            input.title ?? null,
-            input.instructions ?? null,
-            input.passScore ?? null,
-            input.timeLimitMinutes ?? null,
-            input.sourceFileName ?? null,
-            input.sourceFileUrl ?? null,
-            testId,
-        ]
-    );
-}
-
-export async function publishClassTest(testId: number, actorId: number) {
-    await ensureAdmissionTestTables();
-    const test = await findClassTestById(testId);
-    if (!test) throw new Error("TEST_NOT_FOUND");
-    const questionCount = await queryMySQL<RowDataPacket[]>(
-        "SELECT COUNT(*) AS total FROM class_test_questions WHERE test_id = ?",
-        [testId]
-    );
-    if (!questionCount[0] || Number(questionCount[0].total) === 0) throw new Error("TEST_HAS_NO_QUESTIONS");
-    await queryMySQL("UPDATE class_tests SET status = 'published' WHERE id = ?", [testId]);
-    await queryMySQL(
-        `INSERT INTO audit_logs (actor_id, action, entity_type, entity_id, after_data)
-         VALUES (?, 'class_test_published', 'class_test', ?, ?)`,
-        [actorId, testId, JSON.stringify({ status: "published" })]
-    );
-}
-
-export async function closeClassTest(testId: number, actorId: number) {
-    await ensureAdmissionTestTables();
-    const test = await findClassTestById(testId);
-    if (!test) throw new Error("TEST_NOT_FOUND");
-    await queryMySQL("UPDATE class_tests SET status = 'closed' WHERE id = ?", [testId]);
-    await queryMySQL(
-        `INSERT INTO audit_logs (actor_id, action, entity_type, entity_id, after_data)
-         VALUES (?, 'class_test_closed', 'class_test', ?, ?)`,
-        [actorId, testId, JSON.stringify({ status: "closed" })]
-    );
-}
-
-export async function findClassTestById(testId: number) {
-    await ensureAdmissionTestTables();
+/** Class + its derived test config (level-based shared question bank), for the info/rules screen. */
+export async function getClassTestInfo(classId: number): Promise<ClassTestInfo | null> {
     const rows = await queryMySQL<RowDataPacket[]>(
-        `SELECT t.*, c.name AS class_name, c.code AS class_code
-         FROM class_tests t JOIN enrollment_classes c ON c.id = t.class_id
-         WHERE t.id = ? LIMIT 1`,
-        [testId]
-    );
-    const row = rows[0];
-    if (!row) return null;
-    return {
-        id: Number(row.id),
-        classId: Number(row.class_id),
-        className: String(row.class_name),
-        classCode: String(row.class_code),
-        title: String(row.title),
-        instructions: row.instructions as string | null,
-        passScore: Number(row.pass_score),
-        timeLimitMinutes: Number(row.time_limit_minutes),
-        status: row.status as ClassTestStatus,
-        sourceFileName: row.source_file_name as string | null,
-        sourceFileUrl: row.source_file_url as string | null,
-        createdBy: Number(row.created_by),
-    };
-}
-
-/** actorId = null lists tests across all classes (admin view); a teacher id restricts to their own classes. */
-export async function listTestsForTeacher(actorId: number | null, classId?: number) {
-    await ensureAdmissionTestTables();
-    const teacherJoin = actorId
-        ? "JOIN class_teachers ct ON ct.class_id = t.class_id AND ct.teacher_id = ? AND ct.active = 1"
-        : "";
-    const params: unknown[] = actorId ? [actorId] : [];
-    if (classId) params.push(classId);
-    return queryMySQL<RowDataPacket[]>(
-        `SELECT t.*, c.name AS class_name, c.code AS class_code,
-                (SELECT COUNT(*) FROM class_test_questions q WHERE q.test_id = t.id) AS question_count,
-                (SELECT COUNT(*) FROM class_test_attempts a WHERE a.test_id = t.id) AS attempt_count
-         FROM class_tests t
-         JOIN enrollment_classes c ON c.id = t.class_id
-         ${teacherJoin}
-         ${classId ? "WHERE t.class_id = ?" : ""}
-         ORDER BY t.created_at DESC`,
-        params
-    );
-}
-
-export async function listPublishedTestsForClass(classId: number) {
-    await ensureAdmissionTestTables();
-    return queryMySQL<RowDataPacket[]>(
-        `SELECT id, class_id, title, instructions, pass_score, time_limit_minutes
-         FROM class_tests WHERE class_id = ? AND status = 'published' ORDER BY created_at DESC`,
+        `SELECT id, code, name, level, status, test_pass_score, test_time_limit_minutes, test_question_count
+         FROM enrollment_classes WHERE id = ? LIMIT 1`,
         [classId]
     );
-}
+    const cls = rows[0];
+    if (!cls) return null;
 
-export async function listQuestionsForTest(testId: number) {
-    await ensureAdmissionTestTables();
-    const rows = await queryMySQL<RowDataPacket[]>(
-        "SELECT * FROM class_test_questions WHERE test_id = ? ORDER BY position ASC, id ASC",
-        [testId]
-    );
-    return rows.map(mapQuestionRow);
-}
-
-function validateQuestionInput(question: ClassTestQuestionInput, index: number): string[] {
-    const errors: string[] = [];
-    const label = `Baris ${index + 1}`;
-    if (!question.text || !question.text.trim()) errors.push(`${label}: teks soal kosong`);
-    if (!Array.isArray(question.options) || question.options.filter((option) => option && option.trim()).length !== 4) {
-        errors.push(`${label}: harus memiliki tepat 4 opsi (A-D) yang tidak kosong`);
-    }
-    const correct = String(question.correctAnswer || "").trim().toUpperCase();
-    if (!CORRECT_OPTIONS.includes(correct as (typeof CORRECT_OPTIONS)[number])) {
-        errors.push(`${label}: correct_option harus salah satu dari A, B, C, D`);
-    }
-    return errors;
-}
-
-export async function replaceTestQuestions(
-    testId: number,
-    questions: ClassTestQuestionInput[]
-): Promise<{ count: number; errors: string[] }> {
-    await ensureAdmissionTestTables();
-    const test = await findClassTestById(testId);
-    if (!test) throw new Error("TEST_NOT_FOUND");
-
-    const errors = questions.flatMap((question, index) => validateQuestionInput(question, index));
-    if (errors.length) return { count: 0, errors };
-    if (questions.length === 0) throw new Error("NO_QUESTIONS_PROVIDED");
-
-    await queryMySQL("DELETE FROM class_test_questions WHERE test_id = ?", [testId]);
-    let position = 0;
-    for (const question of questions) {
-        await queryMySQL<ResultSetHeader>(
-            `INSERT INTO class_test_questions (test_id, text, options, correct_answer, points, position)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [
-                testId,
-                question.text.trim(),
-                JSON.stringify(question.options.map((option) => option.trim())),
-                question.correctAnswer.trim().toUpperCase(),
-                question.points ?? 1,
-                position,
-            ]
+    let availableQuestions = 0;
+    if (cls.level) {
+        const countRows = await queryMySQL<RowDataPacket[]>(
+            "SELECT COUNT(*) AS total FROM questions WHERE level = ?",
+            [cls.level]
         );
-        position += 1;
+        availableQuestions = Number(countRows[0]?.total || 0);
     }
-    return { count: questions.length, errors: [] };
+
+    return {
+        id: Number(cls.id),
+        code: String(cls.code),
+        name: String(cls.name),
+        level: cls.level as string | null,
+        status: String(cls.status),
+        testPassScore: Number(cls.test_pass_score),
+        testTimeLimitMinutes: Number(cls.test_time_limit_minutes),
+        testQuestionCount: Number(cls.test_question_count),
+        availableQuestions,
+    };
 }
 
-/**
- * CSV format (UTF-8, header row required):
- * question,option_a,option_b,option_c,option_d,correct_option,points
- * `points` is optional. No external CSV dependency is used since the format is fixed and small.
- */
-function parseCsvLine(line: string): string[] {
-    const cells: string[] = [];
-    let current = "";
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i += 1) {
-        const char = line[i];
-        if (inQuotes) {
-            if (char === '"') {
-                if (line[i + 1] === '"') {
-                    current += '"';
-                    i += 1;
-                } else {
-                    inQuotes = false;
-                }
-            } else {
-                current += char;
-            }
-        } else if (char === '"') {
-            inQuotes = true;
-        } else if (char === ",") {
-            cells.push(current);
-            current = "";
-        } else {
-            current += char;
-        }
-    }
-    cells.push(current);
-    return cells.map((cell) => cell.trim());
-}
-
-const REQUIRED_CSV_HEADERS = ["question", "option_a", "option_b", "option_c", "option_d", "correct_option"];
-
-export function parseQuestionCsv(content: string): ParsedQuestionFileResult {
-    const lines = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n").filter((line) => line.trim().length > 0);
-    if (lines.length === 0) return { questions: [], errors: ["File kosong"] };
-
-    const header = parseCsvLine(lines[0]).map((cell) => cell.toLowerCase());
-    const missingHeaders = REQUIRED_CSV_HEADERS.filter((name) => !header.includes(name));
-    if (missingHeaders.length) {
-        return { questions: [], errors: [`Header wajib tidak ditemukan: ${missingHeaders.join(", ")}`] };
-    }
-
-    const columnIndex = (name: string) => header.indexOf(name);
-    const questions: ClassTestQuestionInput[] = [];
-    const errors: string[] = [];
-
-    for (let rowIndex = 1; rowIndex < lines.length; rowIndex += 1) {
-        const cells = parseCsvLine(lines[rowIndex]);
-        const rowLabel = `Baris ${rowIndex + 1}`;
-        const text = cells[columnIndex("question")] ?? "";
-        const options = ["option_a", "option_b", "option_c", "option_d"].map((name) => cells[columnIndex(name)] ?? "");
-        const correctAnswer = (cells[columnIndex("correct_option")] ?? "").toUpperCase();
-        const pointsIndex = columnIndex("points");
-        const pointsRaw = pointsIndex >= 0 ? cells[pointsIndex] : "";
-        const points = pointsRaw && Number.isFinite(Number(pointsRaw)) ? Number(pointsRaw) : 1;
-
-        if (!text.trim()) {
-            errors.push(`${rowLabel}: kolom question kosong`);
-            continue;
-        }
-        if (options.some((option) => !option.trim())) {
-            errors.push(`${rowLabel}: salah satu opsi jawaban kosong`);
-            continue;
-        }
-        if (!CORRECT_OPTIONS.includes(correctAnswer as (typeof CORRECT_OPTIONS)[number])) {
-            errors.push(`${rowLabel}: correct_option harus A, B, C, atau D`);
-            continue;
-        }
-        questions.push({ text, options, correctAnswer, points });
-    }
-
-    return { questions, errors };
-}
-
-export async function findLatestAttemptForTest(userId: number, testId: number) {
+export async function findLatestAttemptForClass(userId: number, classId: number) {
     const rows = await queryMySQL<RowDataPacket[]>(
-        "SELECT * FROM class_test_attempts WHERE user_id = ? AND test_id = ? ORDER BY id DESC LIMIT 1",
-        [userId, testId]
+        "SELECT * FROM class_test_attempts WHERE user_id = ? AND class_id = ? ORDER BY id DESC LIMIT 1",
+        [userId, classId]
     );
     return rows[0] ?? null;
 }
 
-export async function startAttempt(userId: number, testId: number) {
+export async function startAttempt(userId: number, classId: number) {
     await ensureAdmissionTestTables();
-    const test = await findClassTestById(testId);
-    if (!test || test.status !== "published") throw new Error("TEST_NOT_AVAILABLE");
+    const classInfo = await getClassTestInfo(classId);
+    if (!classInfo || classInfo.status !== "published" || !classInfo.level) throw new Error("TEST_NOT_AVAILABLE");
+    if (classInfo.availableQuestions < classInfo.testQuestionCount) throw new Error("NOT_ENOUGH_QUESTIONS");
 
     const alreadyPassed = await queryMySQL<RowDataPacket[]>(
         "SELECT id FROM class_test_attempts WHERE user_id = ? AND pass_status = 'passed' LIMIT 1",
@@ -427,23 +155,29 @@ export async function startAttempt(userId: number, testId: number) {
     if (alreadyPassed[0]) throw new Error("ALREADY_PASSED");
 
     const inProgress = await queryMySQL<RowDataPacket[]>(
-        "SELECT id, test_id FROM class_test_attempts WHERE user_id = ? AND status = 'in_progress' LIMIT 1",
+        "SELECT id, class_id FROM class_test_attempts WHERE user_id = ? AND status = 'in_progress' LIMIT 1",
         [userId]
     );
     if (inProgress[0]) {
-        if (Number(inProgress[0].test_id) === testId) return Number(inProgress[0].id);
+        if (Number(inProgress[0].class_id) === classId) return Number(inProgress[0].id);
         throw new Error("ATTEMPT_IN_PROGRESS");
     }
 
-    const latest = await findLatestAttemptForTest(userId, testId);
+    const latest = await findLatestAttemptForClass(userId, classId);
     if (latest && latest.pass_status === "failed") {
         const elapsed = Date.now() - new Date(latest.submitted_at ?? latest.created_at).getTime();
         if (elapsed < RETAKE_COOLDOWN_MS) throw new Error("RETAKE_COOLDOWN");
     }
 
+    const questionRows = await queryMySQL<RowDataPacket[]>(
+        "SELECT id FROM questions WHERE level = ? ORDER BY RAND() LIMIT ?",
+        [classInfo.level, classInfo.testQuestionCount]
+    );
+    const questionIds = questionRows.map((row) => Number(row.id));
+
     const result = await queryMySQL<ResultSetHeader>(
-        "INSERT INTO class_test_attempts (test_id, class_id, user_id) VALUES (?, ?, ?)",
-        [testId, test.classId, userId]
+        "INSERT INTO class_test_attempts (class_id, user_id, question_ids) VALUES (?, ?, ?)",
+        [classId, userId, JSON.stringify(questionIds)]
     );
     return result.insertId;
 }
@@ -466,9 +200,12 @@ export async function recordAnswer(input: {
     const attempt = await findAttemptOwnedByUser(input.attemptId, input.userId);
     if (!attempt || attempt.status !== "in_progress") throw new Error("ATTEMPT_NOT_ACTIVE");
 
+    const questionIds = parseIdArray(attempt.question_ids);
+    if (!questionIds.includes(input.questionId)) throw new Error("QUESTION_NOT_FOUND");
+
     const questionRows = await queryMySQL<RowDataPacket[]>(
-        "SELECT * FROM class_test_questions WHERE id = ? AND test_id = ? LIMIT 1",
-        [input.questionId, attempt.test_id]
+        "SELECT correct_answer FROM questions WHERE id = ? LIMIT 1",
+        [input.questionId]
     );
     const question = questionRows[0];
     if (!question) throw new Error("QUESTION_NOT_FOUND");
@@ -491,22 +228,23 @@ export async function finishAttempt(attemptId: number, userId: number) {
     const attempt = await findAttemptOwnedByUser(attemptId, userId);
     if (!attempt || attempt.status !== "in_progress") throw new Error("ATTEMPT_NOT_ACTIVE");
 
-    const test = await findClassTestById(Number(attempt.test_id));
-    if (!test) throw new Error("TEST_NOT_FOUND");
+    const classInfo = await getClassTestInfo(Number(attempt.class_id));
+    if (!classInfo) throw new Error("CLASS_NOT_FOUND");
 
+    const questionIds = parseIdArray(attempt.question_ids);
     const totals = await queryMySQL<RowDataPacket[]>(
         `SELECT
-            (SELECT COALESCE(SUM(q.points), 0) FROM class_test_questions q WHERE q.test_id = ?) AS max_points,
+            (SELECT COALESCE(SUM(q.points), 0) FROM questions q WHERE q.id IN (${questionIds.map(() => "?").join(",") || "NULL"})) AS max_points,
             (SELECT COALESCE(SUM(q.points), 0)
              FROM class_test_answers a
-             JOIN class_test_questions q ON q.id = a.question_id
+             JOIN questions q ON q.id = a.question_id
              WHERE a.attempt_id = ? AND a.is_correct = 1) AS earned_points`,
-        [attempt.test_id, attemptId]
+        [...questionIds, attemptId]
     );
     const maxPoints = Number(totals[0]?.max_points || 0);
     const earnedPoints = Number(totals[0]?.earned_points || 0);
     const score = maxPoints > 0 ? Math.round((earnedPoints / maxPoints) * 100) : 0;
-    const passStatus: AttemptPassStatus = score >= test.passScore ? "passed" : "failed";
+    const passStatus: AttemptPassStatus = score >= classInfo.testPassScore ? "passed" : "failed";
 
     await queryMySQL(
         `UPDATE class_test_attempts
@@ -521,9 +259,8 @@ export async function finishAttempt(attemptId: number, userId: number) {
 export async function listAttemptsForUser(userId: number) {
     await ensureAdmissionTestTables();
     return queryMySQL<RowDataPacket[]>(
-        `SELECT a.*, t.title AS test_title, c.name AS class_name, c.code AS class_code
+        `SELECT a.*, c.name AS class_name, c.code AS class_code
          FROM class_test_attempts a
-         JOIN class_tests t ON t.id = a.test_id
          JOIN enrollment_classes c ON c.id = a.class_id
          WHERE a.user_id = ? ORDER BY a.created_at DESC`,
         [userId]
@@ -534,43 +271,57 @@ export async function findAttemptWithQuestions(attemptId: number, userId: number
     await ensureAdmissionTestTables();
     const attempt = await findAttemptOwnedByUser(attemptId, userId);
     if (!attempt) return null;
-    const test = await findClassTestById(Number(attempt.test_id));
-    if (!test) return null;
-    const questions = await listQuestionsForTest(Number(attempt.test_id));
+    const classInfo = await getClassTestInfo(Number(attempt.class_id));
+    if (!classInfo) return null;
+
+    const questionIds = parseIdArray(attempt.question_ids);
+    const questionRows = questionIds.length
+        ? await queryMySQL<RowDataPacket[]>(
+            `SELECT * FROM questions WHERE id IN (${questionIds.map(() => "?").join(",")})`,
+            questionIds
+        )
+        : [];
+    const questionById = new Map(questionRows.map((row) => [Number(row.id), row]));
+
     const answers = await queryMySQL<RowDataPacket[]>(
         "SELECT question_id, selected_value FROM class_test_answers WHERE attempt_id = ?",
         [attemptId]
     );
     const answerMap = new Map(answers.map((row) => [Number(row.question_id), row.selected_value as string | null]));
+
     return {
         attempt: {
             id: Number(attempt.id),
-            testId: Number(attempt.test_id),
             classId: Number(attempt.class_id),
             status: attempt.status as AttemptStatus,
             score: Number(attempt.score),
             passStatus: attempt.pass_status as AttemptPassStatus,
             startedAt: attempt.started_at as Date,
             submittedAt: attempt.submitted_at as Date | null,
-            testTitle: test.title,
-            passScore: test.passScore,
-            timeLimitMinutes: test.timeLimitMinutes,
+            className: classInfo.name,
+            passScore: classInfo.testPassScore,
+            timeLimitMinutes: classInfo.testTimeLimitMinutes,
         },
-        questions: questions.map((question) => ({
-            ...question,
-            // Never leak the correct answer to an in-progress attempt.
-            correctAnswer: attempt.status === "completed" ? question.correctAnswer : undefined,
-            selectedValue: answerMap.get(question.id) ?? null,
-        })),
+        questions: questionIds
+            .map((id) => questionById.get(id))
+            .filter((row): row is RowDataPacket => Boolean(row))
+            .map((row) => ({
+                id: Number(row.id),
+                text: String(row.text),
+                options: parseOptions(row.options),
+                points: Number(row.points ?? 1),
+                // Never leak the correct answer to an in-progress attempt.
+                correctAnswer: attempt.status === "completed" ? String(row.correct_answer) : undefined,
+                selectedValue: answerMap.get(Number(row.id)) ?? null,
+            })),
     };
 }
 
 export async function findPassedAttemptWithoutPayment(userId: number) {
     await ensureAdmissionTestTables();
     const rows = await queryMySQL<RowDataPacket[]>(
-        `SELECT a.*, t.title AS test_title, c.name AS class_name, c.code AS class_code
+        `SELECT a.*, c.name AS class_name, c.code AS class_code
          FROM class_test_attempts a
-         JOIN class_tests t ON t.id = a.test_id
          JOIN enrollment_classes c ON c.id = a.class_id
          WHERE a.user_id = ? AND a.pass_status = 'passed'
            AND NOT EXISTS (
@@ -618,11 +369,10 @@ export async function createPayment(input: { attemptId: number; userId: number; 
 export async function listPendingPayments() {
     await ensureAdmissionTestTables();
     return queryMySQL<RowDataPacket[]>(
-        `SELECT p.*, a.score, a.test_id, t.title AS test_title, c.name AS class_name, c.code AS class_code,
+        `SELECT p.*, a.score, c.name AS class_name, c.code AS class_code,
                 u.username AS applicant_name, u.email AS applicant_email
          FROM class_test_payments p
          JOIN class_test_attempts a ON a.id = p.attempt_id
-         JOIN class_tests t ON t.id = a.test_id
          JOIN enrollment_classes c ON c.id = p.class_id
          JOIN users u ON u.id = p.user_id
          WHERE p.status = 'pending' ORDER BY p.created_at ASC`
@@ -769,11 +519,10 @@ export async function listPreStudentsOverview(options: ListPreStudentsOptions = 
     const joins = `
         LEFT JOIN users u ON u.id = ps.promoted_user_id
         LEFT JOIN (
-            SELECT a.user_id, a.score, a.pass_status, a.submitted_at, c.name AS class_name, c.code AS class_code, t.title AS test_title,
+            SELECT a.user_id, a.score, a.pass_status, a.submitted_at, c.name AS class_name, c.code AS class_code,
                    ROW_NUMBER() OVER (PARTITION BY a.user_id ORDER BY a.created_at DESC) AS rn
             FROM class_test_attempts a
             JOIN enrollment_classes c ON c.id = a.class_id
-            JOIN class_tests t ON t.id = a.test_id
         ) latest_attempt ON latest_attempt.user_id = ps.promoted_user_id AND latest_attempt.rn = 1
         LEFT JOIN (
             SELECT user_id, COUNT(*) AS total_attempts, SUM(pass_status = 'passed') AS passed_attempts
@@ -799,7 +548,7 @@ export async function listPreStudentsOverview(options: ListPreStudentsOptions = 
                 COALESCE(u.role, 'pre_student') AS current_role,
                 latest_attempt.score AS latest_score, latest_attempt.pass_status AS latest_pass_status,
                 latest_attempt.class_name AS latest_class_name, latest_attempt.class_code AS latest_class_code,
-                latest_attempt.test_title AS latest_test_title, latest_attempt.submitted_at AS latest_attempt_at,
+                latest_attempt.submitted_at AS latest_attempt_at,
                 COALESCE(attempt_counts.total_attempts, 0) AS total_attempts,
                 COALESCE(attempt_counts.passed_attempts, 0) AS passed_attempts,
                 latest_payment.status AS latest_payment_status, latest_payment.amount AS latest_payment_amount,
@@ -831,9 +580,8 @@ export async function findPreStudentDetail(preStudentId: number) {
     const [attempts, payments] = userId
         ? await Promise.all([
             queryMySQL<RowDataPacket[]>(
-                `SELECT a.*, t.title AS test_title, c.name AS class_name, c.code AS class_code
+                `SELECT a.*, c.name AS class_name, c.code AS class_code
                  FROM class_test_attempts a
-                 JOIN class_tests t ON t.id = a.test_id
                  JOIN enrollment_classes c ON c.id = a.class_id
                  WHERE a.user_id = ? ORDER BY a.created_at DESC`,
                 [userId]

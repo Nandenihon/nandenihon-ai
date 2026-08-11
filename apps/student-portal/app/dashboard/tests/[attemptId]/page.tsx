@@ -8,7 +8,7 @@ type Question = { id: number; text: string; options: string[]; selectedValue: st
 type Attempt = {
     id: number; status: "in_progress" | "completed"; score: number;
     passStatus: "pending" | "passed" | "failed"; startedAt: string;
-    testTitle: string; passScore: number; timeLimitMinutes: number;
+    className: string; passScore: number; timeLimitMinutes: number;
 };
 
 const OPTION_LETTERS = ["A", "B", "C", "D"];
@@ -94,7 +94,7 @@ export default function TestRunnerPage() {
     return (
         <div className="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-8">
             <section className="portal-card p-6">
-                <h1 className="text-xl font-black text-[#14213d]">{attempt.testTitle}</h1>
+                <h1 className="text-xl font-black text-[#14213d]">Tes Penempatan {attempt.className}</h1>
                 <p className="mt-1 text-sm text-neutral-50">{answeredCount}/{questions.length} soal terjawab · batas waktu {attempt.timeLimitMinutes} menit</p>
             </section>
             {error && <div role="alert" className="rounded-xl bg-error-10 p-4 text-error-base">{error}</div>}

@@ -120,7 +120,6 @@ export default async function PreStudentDetailPage({ params }: DetailPageProps) 
                         <thead className="bg-neutral-0 border-b border-neutral-20">
                             <tr>
                                 <th className="text-left text-xs font-semibold text-neutral-50 px-6 py-3">Kelas</th>
-                                <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3">Tes</th>
                                 <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3">Nilai</th>
                                 <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3">Status</th>
                                 <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3">Selesai</th>
@@ -128,14 +127,13 @@ export default async function PreStudentDetailPage({ params }: DetailPageProps) 
                         </thead>
                         <tbody className="divide-y divide-neutral-10">
                             {attempts.length === 0 ? (
-                                <tr><td colSpan={5} className="px-6 py-8 text-center text-sm text-neutral-50">Belum ada tes yang dikerjakan.</td></tr>
+                                <tr><td colSpan={4} className="px-6 py-8 text-center text-sm text-neutral-50">Belum ada tes yang dikerjakan.</td></tr>
                             ) : (
                                 attempts.map((attempt) => {
                                     const badge = PASS_STATUS_BADGE[attempt.pass_status as string] ?? PASS_STATUS_BADGE.pending;
                                     return (
                                         <tr key={attempt.id} className="hover:bg-neutral-0 transition-colors">
                                             <td className="px-6 py-3 text-sm font-semibold text-neutral-80">{attempt.class_code} · {attempt.class_name}</td>
-                                            <td className="px-4 py-3 text-sm text-neutral-60">{attempt.test_title}</td>
                                             <td className="px-4 py-3 text-sm font-bold text-neutral-80">{attempt.status === "completed" ? `${attempt.score}%` : "-"}</td>
                                             <td className="px-4 py-3"><span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badge.className}`}>{badge.label}</span></td>
                                             <td className="px-4 py-3 text-sm text-neutral-60">{formatDateTime(attempt.submitted_at as Date | null)}</td>
