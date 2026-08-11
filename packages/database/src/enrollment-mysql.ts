@@ -581,6 +581,23 @@ export async function acceptApplication(applicationId: number, actorId: number, 
     }
 }
 
+/** A student's own active class enrollments, for the student-portal learning dashboard. */
+export async function listActiveClassMembershipsForUser(userId: number) {
+    await ensureEnrollmentTables();
+    return queryMySQL<RowDataPacket[]>(
+        `SELECT m.id AS membership_id, m.joined_at,
+                c.id AS class_id, c.code, c.name, c.description, c.level, c.program, c.schedule,
+                c.start_at, c.end_at, c.status AS class_status,
+                u.username AS teacher_name, u.email AS teacher_email
+         FROM class_memberships m
+         JOIN enrollment_classes c ON c.id = m.class_id
+         LEFT JOIN users u ON u.id = c.owner_teacher_id
+         WHERE m.user_id = ? AND m.status = 'active'
+         ORDER BY m.joined_at DESC`,
+        [userId]
+    );
+}
+
 export async function listClassMembers(classId: number) {
     await ensureEnrollmentTables();
     return queryMySQL<RowDataPacket[]>(

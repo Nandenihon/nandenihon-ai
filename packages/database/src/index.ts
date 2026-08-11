@@ -140,6 +140,7 @@ export {
     reviewApplication,
     rejectApplication,
     acceptApplication,
+    listActiveClassMembershipsForUser,
     listClassMembers,
     listClassTeachers,
     assignClassTeacher,

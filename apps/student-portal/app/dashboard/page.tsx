@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import type { StudentDashboard } from "@repo/database";
+import { listActiveClassMembershipsForUser, type StudentDashboard } from "@repo/database";
 import CourseCard from "../components/CourseCard";
 import {
     getAttendanceSummary,
@@ -9,6 +9,19 @@ import {
     getStudentDashboardSafe,
     getStudentGrades,
 } from "./dashboard-data";
+
+function formatDate(value: string | Date | null): string {
+    if (!value) return "-";
+    return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeZone: "Asia/Jakarta" }).format(new Date(value));
+}
+
+async function getMyClasses(userId: number) {
+    try {
+        return await listActiveClassMembershipsForUser(userId);
+    } catch {
+        return [];
+    }
+}
 
 export const dynamic = "force-dynamic";
 
@@ -82,9 +95,11 @@ export default async function StudentDashboardPage() {
     const dashboard: StudentDashboard = await getStudentDashboardSafe(studentId);
     const recentGrades = await getStudentGrades(studentId, 3);
     const leaderboard = await getDailyQuizLeaderboard(3);
+    const myClasses = await getMyClasses(studentId);
     const attendance = getAttendanceSummary(dashboard);
     const schedule = getSchedulePreview(dashboard);
     const activeCourse = dashboard.enrolledCourses.find((course) => course.enrollmentStatus !== "completed") ?? dashboard.enrolledCourses[0];
+    const primaryClass = myClasses[0];
     const average = recentGrades.length
         ? Math.round(recentGrades.reduce((total, grade) => total + grade.score, 0) / recentGrades.length)
         : 0;
@@ -104,6 +119,13 @@ export default async function StudentDashboardPage() {
                                 <Link href={`/courses/${activeCourse.id}`} className="portal-focus mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-primary-90 shadow-lg transition-transform hover:-translate-y-0.5">
                                     <span aria-hidden="true">▶</span> Lanjutkan belajar
                                 </Link>
+                            </>
+                        ) : primaryClass ? (
+                            <>
+                                <h1 className="max-w-2xl text-2xl font-extrabold leading-tight sm:text-3xl">Selamat datang di kelas {primaryClass.name}!</h1>
+                                <p className="mt-3 max-w-xl text-sm leading-relaxed text-blue-100">
+                                    Kamu resmi terdaftar di <strong className="text-white">{primaryClass.name}</strong> ({primaryClass.level}). Materi belajar akan ditambahkan oleh pengajarmu.
+                                </p>
                             </>
                         ) : (
                             <>
@@ -129,6 +151,36 @@ export default async function StudentDashboardPage() {
                 <MetricCard icon="学" label="Progres belajar" value={`${dashboard.overallProgressPercent}%`} detail={`${dashboard.enrolledCourses.length} kursus terdaftar`} accent="bg-primary-10 text-primary-base" />
                 <MetricCard icon="✓" label="Kehadiran" value={`${attendance.percent}%`} detail={`${attendance.present} dari ${attendance.total} sesi`} accent="bg-success-10 text-success-100" />
                 <MetricCard icon="★" label="Rata-rata nilai" value={recentGrades.length ? String(average) : "–"} detail={recentGrades.length ? `${recentGrades.length} penilaian terbaru` : "Belum ada penilaian"} accent="bg-warning-10 text-warning-100" />
+            </section>
+
+            <section>
+                <SectionHeading title="Kelas Saya" description="Kelas yang sedang kamu ikuti setelah lolos tes penempatan." />
+                {myClasses.length ? (
+                    <div className="grid gap-5 sm:grid-cols-2">
+                        {myClasses.map((cls) => (
+                            <article key={cls.membership_id} className="portal-card overflow-hidden">
+                                <div className="h-2 bg-primary-base" />
+                                <div className="p-6">
+                                    <p className="text-xs font-bold text-primary-base">{cls.code} · {cls.level}</p>
+                                    <h3 className="mt-1 text-lg font-black text-[#14213d]">{cls.name}</h3>
+                                    {cls.description && <p className="mt-2 line-clamp-2 text-sm text-neutral-60">{cls.description}</p>}
+                                    <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                                        <div><dt className="text-neutral-40">Program</dt><dd className="font-semibold">{cls.program}</dd></div>
+                                        <div><dt className="text-neutral-40">Pengajar</dt><dd className="font-semibold">{cls.teacher_name || "Nande Nihon"}</dd></div>
+                                        <div><dt className="text-neutral-40">Jadwal</dt><dd className="font-semibold">{cls.schedule}</dd></div>
+                                        <div><dt className="text-neutral-40">Periode</dt><dd className="font-semibold">{formatDate(cls.start_at)} – {formatDate(cls.end_at)}</dd></div>
+                                    </dl>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="portal-card p-10 text-center">
+                        <div className="text-4xl" aria-hidden="true">🏫</div>
+                        <h3 className="mt-3 font-bold text-neutral-80">Belum terdaftar di kelas manapun</h3>
+                        <p className="mt-1 text-sm text-neutral-50">Hubungi admin jika kamu merasa seharusnya sudah aktif di sebuah kelas.</p>
+                    </div>
+                )}
             </section>
 
             <section>
