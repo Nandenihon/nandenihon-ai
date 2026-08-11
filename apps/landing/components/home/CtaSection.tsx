@@ -7,6 +7,11 @@ import {
 import { GraduationCap, MessageCircleHeart } from "lucide-react";
 import Link from "next/link";
 
+const studentPortalUrl = (
+  process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL ||
+  (process.env.NODE_ENV === "development" ? "http://localhost:3001" : "https://student.nandenihon.com")
+).replace(/\/$/, "");
+
 function CtaSection({
   t = homeTranslations.id.cta,
   language = defaultLanguage,
@@ -29,14 +34,13 @@ function CtaSection({
           </p>
         </div>
         <div className="flex flex-col gap-4 w-full lg:w-auto">
-          <Link
-            href={withLanguage("/class/register")}
-            prefetch={false}
+          <a
+            href={`${studentPortalUrl}/register`}
             className="btn btn-shine cta-pulse justify-center w-full sm:w-auto text-nowrap"
           >
             <GraduationCap className="w-6 h-6" />
             {t.join}
-          </Link>
+          </a>
           <Link
             href={withLanguage("/information/konseling/register")}
             prefetch={false}

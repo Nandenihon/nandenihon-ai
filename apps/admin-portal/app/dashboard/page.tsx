@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { queryMySQL, type RowDataPacket } from "@repo/database";
+import { ensureStudentsTable, queryMySQL, type RowDataPacket } from "@repo/database";
 
 interface DashboardStats {
     totalStudents: number;
@@ -27,9 +27,10 @@ interface UpcomingClass {
 
 async function getDashboardStats(): Promise<DashboardStats> {
     try {
+        await ensureStudentsTable();
         const [studentsRow, classesRow, seminarsRow, testimoniesRow] =
             await Promise.all([
-                queryMySQL<RowDataPacket[]>("SELECT COUNT(*) as total FROM students"),
+                queryMySQL<RowDataPacket[]>("SELECT COUNT(*) as total FROM students WHERE user_id IS NOT NULL"),
                 queryMySQL<RowDataPacket[]>("SELECT COUNT(*) as total FROM `class`"),
                 queryMySQL<RowDataPacket[]>(
                     "SELECT COUNT(*) as total FROM seminar WHERE status = 'ongoing' OR status = 'upcoming'"
@@ -50,18 +51,20 @@ async function getDashboardStats(): Promise<DashboardStats> {
 
 async function getRecentStudents(): Promise<RecentStudent[]> {
     try {
+        await ensureStudentsTable();
         const rows = await queryMySQL<RowDataPacket[]>(
-            `SELECT id, full_name, email, level, test_status
+            `SELECT id, full_name, email, japanese_level
              FROM students
-             ORDER BY created_at DESC
+             WHERE user_id IS NOT NULL
+             ORDER BY activated_at DESC
              LIMIT 5`
         );
         return rows.map((row) => ({
             id: Number(row.id),
             name: String(row.full_name),
             email: String(row.email),
-            level: row.level ? String(row.level) : "-",
-            status: row.test_status === "completed" ? "Selesai" : "Aktif",
+            level: row.japanese_level ? String(row.japanese_level) : "-",
+            status: "Aktif",
         }));
     } catch {
         return [];

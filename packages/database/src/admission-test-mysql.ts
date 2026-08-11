@@ -70,6 +70,67 @@ export async function ensureAdmissionTestTables(): Promise<void> {
     `);
 }
 
+let studentsTableEnsured = false;
+
+/**
+ * Repurposes the legacy `students` table (previously owned by the retired
+ * public landing-page placement quiz — see quiz-mysql.ts history) into the
+ * active-student profile record for this class-based admission flow. The old
+ * live-test columns (test_status/pass_status/score/payment_proof_url/
+ * registration_complete/test_started_at) are dropped since that quiz flow no
+ * longer runs; test results now live in class_test_attempts and payments in
+ * class_test_payments. `user_id` is the new source of truth linking a row
+ * here back to the login identity in `users`.
+ */
+export async function ensureStudentsTable(): Promise<void> {
+    if (studentsTableEnsured) return;
+    const columns = await queryMySQL<RowDataPacket[]>("SHOW COLUMNS FROM students");
+    const names = new Set(columns.map((column) => String(column.Field)));
+
+    for (const column of ["test_status", "pass_status", "score", "payment_proof_url", "registration_complete", "test_started_at"]) {
+        if (names.has(column)) await queryMySQL(`ALTER TABLE students DROP COLUMN \`${column}\``);
+    }
+    if (!names.has("user_id")) {
+        await queryMySQL("ALTER TABLE students ADD COLUMN user_id BIGINT UNSIGNED NULL AFTER id");
+        await queryMySQL("ALTER TABLE students ADD UNIQUE KEY uq_students_user_id (user_id)");
+    }
+    if (!names.has("pre_student_id")) {
+        await queryMySQL("ALTER TABLE students ADD COLUMN pre_student_id BIGINT UNSIGNED NULL AFTER user_id");
+    }
+    if (!names.has("activated_at")) {
+        await queryMySQL("ALTER TABLE students ADD COLUMN activated_at DATETIME NULL AFTER pre_student_id");
+    }
+    studentsTableEnsured = true;
+}
+
+/** Upserts the active-student profile row when a payment is verified (see verifyPayment). */
+async function upsertStudentRecord(
+    connection: Awaited<ReturnType<typeof getConnection>>,
+    input: { userId: number }
+): Promise<void> {
+    const [preStudentRows] = await connection.query<RowDataPacket[]>(
+        `SELECT id, full_name, nickname, email, phone_number, domicile, motivation, japanese_level
+         FROM pre_students WHERE promoted_user_id = ? LIMIT 1`,
+        [input.userId]
+    );
+    const preStudent = preStudentRows[0];
+    if (!preStudent) return; // Nothing to mirror (e.g. account promoted via a different path).
+
+    await connection.query(
+        `INSERT INTO students (user_id, pre_student_id, full_name, email, nickname, whatsapp, domicile, motivation, japanese_level, activated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())
+         ON DUPLICATE KEY UPDATE
+             pre_student_id = VALUES(pre_student_id), full_name = VALUES(full_name), email = VALUES(email),
+             nickname = VALUES(nickname), whatsapp = VALUES(whatsapp), domicile = VALUES(domicile),
+             motivation = VALUES(motivation), japanese_level = VALUES(japanese_level),
+             activated_at = COALESCE(students.activated_at, VALUES(activated_at))`,
+        [
+            input.userId, preStudent.id, preStudent.full_name, preStudent.email, preStudent.nickname,
+            preStudent.phone_number, preStudent.domicile, preStudent.motivation, preStudent.japanese_level,
+        ]
+    );
+}
+
 function parseIdArray(raw: unknown): number[] {
     if (Array.isArray(raw)) return raw.map(Number);
     try {
@@ -402,6 +463,7 @@ export async function rejectPayment(paymentId: number, actorId: number, reason: 
  */
 export async function verifyPayment(paymentId: number, actorId: number) {
     await ensureAdmissionTestTables();
+    await ensureStudentsTable();
     const connection = await getConnection();
     try {
         await connection.beginTransaction();
@@ -456,6 +518,7 @@ export async function verifyPayment(paymentId: number, actorId: number) {
             await connection.query("UPDATE enrollment_classes SET occupied_seats = occupied_seats + 1 WHERE id = ?", [payment.class_id]);
         }
         await connection.query("UPDATE users SET role = 'student' WHERE id = ? AND role = 'pre_student'", [payment.user_id]);
+        await upsertStudentRecord(connection, { userId: Number(payment.user_id) });
         await connection.query(
             "UPDATE class_test_payments SET status = 'verified', verified_by = ?, verified_at = UTC_TIMESTAMP() WHERE id = ?",
             [actorId, paymentId]

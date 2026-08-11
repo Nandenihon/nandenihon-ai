@@ -1,16 +1,18 @@
 import { NextResponse } from "next/server";
-import { queryMySQL, type RowDataPacket } from "@repo/database";
+import { ensureStudentsTable, queryMySQL, type RowDataPacket } from "@repo/database";
 
 /**
  * GET /api/dashboard/recent-students
- * Returns the 5 most recently registered students.
+ * Returns the 5 most recently activated students (payment verified).
  */
 export async function GET() {
     try {
+        await ensureStudentsTable();
         const rows = await queryMySQL<RowDataPacket[]>(
-            `SELECT id, full_name, email, level, test_status
+            `SELECT id, full_name, email, japanese_level
              FROM students
-             ORDER BY created_at DESC
+             WHERE user_id IS NOT NULL
+             ORDER BY activated_at DESC
              LIMIT 5`
         );
 
@@ -18,8 +20,8 @@ export async function GET() {
             id: row.id,
             name: row.full_name,
             email: row.email,
-            level: row.level ?? "-",
-            status: row.test_status === "completed" ? "Selesai" : "Aktif",
+            level: row.japanese_level ?? "-",
+            status: "Aktif",
         }));
 
         return NextResponse.json({ data: students });

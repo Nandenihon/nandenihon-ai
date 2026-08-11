@@ -52,6 +52,11 @@ function withLanguage(href: string, language: Language) {
   return language === defaultLanguage ? href : `${href}?lang=${language}`;
 }
 
+const studentPortalUrl = (
+  process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL ||
+  (process.env.NODE_ENV === "development" ? "http://localhost:3001" : "https://student.nandenihon.com")
+).replace(/\/$/, "");
+
 const HeroSection = ({
   t,
   language,
@@ -70,13 +75,12 @@ const HeroSection = ({
       </p>
 
       <div className="flex flex-col sm:flex-row items-center gap-4 mt-6 w-full lg:w-auto">
-        <Link
-          href={withLanguage("/class/register", language)}
-          prefetch={false}
+        <a
+          href={`${studentPortalUrl}/register`}
           className="btn btn-shine cta-pulse w-full sm:w-auto justify-center"
         >
           {t.primaryCta}
-        </Link>
+        </a>
         <Link
           href={withLanguage("/class", language)}
           prefetch={false}

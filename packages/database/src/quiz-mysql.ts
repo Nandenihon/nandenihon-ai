@@ -1,42 +1,9 @@
 import { queryMySQL, type ResultSetHeader, type RowDataPacket } from "./mysql-connection";
 
-export type TestStatus = "not_started" | "in_progress" | "completed";
-export type PassStatus = "pending" | "passed" | "failed";
 // "N5"/"N4" are kept for the legacy public landing-site quiz (apps/landing/app/class/*),
 // which still only ever passes those two literal levels. The other three are the
 // canonical levels used by the admin question bank / class-linked test flow.
 export type QuizLevel = "N5" | "N4" | "N5 Basic" | "N5 Menengah" | "N5 Lanjutan";
-
-export interface QuizAnswer {
-    id: number;
-    studentId: number;
-    questionId: number;
-    selectedValue: string | null;
-    isCorrect: boolean;
-    answeredAt: Date;
-}
-
-export interface QuizStudent {
-    id: number;
-    fullName: string;
-    email: string;
-    testStatus: TestStatus;
-    passStatus: PassStatus;
-    score: number;
-    nickname: string | null;
-    whatsapp: string | null;
-    age: number | null;
-    domicile: string | null;
-    motivation: string | null;
-    level: string | null;
-    japaneseLevel: string | null;
-    paymentProofUrl: string | null;
-    registrationComplete: boolean;
-    testStartedAt: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
-    answerHistory: QuizAnswer[];
-}
 
 export interface QuizQuestion {
     id: number;
@@ -49,36 +16,6 @@ export interface QuizQuestion {
     level: QuizLevel;
     createdAt: Date;
     updatedAt: Date;
-}
-
-interface StudentRow extends RowDataPacket {
-    id: number;
-    full_name: string;
-    email: string;
-    test_status: TestStatus;
-    pass_status: PassStatus;
-    score: number;
-    nickname: string | null;
-    whatsapp: string | null;
-    age: number | null;
-    domicile: string | null;
-    motivation: string | null;
-    level: string | null;
-    japanese_level: string | null;
-    payment_proof_url: string | null;
-    registration_complete: number;
-    test_started_at: Date | null;
-    created_at: Date;
-    updated_at: Date;
-}
-
-interface AnswerRow extends RowDataPacket {
-    id: number;
-    student_id: number;
-    question_id: number;
-    selected_value: string | null;
-    is_correct: number;
-    answered_at: Date;
 }
 
 interface QuestionRow extends RowDataPacket {
@@ -105,17 +42,6 @@ function parseNumericId(id: string): number {
     return Number(id);
 }
 
-function mapAnswer(row: AnswerRow): QuizAnswer {
-    return {
-        id: row.id,
-        studentId: row.student_id,
-        questionId: row.question_id,
-        selectedValue: row.selected_value,
-        isCorrect: Boolean(row.is_correct),
-        answeredAt: row.answered_at,
-    };
-}
-
 function mapQuestion(row: QuestionRow): QuizQuestion {
     let options: string[] = [];
     try {
@@ -138,30 +64,6 @@ function mapQuestion(row: QuestionRow): QuizQuestion {
     };
 }
 
-function mapStudent(row: StudentRow, answers: QuizAnswer[] = []): QuizStudent {
-    return {
-        id: row.id,
-        fullName: row.full_name,
-        email: row.email,
-        testStatus: row.test_status,
-        passStatus: row.pass_status,
-        score: row.score,
-        nickname: row.nickname,
-        whatsapp: row.whatsapp,
-        age: row.age,
-        domicile: row.domicile,
-        motivation: row.motivation,
-        level: row.level,
-        japaneseLevel: row.japanese_level,
-        paymentProofUrl: row.payment_proof_url,
-        registrationComplete: Boolean(row.registration_complete),
-        testStartedAt: row.test_started_at,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-        answerHistory: answers,
-    };
-}
-
 let quizTablesEnsured = false;
 
 export async function ensureQuizTables(): Promise<void> {
@@ -175,140 +77,6 @@ export async function ensureQuizTables(): Promise<void> {
         await queryMySQL("ALTER TABLE questions MODIFY COLUMN level VARCHAR(50) NOT NULL");
     }
     quizTablesEnsured = true;
-}
-
-async function getAnswersByStudentId(studentId: number): Promise<QuizAnswer[]> {
-    const rows = await queryMySQL<AnswerRow[]>(
-        "SELECT * FROM student_answers WHERE student_id = ? ORDER BY answered_at ASC, id ASC",
-        [studentId]
-    );
-    return rows.map(mapAnswer);
-}
-
-export async function findStudentById(studentId: string | number): Promise<QuizStudent | null> {
-    await ensureQuizTables();
-    const id = typeof studentId === "number" ? studentId : parseNumericId(studentId);
-    const rows = await queryMySQL<StudentRow[]>("SELECT * FROM students WHERE id = ? LIMIT 1", [id]);
-    if (rows.length === 0) {
-        return null;
-    }
-    const answers = await getAnswersByStudentId(id);
-    return mapStudent(rows[0], answers);
-}
-
-export async function findStudentByEmail(email: string): Promise<QuizStudent | null> {
-    await ensureQuizTables();
-    const rows = await queryMySQL<StudentRow[]>(
-        "SELECT * FROM students WHERE email = ? LIMIT 1",
-        [email.toLowerCase()]
-    );
-    if (rows.length === 0) {
-        return null;
-    }
-    const answers = await getAnswersByStudentId(rows[0].id);
-    return mapStudent(rows[0], answers);
-}
-
-export async function createStudent(input: {
-    fullName: string;
-    email: string;
-    level: string;
-    japaneseLevel: string;
-    testStartedAt?: Date;
-}): Promise<QuizStudent> {
-    await ensureQuizTables();
-    const result = await queryMySQL<ResultSetHeader>(
-        `INSERT INTO students
-            (full_name, email, level, japanese_level, test_status, pass_status, score, registration_complete, test_started_at)
-         VALUES (?, ?, ?, ?, 'not_started', 'pending', 0, 0, ?)`,
-        [input.fullName, input.email.toLowerCase(), input.level, input.japaneseLevel, input.testStartedAt || new Date()]
-    );
-
-    const student = await findStudentById(result.insertId);
-    if (!student) {
-        throw new Error("Failed to load created student");
-    }
-    return student;
-}
-
-export async function resetStudentForRetry(input: {
-    id: number;
-    level: string;
-    japaneseLevel: string;
-    testStartedAt?: Date;
-}): Promise<void> {
-    await ensureQuizTables();
-    await queryMySQL("DELETE FROM student_answers WHERE student_id = ?", [input.id]);
-    await queryMySQL(
-        `UPDATE students
-         SET test_status = 'not_started',
-             pass_status = 'pending',
-             score = 0,
-             level = ?,
-             japanese_level = ?,
-             test_started_at = ?,
-             updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [input.level, input.japaneseLevel, input.testStartedAt || new Date(), input.id]
-    );
-}
-
-export async function completeStudentRegistration(input: {
-    id: number;
-    nickname: string;
-    whatsapp: string;
-    age: number;
-    domicile: string;
-    motivation: string;
-    level: string;
-}): Promise<void> {
-    await ensureQuizTables();
-    await queryMySQL(
-        `UPDATE students
-         SET nickname = ?,
-             whatsapp = ?,
-             age = ?,
-             domicile = ?,
-             motivation = ?,
-             level = ?,
-             registration_complete = 1,
-             updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [
-            input.nickname,
-            input.whatsapp,
-            input.age,
-            input.domicile,
-            input.motivation,
-            input.level,
-            input.id,
-        ]
-    );
-}
-
-export async function updateStudentPaymentProof(id: number, paymentProofUrl: string): Promise<void> {
-    await ensureQuizTables();
-    await queryMySQL(
-        "UPDATE students SET payment_proof_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-        [paymentProofUrl, id]
-    );
-}
-
-export async function ensureStudentTestStarted(id: number): Promise<Date> {
-    const student = await findStudentById(id);
-    if (!student) {
-        throw new Error("Student not found");
-    }
-    if (student.testStartedAt) {
-        return student.testStartedAt;
-    }
-
-    const startedAt = new Date();
-    await queryMySQL(
-        "UPDATE students SET test_started_at = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-        [startedAt, id]
-    );
-    return startedAt;
 }
 
 export async function findQuestionById(questionId: string | number): Promise<QuizQuestion | null> {
@@ -334,51 +102,6 @@ export async function findRandomUnansweredQuestion(
     sql += " ORDER BY RAND() LIMIT 1";
     const rows = await queryMySQL<QuestionRow[]>(sql, params);
     return rows[0] ? mapQuestion(rows[0]) : null;
-}
-
-export async function addStudentAnswer(input: {
-    studentId: number;
-    questionId: number;
-    selectedValue: string | null;
-    isCorrect: boolean;
-}): Promise<number> {
-    await ensureQuizTables();
-    await queryMySQL<ResultSetHeader>(
-        `INSERT INTO student_answers (student_id, question_id, selected_value, is_correct)
-         VALUES (?, ?, ?, ?)`,
-        [input.studentId, input.questionId, input.selectedValue, input.isCorrect ? 1 : 0]
-    );
-
-    await queryMySQL(
-        `UPDATE students
-         SET test_status = CASE WHEN test_status = 'not_started' THEN 'in_progress' ELSE test_status END,
-             updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [input.studentId]
-    );
-
-    const rows = await queryMySQL<RowDataPacket[]>(
-        "SELECT COUNT(*) AS total FROM student_answers WHERE student_id = ?",
-        [input.studentId]
-    );
-    return rows[0]?.total || 0;
-}
-
-export async function finishStudentTest(input: {
-    studentId: number;
-    score: number;
-    passStatus: PassStatus;
-}): Promise<void> {
-    await ensureQuizTables();
-    await queryMySQL(
-        `UPDATE students
-         SET score = ?,
-             pass_status = ?,
-             test_status = 'completed',
-             updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [input.score, input.passStatus, input.studentId]
-    );
 }
 
 export async function replaceQuestions(questions: Array<{
