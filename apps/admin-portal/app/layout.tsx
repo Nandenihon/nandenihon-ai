@@ -1,5 +1,13 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import { Noto_Sans } from "next/font/google";
+
+const notoSans = Noto_Sans({
+    subsets: ["latin"],
+    style: ["normal", "italic"],
+    variable: "--font-noto-sans",
+    display: "swap",
+});
 
 export const metadata: Metadata = {
     metadataBase: new URL("https://nandenihon.com"),
@@ -20,7 +28,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en">
+        <html lang="en" className={notoSans.variable}>
             <body className="bg-neutral-10 min-h-screen">{children}</body>
         </html>
     );

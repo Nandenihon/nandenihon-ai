@@ -46,7 +46,19 @@ async function addColumnIfMissing(table: string, column: string, definition: str
     if (!rows[0]) await queryMySQL(`ALTER TABLE \`${table}\` ADD COLUMN ${definition}`);
 }
 
+let enrollmentTablesReady: Promise<void> | null = null;
+
 export async function ensureEnrollmentTables(): Promise<void> {
+    if (!enrollmentTablesReady) {
+        enrollmentTablesReady = ensureEnrollmentTablesUncached().catch((error) => {
+            enrollmentTablesReady = null;
+            throw error;
+        });
+    }
+    await enrollmentTablesReady;
+}
+
+async function ensureEnrollmentTablesUncached(): Promise<void> {
     // Keep the module independently bootstrappable. The registration module
     // owns these records, but admin class setup may run before the first signup.
     await queryMySQL(`

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import { listActiveClassMembershipsForUser, type StudentDashboard } from "@repo/database";
+import { listActiveClassMembershipsForUser } from "@repo/database";
 import CourseCard from "../components/CourseCard";
 import {
     getAttendanceSummary,
@@ -92,10 +92,12 @@ export default async function StudentDashboardPage() {
         return <PreStudentHome firstName={firstName} />;
     }
 
-    const dashboard: StudentDashboard = await getStudentDashboardSafe(studentId);
-    const recentGrades = await getStudentGrades(studentId, 3);
-    const leaderboard = await getDailyQuizLeaderboard(3);
-    const myClasses = await getMyClasses(studentId);
+    const [dashboard, recentGrades, leaderboard, myClasses] = await Promise.all([
+        getStudentDashboardSafe(studentId),
+        getStudentGrades(studentId, 3),
+        getDailyQuizLeaderboard(3),
+        getMyClasses(studentId),
+    ]);
     const attendance = getAttendanceSummary(dashboard);
     const schedule = getSchedulePreview(dashboard);
     const activeCourse = dashboard.enrolledCourses.find((course) => course.enrollmentStatus !== "completed") ?? dashboard.enrolledCourses[0];

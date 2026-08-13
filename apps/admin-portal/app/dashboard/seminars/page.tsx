@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import type { Seminar } from "@repo/types";
 import SeminarModal from "./SeminarModal";
+import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
 
 const STATUS_COLORS: Record<string, string> = {
     upcoming: "bg-primary-10 text-primary-base",
@@ -26,6 +27,7 @@ export default function SeminarsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
+    const debouncedSearch = useDebouncedValue(search);
     const [filterStatus, setFilterStatus] = useState("");
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -37,15 +39,15 @@ export default function SeminarsPage() {
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const fetchSeminars = useCallback(async () => {
+    const fetchSeminars = useCallback(async (signal?: AbortSignal) => {
         setIsLoading(true);
         setError("");
         try {
             const params = new URLSearchParams({ page: String(page), limit: "10" });
-            if (search) params.set("search", search);
+            if (debouncedSearch) params.set("search", debouncedSearch);
             if (filterStatus) params.set("status", filterStatus);
 
-            const res = await fetch(`/api/seminar?${params}`);
+            const res = await fetch(`/api/seminar?${params}`, { signal });
             const data = await res.json();
 
             if (!res.ok) throw new Error(data.error || "Gagal memuat data");
@@ -53,14 +55,17 @@ export default function SeminarsPage() {
             setTotalPages(data.pagination?.totalPages || 1);
             setTotal(data.pagination?.total || 0);
         } catch (err) {
+            if (err instanceof DOMException && err.name === "AbortError") return;
             setError(err instanceof Error ? err.message : "Terjadi kesalahan");
         } finally {
-            setIsLoading(false);
+            if (!signal?.aborted) setIsLoading(false);
         }
-    }, [page, search, filterStatus]);
+    }, [page, debouncedSearch, filterStatus]);
 
     useEffect(() => {
-        fetchSeminars();
+        const controller = new AbortController();
+        void fetchSeminars(controller.signal);
+        return () => controller.abort();
     }, [fetchSeminars]);
 
     const handleCreate = () => {

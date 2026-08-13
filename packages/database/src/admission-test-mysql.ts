@@ -17,7 +17,30 @@ const RETAKE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
  * (see enrollment-mysql.ts). This keeps one shared question bank per level
  * instead of requiring a teacher to author a distinct question set per class.
  */
+async function ensureIndex(tableName: string, indexName: string, definition: string): Promise<void> {
+    const rows = await queryMySQL<RowDataPacket[]>(
+        `SHOW INDEX FROM \`${tableName}\` WHERE Key_name = ?`,
+        [indexName]
+    );
+
+    if (rows.length === 0) {
+        await queryMySQL(`ALTER TABLE \`${tableName}\` ADD ${definition}`);
+    }
+}
+
+let admissionTestTablesReady: Promise<void> | null = null;
+
 export async function ensureAdmissionTestTables(): Promise<void> {
+    if (!admissionTestTablesReady) {
+        admissionTestTablesReady = ensureAdmissionTestTablesUncached().catch((error) => {
+            admissionTestTablesReady = null;
+            throw error;
+        });
+    }
+    await admissionTestTablesReady;
+}
+
+async function ensureAdmissionTestTablesUncached(): Promise<void> {
     await ensureAssignmentTables();
     await queryMySQL(`
         CREATE TABLE IF NOT EXISTS class_test_attempts (
@@ -65,9 +88,12 @@ export async function ensureAdmissionTestTables(): Promise<void> {
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             INDEX idx_class_test_payments_status (status, created_at),
+            INDEX idx_class_test_payments_user (user_id, created_at),
             CONSTRAINT fk_class_test_payments_attempt FOREIGN KEY (attempt_id) REFERENCES class_test_attempts(id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
+    // Added after the table's initial rollout — existing databases need this backfilled.
+    await ensureIndex("class_test_payments", "idx_class_test_payments_user", "INDEX idx_class_test_payments_user (user_id, created_at)");
 }
 
 let studentsTableEnsured = false;

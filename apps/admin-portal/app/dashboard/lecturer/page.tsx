@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { headers } from "next/headers";
+import Image from "next/image";
 import { queryMySQL, type RowDataPacket, listCourses, ensureLmsTables } from "@repo/database";
 import type { LmsCourse } from "@repo/database";
 
@@ -154,12 +155,14 @@ export default async function LecturerDashboardPage() {
                                     className="card-muted p-4 hover:shadow-md transition-all group cursor-pointer"
                                 >
                                     {/* Thumbnail */}
-                                    <div className="w-full h-32 rounded-xl bg-neutral-20 overflow-hidden mb-3">
+                                    <div className="relative w-full h-32 rounded-xl bg-neutral-20 overflow-hidden mb-3">
                                         {course.thumbnail ? (
-                                            <img
+                                            <Image
                                                 src={course.thumbnail}
                                                 alt={course.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                fill
+                                                sizes="(min-width: 1280px) 30vw, (min-width: 768px) 45vw, 90vw"
+                                                className="object-cover transition-transform duration-300 group-hover:scale-105"
                                             />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center">

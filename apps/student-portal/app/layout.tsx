@@ -1,5 +1,20 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import { Noto_Sans, Noto_Sans_JP } from "next/font/google";
+
+const notoSans = Noto_Sans({
+    subsets: ["latin"],
+    style: ["normal", "italic"],
+    variable: "--font-noto-sans",
+    display: "swap",
+});
+
+const notoSansJP = Noto_Sans_JP({
+    subsets: ["latin"],
+    weight: ["300", "400", "500", "700"],
+    variable: "--font-noto-sans-jp",
+    display: "swap",
+});
 
 export const metadata: Metadata = {
     metadataBase: new URL("https://nandenihon.com"),
@@ -17,7 +32,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
-        <html lang="ja">
+        <html lang="ja" className={`${notoSans.variable} ${notoSansJP.variable}`}>
             <body className="bg-neutral-0 min-h-screen">{children}</body>
         </html>
     );

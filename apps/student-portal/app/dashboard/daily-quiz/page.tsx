@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import Link from "next/link";
 import {
     getDailyQuizQuestionCount,
     getDailyQuizQuestionsForDate,
@@ -63,9 +64,9 @@ export default async function DailyQuizPage() {
                     <p className="text-xs font-semibold uppercase tracking-wide text-neutral-40">Daily Quiz</p>
                     <h1 className="text-2xl font-bold text-neutral-90">Latihan Harian</h1>
                 </div>
-                <a href="/dashboard/daily-quiz/leaderboard" className="rounded-lg bg-primary-base px-4 py-2 text-sm font-semibold text-white">
+                <Link href="/dashboard/daily-quiz/leaderboard" className="rounded-lg bg-primary-base px-4 py-2 text-sm font-semibold text-white">
                     Leaderboard
-                </a>
+                </Link>
             </div>
 
             <section className="grid grid-cols-1 gap-5 lg:grid-cols-[1.4fr_.6fr]">

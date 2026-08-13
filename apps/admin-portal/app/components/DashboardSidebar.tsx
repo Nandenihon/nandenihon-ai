@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NandeNihonLogo } from "@repo/ui";
+import { useCurrentUser } from "./CurrentUserContext";
 
 interface NavItem {
     id: string;
@@ -296,18 +297,8 @@ export default function DashboardSidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const [openMenus, setOpenMenus] = useState<string[]>([]);
-    const [userRole, setUserRole] = useState<string | null>(null);
-
-    useEffect(() => {
-        fetch("/api/auth/me")
-            .then((r) => r.json())
-            .then((data) => {
-                if (data.user) {
-                    setUserRole(data.user.role || "student");
-                }
-            })
-            .catch(() => {});
-    }, []);
+    const { user } = useCurrentUser();
+    const userRole = user?.role || null;
 
     const toggleMenu = (id: string) => {
         setOpenMenus((prev) =>

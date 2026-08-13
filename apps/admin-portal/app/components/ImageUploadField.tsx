@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 interface ImageUploadFieldProps {
     label: string;
@@ -73,7 +74,9 @@ export default function ImageUploadField({ label, value, folder, onChange }: Ima
             <label className="text-sm font-semibold text-neutral-70">{label}</label>
             {value && (
                 <div className="flex items-center gap-3 rounded-xl border border-neutral-20 bg-neutral-0 p-2">
-                    <img src={previewSrc} alt="Preview upload" className="h-14 w-14 rounded-lg object-cover bg-neutral-10" />
+                    {previewSrc && (
+                        <Image src={previewSrc} alt="Preview upload" width={56} height={56} className="h-14 w-14 rounded-lg object-cover bg-neutral-10" />
+                    )}
                     <span className="min-w-0 flex-1 truncate text-xs text-neutral-50">{value}</span>
                 </div>
             )}

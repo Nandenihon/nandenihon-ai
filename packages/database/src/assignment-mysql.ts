@@ -2,7 +2,19 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { queryMySQL } from "./mysql-connection";
 import { ensureEnrollmentTables } from "./enrollment-mysql";
 
+let assignmentTablesReady: Promise<void> | null = null;
+
 export async function ensureAssignmentTables() {
+    if (!assignmentTablesReady) {
+        assignmentTablesReady = ensureAssignmentTablesUncached().catch((error) => {
+            assignmentTablesReady = null;
+            throw error;
+        });
+    }
+    await assignmentTablesReady;
+}
+
+async function ensureAssignmentTablesUncached() {
     await ensureEnrollmentTables();
     await queryMySQL(`
         CREATE TABLE IF NOT EXISTS assignments (

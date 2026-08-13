@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import StarTag from "../../../../packages/ui/src/icons/StarTag";
 import {
   defaultLanguage,
@@ -57,9 +58,11 @@ function HeroSection({ t, language }: HeroSectionProps) {
           </Link>
         </div>
 
-        <img
-          src={"/images/SECTION.png"}
+        <Image
+          src="/images/SECTION.png"
           alt={t.imageAlt}
+          width={520}
+          height={392}
           className="hidden lg:block"
         />
       </div>

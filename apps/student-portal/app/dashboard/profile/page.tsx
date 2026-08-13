@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 type Profile = {
     id: number;
@@ -98,7 +99,7 @@ export default function ProfilePage() {
                 <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
                     <div className="group relative">
                         <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl border-4 border-white/20 bg-white text-3xl font-black text-primary-base shadow-xl">
-                            {profile?.avatar_url ? <img src={profile.avatar_url} alt={`Foto profil ${profile.name}`} className="h-full w-full object-cover" /> : initials}
+                            {profile?.avatar_url ? <Image src={profile.avatar_url} alt={`Foto profil ${profile.name}`} width={96} height={96} className="h-full w-full object-cover" /> : initials}
                         </div>
                         <label className="portal-focus absolute -bottom-2 -right-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-2 border-[#142d63] bg-white text-sm text-primary-base shadow-lg" title="Ganti foto profil">
                             <span aria-hidden="true">✎</span><span className="sr-only">Pilih foto profil</span>

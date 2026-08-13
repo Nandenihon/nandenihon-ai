@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { User, UserRole } from "@repo/types";
+import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
 
 const ROLES: UserRole[] = ["super_admin", "lecture", "medkom", "riset_jurnal", "admin_1", "admin_2", "student"];
 const ROLE_LABELS: Record<string, string> = {
@@ -137,6 +138,7 @@ export default function UsersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
+    const debouncedSearch = useDebouncedValue(search);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
@@ -148,13 +150,13 @@ export default function UsersPage() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [detailsUser, setDetailsUser] = useState<User | null>(null);
 
-    const fetchUsers = useCallback(async () => {
+    const fetchUsers = useCallback(async (signal?: AbortSignal) => {
         setIsLoading(true);
         setError("");
         try {
             const params = new URLSearchParams({ page: String(page), limit: "15" });
-            if (search) params.set("search", search);
-            const res = await fetch(`/api/user?${params}`);
+            if (debouncedSearch) params.set("search", debouncedSearch);
+            const res = await fetch(`/api/user?${params}`, { signal });
             const data = await res.json();
             if (res.status === 403) { setError("Akses ditolak. Hanya admin yang dapat melihat halaman ini."); return; }
             if (!res.ok) throw new Error(data.error || "Gagal memuat data");
@@ -162,13 +164,18 @@ export default function UsersPage() {
             setTotalPages(data.pagination?.totalPages || 1);
             setTotal(data.pagination?.total || 0);
         } catch (err) {
+            if (err instanceof DOMException && err.name === "AbortError") return;
             setError(err instanceof Error ? err.message : "Terjadi kesalahan");
         } finally {
-            setIsLoading(false);
+            if (!signal?.aborted) setIsLoading(false);
         }
-    }, [page, search]);
+    }, [page, debouncedSearch]);
 
-    useEffect(() => { fetchUsers(); }, [fetchUsers]);
+    useEffect(() => {
+        const controller = new AbortController();
+        void fetchUsers(controller.signal);
+        return () => controller.abort();
+    }, [fetchUsers]);
 
     const handleCreate = () => { setModalMode("create"); setEditingUser(null); setModalOpen(true); };
     const handleEdit = (u: User) => { setModalMode("edit"); setEditingUser(u); setModalOpen(true); };

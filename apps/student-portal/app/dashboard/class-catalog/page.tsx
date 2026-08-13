@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
 
 type ClassItem = {
     id: number; code: string; name: string; description: string; level: string; program: string;
@@ -12,25 +13,31 @@ type ClassItem = {
 export default function ClassCatalogPage() {
     const [classes, setClasses] = useState<ClassItem[]>([]);
     const [search, setSearch] = useState("");
+    const debouncedSearch = useDebouncedValue(search);
     const [level, setLevel] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const load = useCallback(async () => {
+    const load = useCallback(async (signal?: AbortSignal) => {
         setLoading(true);
         const params = new URLSearchParams();
-        if (search) params.set("search", search);
+        if (debouncedSearch) params.set("search", debouncedSearch);
         if (level) params.set("level", level);
         try {
-            const response = await fetch(`/api/enrollment/classes?${params}`);
+            const response = await fetch(`/api/enrollment/classes?${params}`, { signal });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error);
             setClasses(data.data ?? []);
         } catch (loadError) {
+            if (loadError instanceof DOMException && loadError.name === "AbortError") return;
             setError(loadError instanceof Error ? loadError.message : "Gagal memuat katalog");
-        } finally { setLoading(false); }
-    }, [level, search]);
-    useEffect(() => { void load(); }, [load]);
+        } finally { if (!signal?.aborted) setLoading(false); }
+    }, [level, debouncedSearch]);
+    useEffect(() => {
+        const controller = new AbortController();
+        void load(controller.signal);
+        return () => controller.abort();
+    }, [load]);
 
     return (
         <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-8">

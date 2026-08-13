@@ -97,7 +97,19 @@ export function verifyRegistrationToken(token: string): { preStudentId: number; 
     }
 }
 
+let registrationTablesReady: Promise<void> | null = null;
+
 export async function ensureRegistrationTables(): Promise<void> {
+    if (!registrationTablesReady) {
+        registrationTablesReady = ensureRegistrationTablesUncached().catch((error) => {
+            registrationTablesReady = null;
+            throw error;
+        });
+    }
+    await registrationTablesReady;
+}
+
+async function ensureRegistrationTablesUncached(): Promise<void> {
     await queryMySQL(`
         CREATE TABLE IF NOT EXISTS pre_students (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

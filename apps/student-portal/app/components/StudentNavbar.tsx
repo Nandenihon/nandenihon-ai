@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import type { UserSession } from "@repo/types";
 import Link from "next/link";
+import Image from "next/image";
 
 type NavbarUser = UserSession & { avatarUrl?: string | null };
 
@@ -80,7 +81,7 @@ export default function StudentNavbar() {
                     aria-haspopup="menu"
                 >
                     <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-primary-base to-primary-80 text-sm font-bold text-white shadow-md shadow-primary-base/20">
-                        {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
+                        {user?.avatarUrl ? <Image src={user.avatarUrl} alt="" width={36} height={36} className="h-full w-full object-cover" /> : initials}
                     </span>
                     <ChevronDownIcon className={`h-4 w-4 text-neutral-40 transition-transform ${menuOpen ? "rotate-180" : ""}`} aria-hidden="true" />
                 </button>

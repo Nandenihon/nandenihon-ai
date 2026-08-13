@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import Link from "next/link";
 import { getSchedulePreview, getStudentDashboardSafe } from "../dashboard-data";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ export default async function SchedulePage() {
                     <p className="px-5 py-12 text-center text-sm text-neutral-50">Belum ada jadwal belajar.</p>
                 ) : (
                     schedule.map((item) => (
-                        <a key={item.id} href={`/courses/${item.id}`} className="grid gap-3 px-5 py-4 transition-colors hover:bg-primary-10 md:grid-cols-[120px_1fr_auto] md:items-center">
+                        <Link key={item.id} href={`/courses/${item.id}`} className="grid gap-3 px-5 py-4 transition-colors hover:bg-primary-10 md:grid-cols-[120px_1fr_auto] md:items-center">
                             <p className="text-sm font-bold text-primary-base">{item.time}</p>
                             <div>
                                 <p className="text-sm font-semibold text-neutral-80">{item.title}</p>
@@ -31,7 +32,7 @@ export default async function SchedulePage() {
                             <span className="w-fit rounded-full bg-neutral-10 px-3 py-1 text-xs font-semibold text-neutral-60">
                                 {item.level}
                             </span>
-                        </a>
+                        </Link>
                     ))
                 )}
             </section>

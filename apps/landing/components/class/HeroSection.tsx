@@ -1,5 +1,6 @@
 import type { LandingTranslations } from "@/lib/i18n";
 import React from "react";
+import Image from "next/image";
 import StarTag from "../../../../packages/ui/src/icons/StarTag";
 
 type HeroSectionProps = {
@@ -27,9 +28,11 @@ function HeroSection({ t }: HeroSectionProps) {
           <p className="text-lg mt-6">{t.description}</p>
         </div>
 
-        <img
+        <Image
           src="/images/hero-class.png"
           alt={t.imageAlt}
+          width={489}
+          height={392}
           className="hidden lg:block"
         />
       </div>

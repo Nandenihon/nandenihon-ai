@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -292,6 +293,7 @@ export default function QuestionsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
+    const debouncedSearch = useDebouncedValue(search);
     const [levelFilter, setLevelFilter] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("");
     const [page, setPage] = useState(1);
@@ -310,16 +312,16 @@ export default function QuestionsPage() {
     const [importing, setImporting] = useState(false);
     const [importNotice, setImportNotice] = useState("");
 
-    const fetchQuestions = useCallback(async () => {
+    const fetchQuestions = useCallback(async (signal?: AbortSignal) => {
         setIsLoading(true);
         setError("");
         try {
             const params = new URLSearchParams({ page: String(page), limit: "12" });
-            if (search) params.set("search", search);
+            if (debouncedSearch) params.set("search", debouncedSearch);
             if (levelFilter) params.set("level", levelFilter);
             if (categoryFilter) params.set("category", categoryFilter);
 
-            const response = await fetch(`/api/question?${params}`);
+            const response = await fetch(`/api/question?${params}`, { signal });
             const data = await response.json() as { data?: Question[]; pagination?: { total: number; totalPages: number }; error?: string };
 
             if (!response.ok) throw new Error(data.error ?? "Gagal memuat data soal");
@@ -328,13 +330,18 @@ export default function QuestionsPage() {
             setTotal(data.pagination?.total ?? 0);
             setTotalPages(data.pagination?.totalPages ?? 1);
         } catch (fetchError) {
+            if (fetchError instanceof DOMException && fetchError.name === "AbortError") return;
             setError(fetchError instanceof Error ? fetchError.message : "Terjadi kesalahan");
         } finally {
-            setIsLoading(false);
+            if (!signal?.aborted) setIsLoading(false);
         }
-    }, [page, search, levelFilter, categoryFilter]);
+    }, [page, debouncedSearch, levelFilter, categoryFilter]);
 
-    useEffect(() => { void fetchQuestions(); }, [fetchQuestions]);
+    useEffect(() => {
+        const controller = new AbortController();
+        void fetchQuestions(controller.signal);
+        return () => controller.abort();
+    }, [fetchQuestions]);
 
     const handleCreate = () => {
         setModalMode("create");

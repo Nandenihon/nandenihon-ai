@@ -1,5 +1,10 @@
 import type { NextConfig } from "next";
 import path from "path";
+import createBundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = createBundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 const uploadUrl = process.env.NEXT_PUBLIC_UPLOAD_BASE_URL;
@@ -80,4 +85,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// @next/bundle-analyzer resolves against the workspace-hoisted `next` install, whose
+// NextConfig type doesn't structurally match this app's own (newer) `next` version.
+export default withBundleAnalyzer(nextConfig as Parameters<typeof withBundleAnalyzer>[0]) as NextConfig;
