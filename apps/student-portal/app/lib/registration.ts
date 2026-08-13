@@ -1,20 +1,10 @@
 import crypto from "crypto";
-import { queryMySQL, type RowDataPacket } from "@repo/database";
+import { queryMySQL, type ResultSetHeader, type RowDataPacket } from "@repo/database";
 
 export const OTP_TTL_MINUTES = 10;
 export const OTP_RESEND_SECONDS = 60;
 export const OTP_MAX_ATTEMPTS = 5;
 export const REGISTRATION_COOKIE_NAME = "nn_student_registration";
-
-// Existing LMS tables use positive `users.id` values. Keep pre-student sessions
-// in a separate numeric namespace so an equal id can never expose legacy data.
-export function toPreStudentSessionId(preStudentId: number): number {
-    return -Math.abs(preStudentId);
-}
-
-export function fromPreStudentSessionId(sessionId: number): number | null {
-    return sessionId < 0 ? Math.abs(sessionId) : null;
-}
 
 export type PreStudentRow = RowDataPacket & {
     id: number;
@@ -107,7 +97,19 @@ export function verifyRegistrationToken(token: string): { preStudentId: number; 
     }
 }
 
+let registrationTablesReady: Promise<void> | null = null;
+
 export async function ensureRegistrationTables(): Promise<void> {
+    if (!registrationTablesReady) {
+        registrationTablesReady = ensureRegistrationTablesUncached().catch((error) => {
+            registrationTablesReady = null;
+            throw error;
+        });
+    }
+    await registrationTablesReady;
+}
+
+async function ensureRegistrationTablesUncached(): Promise<void> {
     await queryMySQL(`
         CREATE TABLE IF NOT EXISTS pre_students (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -166,6 +168,56 @@ export async function ensureRegistrationTables(): Promise<void> {
     if (!names.has("expires_at_epoch")) {
         await queryMySQL("ALTER TABLE student_email_otps ADD COLUMN expires_at_epoch BIGINT UNSIGNED NULL AFTER sent_at_epoch");
     }
+}
+
+/**
+ * Ensures a pre-student has a row in the shared `users` table (role = 'pre_student')
+ * and that `pre_students.promoted_user_id` points to it. Called eagerly at
+ * registration, and lazily on login for accounts registered before this existed.
+ *
+ * Registration's real uniqueness key is email (enforced by pre_students'
+ * UNIQUE(email) and checked explicitly at the OTP-request step). `users` also has
+ * a legacy UNIQUE constraint on `username`, which we populate from the nickname —
+ * two different people are allowed to pick the same nickname, so on a username
+ * collision we disambiguate and retry instead of failing the registration.
+ */
+export async function ensurePreStudentUserId(input: {
+    preStudentId: number;
+    nickname: string;
+    email: string;
+    passwordHash: string;
+}): Promise<number> {
+    const existingUsers = await queryMySQL<RowDataPacket[]>("SELECT id FROM users WHERE email = ? LIMIT 1", [input.email]);
+    let userId = existingUsers[0] ? Number(existingUsers[0].id) : 0;
+    if (!userId) {
+        userId = await insertPreStudentUser(input.nickname, input.email, input.passwordHash);
+    }
+    await queryMySQL("UPDATE pre_students SET promoted_user_id = ? WHERE id = ?", [userId, input.preStudentId]);
+    return userId;
+}
+
+async function insertPreStudentUser(nickname: string, email: string, passwordHash: string): Promise<number> {
+    let candidateUsername = nickname;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+        try {
+            const result = await queryMySQL<ResultSetHeader>(
+                "INSERT INTO users (username, email, password, role, is_active) VALUES (?, ?, ?, 'pre_student', 1)",
+                [candidateUsername, email, passwordHash]
+            );
+            return result.insertId;
+        } catch (error) {
+            const mysqlError = error as { code?: string; sqlMessage?: string };
+            const isUsernameCollision = mysqlError.code === "ER_DUP_ENTRY" && Boolean(mysqlError.sqlMessage?.includes("username"));
+            if (!isUsernameCollision) throw error;
+            candidateUsername = `${nickname}-${crypto.randomBytes(2).toString("hex")}`;
+        }
+    }
+    throw new Error("Gagal membuat akun: username bentrok berulang kali");
+}
+
+export async function findUserRoleById(userId: number): Promise<string | null> {
+    const rows = await queryMySQL<RowDataPacket[]>("SELECT role FROM users WHERE id = ? LIMIT 1", [userId]);
+    return rows[0] ? String(rows[0].role) : null;
 }
 
 export async function findPreStudentByEmail(email: string): Promise<PreStudentRow | null> {

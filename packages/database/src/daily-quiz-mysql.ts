@@ -276,7 +276,8 @@ export async function ensureDailyQuizTables(): Promise<void> {
                     submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE KEY uq_daily_quiz_attempts_student_date (student_id, quiz_date),
                     INDEX idx_daily_quiz_attempts_student_date (student_id, submitted_at),
-                    INDEX idx_daily_quiz_attempts_submitted_at (submitted_at)
+                    INDEX idx_daily_quiz_attempts_submitted_at (submitted_at),
+                    INDEX idx_daily_quiz_attempts_quiz_date (quiz_date)
                 )
             `);
 
@@ -299,6 +300,13 @@ export async function ensureDailyQuizTables(): Promise<void> {
                 "daily_quiz_attempts",
                 "uq_daily_quiz_attempts_student_date",
                 "UNIQUE INDEX uq_daily_quiz_attempts_student_date (student_id, quiz_date)"
+            );
+            // Backfill for existing databases — lets getDailyQuizAttemptLeaderboard's
+            // `quiz_date = ?` branch use an index instead of scanning the whole table.
+            await ensureIndex(
+                "daily_quiz_attempts",
+                "idx_daily_quiz_attempts_quiz_date",
+                "INDEX idx_daily_quiz_attempts_quiz_date (quiz_date)"
             );
         })().catch((error) => {
             dailyQuizReady = null;
@@ -598,16 +606,24 @@ export async function getDailyQuizAttemptLeaderboard(
 ): Promise<DailyQuizLeaderboardItem[]> {
     await ensureDailyQuizTables();
     const todayKey = getJakartaDateKey(new Date());
+    // Split the `quiz_date = ? OR (quiz_date IS NULL AND DATE(submitted_at) = ?)` filter
+    // into a UNION ALL of its two (mutually exclusive) branches so the common branch —
+    // every attempt going forward has quiz_date set — can use idx_daily_quiz_attempts_quiz_date
+    // instead of a full scan. The legacy NULL-quiz_date branch keeps its original DATE()
+    // comparison unchanged, so results are identical to before.
     const rows = await queryMySQL<DailyQuizLeaderboardRow[]>(
         `SELECT
-            dqa.student_id,
+            t.student_id,
             COALESCE(u.username, u.email) AS student_name,
-            MAX(dqa.score) AS best_score,
+            MAX(t.score) AS best_score,
             COUNT(*) AS attempts
-         FROM daily_quiz_attempts dqa
-         JOIN users u ON u.id = dqa.student_id
-         WHERE dqa.quiz_date = ? OR (dqa.quiz_date IS NULL AND DATE(dqa.submitted_at) = ?)
-         GROUP BY dqa.student_id, u.username, u.email
+         FROM (
+            SELECT student_id, score FROM daily_quiz_attempts WHERE quiz_date = ?
+            UNION ALL
+            SELECT student_id, score FROM daily_quiz_attempts WHERE quiz_date IS NULL AND DATE(submitted_at) = ?
+         ) t
+         JOIN users u ON u.id = t.student_id
+         GROUP BY t.student_id, u.username, u.email
          ORDER BY best_score DESC, attempts ASC, student_name ASC
          LIMIT ?`,
         [todayKey, todayKey, limit]

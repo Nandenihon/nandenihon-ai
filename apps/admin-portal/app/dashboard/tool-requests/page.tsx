@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import type { UserSession } from "@repo/types";
+import { useCurrentUser } from "../../components/CurrentUserContext";
 
 interface ToolRequest {
     id: number;
@@ -39,7 +39,7 @@ export default function ToolRequestsPage() {
     const [requests, setRequests] = useState<ToolRequest[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
-    const [session, setSession] = useState<UserSession | null>(null);
+    const { user: session } = useCurrentUser();
 
     // Modal state for Class Admin (Create/Edit)
     const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
@@ -80,14 +80,6 @@ export default function ToolRequestsPage() {
     }, [page]);
 
     useEffect(() => {
-        // Fetch session
-        fetch("/api/auth/me")
-            .then((r) => r.json())
-            .then((data) => {
-                if (data.user) setSession(data.user);
-            })
-            .catch(() => { });
-
         fetchRequests();
     }, [page, fetchRequests]);
 

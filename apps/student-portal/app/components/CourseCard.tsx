@@ -1,3 +1,5 @@
+import Image from "next/image";
+import Link from "next/link";
 import type { CourseLevel } from "@repo/database";
 
 interface CourseCardProps {
@@ -33,7 +35,7 @@ export default function CourseCard({
     const isCompleted = enrollmentStatus === "completed" || progressPercent === 100;
 
     return (
-        <a
+        <Link
             href={`/courses/${id}`}
             id={`course-card-${id}`}
             className="portal-card portal-card-interactive portal-focus group flex flex-col overflow-hidden"
@@ -41,10 +43,12 @@ export default function CourseCard({
             {/* Thumbnail */}
             <div className="relative w-full h-36 bg-neutral-10 overflow-hidden flex-shrink-0">
                 {thumbnail ? (
-                    <img
+                    <Image
                         src={thumbnail}
                         alt={title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-10 to-secondary-10">
@@ -100,6 +104,6 @@ export default function CourseCard({
                     </span>
                 </div>
             </div>
-        </a>
+        </Link>
     );
 }

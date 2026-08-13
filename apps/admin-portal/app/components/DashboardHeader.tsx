@@ -1,8 +1,8 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import type { UserSession } from "@repo/types";
+import { useState } from "react";
+import { useCurrentUser } from "./CurrentUserContext";
 
 const breadcrumbMap: Record<string, string> = {
     "/dashboard": "Dashboard",
@@ -12,7 +12,9 @@ const breadcrumbMap: Record<string, string> = {
     "/dashboard/classes/add": "Tambah Kelas",
     "/dashboard/seminars": "Seminar",
     "/dashboard/seminars/registrations": "Pendaftaran Seminar",
-    "/dashboard/questions": "Soal & Ujian",
+    "/dashboard/questions": "Soal Test",
+    "/dashboard/pre-students": "Pra-Siswa",
+    "/dashboard/test-payments": "Verifikasi Pembayaran",
     "/dashboard/testimonials": "Testimoni",
     "/dashboard/team": "Tim",
     "/dashboard/news": "Berita & Artikel",
@@ -41,7 +43,7 @@ export default function DashboardHeader({ onMenuClick }: { onMenuClick?: () => v
     const pathname = usePathname();
     const router = useRouter();
     const pageTitle = breadcrumbMap[pathname] ?? "Dashboard";
-    const [user, setUser] = useState<UserSession | null>(null);
+    const { user } = useCurrentUser();
     const [showUserMenu, setShowUserMenu] = useState(false);
 
     // Build breadcrumb segments
@@ -52,16 +54,6 @@ export default function DashboardHeader({ onMenuClick }: { onMenuClick?: () => v
         const isLast = i === segments.length - 1;
         return { label, href, isLast };
     });
-
-    // Fetch current user
-    useEffect(() => {
-        fetch("/api/auth/me")
-            .then((r) => r.json())
-            .then((data) => {
-                if (data.user) setUser(data.user);
-            })
-            .catch(() => { });
-    }, []);
 
     const handleLogout = async () => {
         await fetch("/api/auth/logout", { method: "POST" });

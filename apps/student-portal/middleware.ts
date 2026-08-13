@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken, COOKIE_NAME } from "@/app/lib/auth";
 
+// Pre-students only get access to the admission test flow: pick a class, take
+// its test, review history, and pay once passed. Everything else in the
+// dashboard (courses, grades, forum, ...) requires the full 'student' role.
+const PRE_STUDENT_ALLOWED_PATHS = ["/dashboard/class-catalog", "/dashboard/tests", "/dashboard/payment", "/dashboard/profile", "/dashboard/settings"];
+
+function isAllowedForPreStudent(pathname: string): boolean {
+    if (pathname === "/dashboard") return true;
+    return PRE_STUDENT_ALLOWED_PATHS.some((allowed) => pathname === allowed || pathname.startsWith(`${allowed}/`));
+}
+
 /**
  * Student Portal Middleware
- * - Protects /dashboard/* — must be logged in as 'student'
- * - Redirects already-logged-in students away from /login
+ * - Protects /dashboard/* — must be logged in as 'student' or 'pre_student'
+ * - Restricts 'pre_student' sessions to the admission test/payment routes
+ * - Redirects already-logged-in users away from /login
  */
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     if (pathname.startsWith("/dashboard")) {
@@ -23,11 +34,15 @@ export async function proxy(request: NextRequest) {
             return response;
         }
 
-        // Only students can use this portal
-        if (session.role !== "student") {
+        // Only students and pre-students can use this portal
+        if (session.role !== "student" && session.role !== "pre_student") {
             const response = NextResponse.redirect(new URL("/login", request.url));
             response.cookies.delete(COOKIE_NAME);
             return response;
+        }
+
+        if (session.role === "pre_student" && !isAllowedForPreStudent(pathname)) {
+            return NextResponse.redirect(new URL("/dashboard", request.url));
         }
 
         // Inject identity into headers for server components
@@ -44,7 +59,7 @@ export async function proxy(request: NextRequest) {
         const token = request.cookies.get(COOKIE_NAME)?.value;
         if (token) {
             const session = await verifyToken(token);
-            if (session && session.role === "student") {
+            if (session && (session.role === "student" || session.role === "pre_student")) {
                 return NextResponse.redirect(new URL("/dashboard", request.url));
             }
         }

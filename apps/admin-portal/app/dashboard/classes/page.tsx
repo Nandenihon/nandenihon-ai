@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import type { Class, CreateClassInput, UpdateClassInput } from "@repo/types";
 import ImageUploadField from "@/app/components/ImageUploadField";
+import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
 
 const DEFAULT_FORM: CreateClassInput = {
     class_name: "",
@@ -269,6 +271,7 @@ export default function ClassesPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
+    const debouncedSearch = useDebouncedValue(search);
     const [page, setPage] = useState(1);
     const [total, setTotal] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
@@ -279,14 +282,14 @@ export default function ClassesPage() {
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const fetchClasses = useCallback(async () => {
+    const fetchClasses = useCallback(async (signal?: AbortSignal) => {
         setIsLoading(true);
         setError("");
 
         try {
             const params = new URLSearchParams({ page: String(page), limit: "12" });
-            if (search) params.set("search", search);
-            const response = await fetch(`/api/class?${params}`);
+            if (debouncedSearch) params.set("search", debouncedSearch);
+            const response = await fetch(`/api/class?${params}`, { signal });
             const data = await response.json();
 
             if (!response.ok) {
@@ -298,14 +301,17 @@ export default function ClassesPage() {
             setTotal(data.pagination?.total || classData.length);
             setTotalPages(data.pagination?.totalPages || 1);
         } catch (fetchError) {
+            if (fetchError instanceof DOMException && fetchError.name === "AbortError") return;
             setError(fetchError instanceof Error ? fetchError.message : "Terjadi kesalahan");
         } finally {
-            setIsLoading(false);
+            if (!signal?.aborted) setIsLoading(false);
         }
-    }, [page, search]);
+    }, [page, debouncedSearch]);
 
     useEffect(() => {
-        void fetchClasses();
+        const controller = new AbortController();
+        void fetchClasses(controller.signal);
+        return () => controller.abort();
     }, [fetchClasses]);
 
     const handleCreate = () => {
@@ -422,7 +428,13 @@ export default function ClassesPage() {
                         <div key={classItem.id} className="bg-absolute-white rounded-2xl border border-neutral-20 overflow-hidden hover:shadow-md transition-shadow">
                             <div className="relative h-36 bg-gradient-to-r from-primary-base to-primary-70">
                                 {classItem.image_banner && (
-                                    <img src={classItem.image_banner} alt={classItem.class_name} className="h-full w-full object-cover" />
+                                    <Image
+                                        src={classItem.image_banner}
+                                        alt={classItem.class_name}
+                                        fill
+                                        sizes="(min-width: 768px) 33vw, 100vw"
+                                        className="object-cover"
+                                    />
                                 )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-neutral-90/70 to-transparent" />
                                 <div className="absolute bottom-4 left-4 right-4 flex items-start justify-between gap-2">

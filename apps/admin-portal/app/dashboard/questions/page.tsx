@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -9,9 +10,10 @@ interface Question {
     text: string;
     options: string[];
     correctAnswer: string;
+    points: number;
     timeLimit: number;
     category: string | null;
-    level: "N5" | "N4";
+    level: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -20,6 +22,7 @@ interface QuestionFormData {
     text: string;
     options: string[];
     correctAnswer: string;
+    points: number;
     timeLimit: number;
     category: string;
     level: string;
@@ -27,20 +30,23 @@ interface QuestionFormData {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const LEVELS = ["N5", "N4"];
+const LEVELS = ["N5 Basic", "N5 Menengah", "N5 Lanjutan", "N4"];
 const CATEGORIES = ["Vocabulary", "Grammar", "Kanji", "Reading", "Listening"];
 
 const DEFAULT_FORM: QuestionFormData = {
     text: "",
     options: ["", "", "", ""],
     correctAnswer: "",
+    points: 1,
     timeLimit: 30,
     category: "",
     level: "",
 };
 
 const levelColors: Record<string, string> = {
-    N5: "bg-primary-10 text-primary-base",
+    "N5 Basic": "bg-primary-10 text-primary-base",
+    "N5 Menengah": "bg-secondary-10 text-secondary-80",
+    "N5 Lanjutan": "bg-warning-10 text-warning-100",
     N4: "bg-success-10 text-success-base",
 };
 
@@ -65,6 +71,7 @@ function QuestionModal({ isOpen, mode, question, onClose, onSave }: QuestionModa
                 text: question.text,
                 options: question.options.length >= 2 ? [...question.options] : ["", "", "", ""],
                 correctAnswer: question.correctAnswer,
+                points: question.points,
                 timeLimit: question.timeLimit,
                 category: question.category ?? "",
                 level: question.level,
@@ -154,7 +161,7 @@ function QuestionModal({ isOpen, mode, question, onClose, onSave }: QuestionModa
                     </div>
 
                     {/* Level & Category */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-semibold text-neutral-70">Level *</label>
                             <select
@@ -177,6 +184,18 @@ function QuestionModal({ isOpen, mode, question, onClose, onSave }: QuestionModa
                                 <option value="">Tidak ada</option>
                                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                             </select>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-semibold text-neutral-70">Poin *</label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="100"
+                                value={form.points}
+                                onChange={(e) => setForm({ ...form, points: Number(e.target.value) })}
+                                className="w-full bg-neutral-0 border border-neutral-20 rounded-xl py-2.5 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all"
+                                required
+                            />
                         </div>
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-semibold text-neutral-70">Waktu (detik) *</label>
@@ -274,6 +293,7 @@ export default function QuestionsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
+    const debouncedSearch = useDebouncedValue(search);
     const [levelFilter, setLevelFilter] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("");
     const [page, setPage] = useState(1);
@@ -286,16 +306,22 @@ export default function QuestionsPage() {
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const fetchQuestions = useCallback(async () => {
+    const [importOpen, setImportOpen] = useState(false);
+    const [importLevel, setImportLevel] = useState("");
+    const [importFile, setImportFile] = useState<File | null>(null);
+    const [importing, setImporting] = useState(false);
+    const [importNotice, setImportNotice] = useState("");
+
+    const fetchQuestions = useCallback(async (signal?: AbortSignal) => {
         setIsLoading(true);
         setError("");
         try {
             const params = new URLSearchParams({ page: String(page), limit: "12" });
-            if (search) params.set("search", search);
+            if (debouncedSearch) params.set("search", debouncedSearch);
             if (levelFilter) params.set("level", levelFilter);
             if (categoryFilter) params.set("category", categoryFilter);
 
-            const response = await fetch(`/api/question?${params}`);
+            const response = await fetch(`/api/question?${params}`, { signal });
             const data = await response.json() as { data?: Question[]; pagination?: { total: number; totalPages: number }; error?: string };
 
             if (!response.ok) throw new Error(data.error ?? "Gagal memuat data soal");
@@ -304,13 +330,18 @@ export default function QuestionsPage() {
             setTotal(data.pagination?.total ?? 0);
             setTotalPages(data.pagination?.totalPages ?? 1);
         } catch (fetchError) {
+            if (fetchError instanceof DOMException && fetchError.name === "AbortError") return;
             setError(fetchError instanceof Error ? fetchError.message : "Terjadi kesalahan");
         } finally {
-            setIsLoading(false);
+            if (!signal?.aborted) setIsLoading(false);
         }
-    }, [page, search, levelFilter, categoryFilter]);
+    }, [page, debouncedSearch, levelFilter, categoryFilter]);
 
-    useEffect(() => { void fetchQuestions(); }, [fetchQuestions]);
+    useEffect(() => {
+        const controller = new AbortController();
+        void fetchQuestions(controller.signal);
+        return () => controller.abort();
+    }, [fetchQuestions]);
 
     const handleCreate = () => {
         setModalMode("create");
@@ -354,6 +385,29 @@ export default function QuestionsPage() {
             setError(deleteError instanceof Error ? deleteError.message : "Gagal menghapus soal");
         } finally {
             setIsDeleting(false);
+        }
+    };
+
+    const handleImport = async () => {
+        if (!importLevel || !importFile) return;
+        setImporting(true);
+        setImportNotice("");
+        setError("");
+        try {
+            const body = new FormData();
+            body.append("level", importLevel);
+            body.append("file", importFile);
+            const response = await fetch("/api/question/import", { method: "POST", body });
+            const data = await response.json() as { message?: string; error?: string; details?: string };
+            if (!response.ok) throw new Error(data.details ?? data.error ?? "Gagal mengimpor soal");
+            setImportNotice(data.message ?? "Soal berhasil diimpor");
+            setImportFile(null);
+            setPage(1);
+            await fetchQuestions();
+        } catch (importError) {
+            setError(importError instanceof Error ? importError.message : "Gagal mengimpor soal");
+        } finally {
+            setImporting(false);
         }
     };
 
@@ -401,17 +455,58 @@ export default function QuestionsPage() {
                     <span className="text-sm text-neutral-50">{total} soal</span>
                 </div>
 
-                <button
-                    id="btn-create-question"
-                    onClick={handleCreate}
-                    className="flex items-center gap-2 bg-primary-base text-absolute-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary-80 transition-all"
-                >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    Tambah Soal
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setImportOpen((value) => !value)}
+                        className="flex items-center gap-2 border border-neutral-20 text-neutral-70 text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-neutral-10 transition-all"
+                    >
+                        {importOpen ? "Tutup Import" : "Import CSV/Excel"}
+                    </button>
+                    <button
+                        id="btn-create-question"
+                        onClick={handleCreate}
+                        className="flex items-center gap-2 bg-primary-base text-absolute-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary-80 transition-all"
+                    >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Tambah Soal
+                    </button>
+                </div>
             </div>
+
+            {importOpen && (
+                <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-absolute-white border border-neutral-20 p-4">
+                    <select
+                        value={importLevel}
+                        onChange={(e) => setImportLevel(e.target.value)}
+                        className="bg-neutral-0 border border-neutral-20 rounded-xl py-2 px-3 text-sm text-neutral-70 outline-none focus:border-primary-base transition-all"
+                    >
+                        <option value="">Pilih level untuk soal yang diimpor</option>
+                        {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                    <input
+                        type="file"
+                        accept=".csv"
+                        onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
+                        className="text-sm"
+                    />
+                    <button
+                        onClick={handleImport}
+                        disabled={!importLevel || !importFile || importing}
+                        className="rounded-xl bg-primary-base px-4 py-2 text-sm font-semibold text-absolute-white disabled:bg-neutral-30 transition-all"
+                    >
+                        {importing ? "Mengimpor..." : "Import"}
+                    </button>
+                    <a href="/templates/soal-test-template.csv" download className="text-xs font-semibold text-primary-base hover:underline">
+                        Unduh template CSV
+                    </a>
+                    {importNotice && <span className="text-xs font-medium text-success-base">{importNotice}</span>}
+                    <p className="w-full text-xs text-neutral-40">
+                        Soal ditambahkan ke bank yang sudah ada (tidak menghapus soal lain). Siapkan file di Excel lalu simpan sebagai CSV (UTF-8) sebelum upload.
+                    </p>
+                </div>
+            )}
 
             {error && <div className="bg-error-10 border border-error-base rounded-xl px-4 py-3 text-sm text-error-base">{error}</div>}
 
@@ -424,6 +519,7 @@ export default function QuestionsPage() {
                             <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Level</th>
                             <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Kategori</th>
                             <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Pilihan</th>
+                            <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Poin</th>
                             <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Waktu</th>
                             <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Aksi</th>
                         </tr>
@@ -436,13 +532,14 @@ export default function QuestionsPage() {
                                     <td className="px-4 py-4"><div className="h-5 bg-neutral-10 rounded-full w-10" /></td>
                                     <td className="px-4 py-4"><div className="h-4 bg-neutral-10 rounded w-16" /></td>
                                     <td className="px-4 py-4"><div className="h-4 bg-neutral-10 rounded w-8" /></td>
+                                    <td className="px-4 py-4"><div className="h-4 bg-neutral-10 rounded w-8" /></td>
                                     <td className="px-4 py-4"><div className="h-4 bg-neutral-10 rounded w-12" /></td>
                                     <td className="px-4 py-4"><div className="h-7 bg-neutral-10 rounded w-16" /></td>
                                 </tr>
                             ))
                         ) : questions.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="px-6 py-12 text-center">
+                                <td colSpan={7} className="px-6 py-12 text-center">
                                     <p className="text-sm font-medium text-neutral-50">Belum ada soal ditemukan</p>
                                     <button onClick={handleCreate} className="mt-2 text-sm font-semibold text-primary-base hover:underline">
                                         + Tambah soal pertama
@@ -468,6 +565,7 @@ export default function QuestionsPage() {
                                         )}
                                     </td>
                                     <td className="px-4 py-4 text-sm text-neutral-60">{q.options.length} pilihan</td>
+                                    <td className="px-4 py-4 text-sm font-semibold text-neutral-70">{q.points}</td>
                                     <td className="px-4 py-4 text-sm text-neutral-60">{q.timeLimit}s</td>
                                     <td className="px-4 py-4">
                                         <div className="flex items-center gap-2">

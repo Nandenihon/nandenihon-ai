@@ -7,7 +7,19 @@ export async function getProfileSession(request: NextRequest) {
     return token ? verifyToken(token) : null;
 }
 
+let profileTableReady: Promise<void> | null = null;
+
 export async function ensureProfileTable() {
+    if (!profileTableReady) {
+        profileTableReady = ensureProfileTableUncached().catch((error) => {
+            profileTableReady = null;
+            throw error;
+        });
+    }
+    await profileTableReady;
+}
+
+async function ensureProfileTableUncached() {
     await queryMySQL(`
         CREATE TABLE IF NOT EXISTS student_profiles (
             user_id INT NOT NULL PRIMARY KEY,

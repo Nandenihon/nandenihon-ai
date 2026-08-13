@@ -8,9 +8,6 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/article/Breadcrumb";
 import ArticleSidebar from "@/components/article/ArticleSidebar";
-import CommentSection from "@/components/article/CommentSection";
-import RelatedArticlesGrid from "@/components/article/RelatedArticlesGrid";
-import NewsletterBanner from "@/components/article/NewsletterBanner";
 import { CategoryTag } from "@repo/ui";
 
 /**
@@ -140,6 +137,7 @@ const socialIcons = [
   },
 ];
 
+
 export default async function ArticleDetailPage(props: {
   params: Promise<{ slug: string }>;
 }) {
@@ -169,11 +167,6 @@ export default async function ArticleDetailPage(props: {
     (a) => a.category !== article.category && a.slug !== article.slug
   );
 
-  const bottomRelatedArticles = [
-    ...sidebarRelatedArticles,
-    ...otherRelatedArticles.slice(0, Math.max(0, 3 - sidebarRelatedArticles.length)),
-  ].slice(0, 3);
-
 
   return (
     <article className="max-w-full">
@@ -185,11 +178,15 @@ export default async function ArticleDetailPage(props: {
         date={article.date}
       />
 
+      {/* Article Title */}
+      <h1 className="text-3xl md:text-4xl lg:text-[42px] font-extrabold text-neutral-90 mb-5 leading-[1.15] tracking-tight">
+        {article.title}
+      </h1>
       {/* Full-width Hero Image */}
       <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-10 group">
         <Image
-          src={article.image || "/images/placeholder.jpg"}
           alt={article.title}
+          src={article.image || "/images/placeholder.jpg"}
           fill
           className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
           priority
@@ -201,10 +198,6 @@ export default async function ArticleDetailPage(props: {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Main Content Column */}
         <div className="lg:col-span-2" data-article-content>
-          {/* Article Title */}
-          <h1 className="text-3xl md:text-4xl lg:text-[42px] font-extrabold text-neutral-90 mb-5 leading-[1.15] tracking-tight">
-            {article.title}
-          </h1>
 
           {/* Category Tags */}
           <div className="flex flex-wrap items-center gap-2 mb-8">
@@ -246,9 +239,6 @@ export default async function ArticleDetailPage(props: {
               ))}
             </div>
           </div>
-
-          {/* Comment Section */}
-          <CommentSection />
         </div>
 
         {/* Sidebar */}
@@ -257,12 +247,6 @@ export default async function ArticleDetailPage(props: {
           relatedArticles={sidebarRelatedArticles}
         />
       </div>
-
-      {/* Related Articles Grid (Bottom) */}
-      <RelatedArticlesGrid articles={bottomRelatedArticles} />
-
-      {/* Newsletter/CTA Banner */}
-      <NewsletterBanner />
     </article>
   );
 }

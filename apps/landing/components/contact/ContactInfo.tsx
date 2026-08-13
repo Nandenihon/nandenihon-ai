@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { LandingTranslations } from "@/lib/i18n";
 
 type ContactInfoProps = {
@@ -113,10 +114,13 @@ export default function ContactInfo({ t }: ContactInfoProps) {
             clipPath:  "path('M 0 80 Q 220 -20 500 20 L 500 200 L 0 200 Z')",
             }}
       >
-        <img
+        <Image
            src="/images/vector-contact.png"
            alt={t.vectorAlt}
+           width={440}
+           height={209}
            className="absolute bottom-[-10px] left-1/2 w-[115%] -translate-x-1/2"
+           style={{ height: "auto" }}
           />
       </div>
     </div>

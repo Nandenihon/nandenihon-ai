@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import {
     ensureLmsTables,
     findCourseById,
@@ -77,9 +78,9 @@ export default async function LecturerCourseDetailPage({ params }: Props) {
 
                 <div className="card p-6 flex flex-col md:flex-row gap-6">
                     {/* Thumbnail */}
-                    <div className="w-full md:w-48 h-32 rounded-xl bg-neutral-20 overflow-hidden flex-shrink-0">
+                    <div className="relative w-full md:w-48 h-32 rounded-xl bg-neutral-20 overflow-hidden flex-shrink-0">
                         {course.thumbnail ? (
-                            <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
+                            <Image src={course.thumbnail} alt={course.title} fill sizes="(min-width: 768px) 192px, 100vw" className="object-cover" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center">
                                 <svg className="w-12 h-12 text-neutral-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import type { Team } from "@repo/types";
 import TeamModal from "./TeamModal";
+import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
 
 export default function TeamPage() {
     const [team, setTeam] = useState<Team[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
+    const debouncedSearch = useDebouncedValue(search);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
@@ -19,26 +22,31 @@ export default function TeamPage() {
     const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const fetchTeam = useCallback(async () => {
+    const fetchTeam = useCallback(async (signal?: AbortSignal) => {
         setIsLoading(true);
         setError("");
         try {
             const params = new URLSearchParams({ page: String(page), limit: "12" });
-            if (search) params.set("search", search);
-            const res = await fetch(`/api/team?${params}`);
+            if (debouncedSearch) params.set("search", debouncedSearch);
+            const res = await fetch(`/api/team?${params}`, { signal });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Gagal memuat data");
             setTeam(data.data || []);
             setTotalPages(data.pagination?.totalPages || 1);
             setTotal(data.pagination?.total || 0);
         } catch (err) {
+            if (err instanceof DOMException && err.name === "AbortError") return;
             setError(err instanceof Error ? err.message : "Terjadi kesalahan");
         } finally {
-            setIsLoading(false);
+            if (!signal?.aborted) setIsLoading(false);
         }
-    }, [page, search]);
+    }, [page, debouncedSearch]);
 
-    useEffect(() => { fetchTeam(); }, [fetchTeam]);
+    useEffect(() => {
+        const controller = new AbortController();
+        void fetchTeam(controller.signal);
+        return () => controller.abort();
+    }, [fetchTeam]);
 
     const handleCreate = () => { setModalMode("create"); setEditingMember(null); setModalOpen(true); };
     const handleEdit = (m: Team) => { setModalMode("edit"); setEditingMember(m); setModalOpen(true); };
@@ -116,7 +124,7 @@ export default function TeamPage() {
                     {team.map((member) => (
                         <div key={member.id} className="bg-absolute-white rounded-2xl border border-neutral-20 p-6 hover:shadow-md transition-shadow flex flex-col items-center text-center gap-4">
                             {member.photo ? (
-                                <img src={member.photo} alt={member.full_name || ""} className="w-16 h-16 rounded-full object-cover" />
+                                <Image src={member.photo} alt={member.full_name || ""} width={64} height={64} className="w-16 h-16 rounded-full object-cover" />
                             ) : (
                                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-base to-primary-70 flex items-center justify-center text-absolute-white text-2xl font-bold">
                                     {(member.full_name || "?").charAt(0)}

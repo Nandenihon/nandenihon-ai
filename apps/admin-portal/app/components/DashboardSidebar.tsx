@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { NandeNihonLogo } from "@repo/ui";
+import { useCurrentUser } from "./CurrentUserContext";
 
 interface NavItem {
     id: string;
@@ -42,6 +43,18 @@ const navItems: NavItem[] = [
             { label: "Daftar Siswa", href: "/dashboard/students" },
             { label: "Tambah Siswa", href: "/dashboard/students/add" },
         ],
+    },
+    {
+        id: "pre-students",
+        label: "Pra-Siswa",
+        href: "/dashboard/pre-students",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21v-1a8 8 0 0116 0v1" />
+                <path d="M9 21v-4M15 21v-4" strokeDasharray="2 2" />
+            </svg>
+        ),
     },
     {
         id: "classes",
@@ -92,6 +105,17 @@ const navItems: NavItem[] = [
         ),
     },
     {
+        id: "test-payments",
+        label: "Verifikasi Pembayaran",
+        href: "/dashboard/test-payments",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="2" y="5" width="20" height="14" rx="2" />
+                <path d="M2 10h20" />
+            </svg>
+        ),
+    },
+    {
         id: "seminars",
         label: "Seminar",
         href: "/dashboard/seminars",
@@ -120,7 +144,7 @@ const navItems: NavItem[] = [
     },
     {
         id: "questions",
-        label: "Soal & Ujian",
+        label: "Soal Test",
         href: "/dashboard/questions",
         icon: (
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -252,14 +276,14 @@ const ALL_NAV_IDS = navItems.map((item) => item.id);
 
 export const roleAllowedItems: Record<string, string[]> = {
     super_admin: ALL_NAV_IDS,
-    // Lecture: Siswa, Kelas, Soal & Ujian, Tugas
-    lecture: ["dashboard", "students", "classes", "enrollment-classes", "questions", "assignments"],
+    // Lecture: Siswa, Pra-Siswa, Kelas, Soal & Ujian, Tugas
+    lecture: ["dashboard", "students", "pre-students", "classes", "enrollment-classes", "questions", "assignments"],
     // Medkom: Galeri, Testimoni, Tim, Merchandise
     medkom: ["dashboard", "gallery", "testimonials", "team", "merchandise"],
     // Riset & Jurnal: Berita & Artikel
     riset_jurnal: ["dashboard", "news"],
-    // Admin 2: Siswa, Kelas, Soal & Ujian, Request Tool, Absensi Kelas
-    admin_2: ["dashboard", "students", "classes", "enrollment-classes", "questions", "tool-requests", "attendance"],
+    // Admin 2: Siswa, Pra-Siswa, Kelas, Soal & Ujian, Request Tool, Absensi Kelas, Verifikasi Pembayaran
+    admin_2: ["dashboard", "students", "pre-students", "classes", "enrollment-classes", "questions", "tool-requests", "attendance", "test-payments"],
     // Admin 1: Tim, Seminar, Request Tool, Merchandise, Manajemen User
     admin_1: ["dashboard", "team", "seminars", "tool-requests", "merchandise", "users"],
 };
@@ -273,18 +297,8 @@ export default function DashboardSidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const [openMenus, setOpenMenus] = useState<string[]>([]);
-    const [userRole, setUserRole] = useState<string | null>(null);
-
-    useEffect(() => {
-        fetch("/api/auth/me")
-            .then((r) => r.json())
-            .then((data) => {
-                if (data.user) {
-                    setUserRole(data.user.role || "student");
-                }
-            })
-            .catch(() => {});
-    }, []);
+    const { user } = useCurrentUser();
+    const userRole = user?.role || null;
 
     const toggleMenu = (id: string) => {
         setOpenMenus((prev) =>

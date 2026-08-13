@@ -4,12 +4,13 @@
     "private": true,
     "main": "./src/index.tsx",
     "types": "./src/index.tsx",
+    "sideEffects": false,
     "exports": {
         ".": "./src/index.tsx",
-        "./FormInput": "./src/FormInput.tsx",
-        "./FormSelect": "./src/FormSelect.tsx",
-        "./FormTextarea": "./src/FormTextarea.tsx",
-        "./FormFile": "./src/FormFile.tsx"
+        "./FormInput": "./src/components/FormInput.tsx",
+        "./FormSelect": "./src/components/FormSelect.tsx",
+        "./FormTextarea": "./src/components/FormTextarea.tsx",
+        "./FormFile": "./src/components/FormFile.tsx"
     },
     "peerDependencies": {
         "next": ">=14.0.0",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import ImageUploadField from "@/app/components/ImageUploadField";
 import type { MerchandiseItem } from "@repo/types";
 
@@ -346,11 +347,13 @@ export default function MerchandisePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {items.map((item) => (
                         <article key={item.id} className="bg-absolute-white rounded-2xl border border-neutral-20 p-4 hover:shadow-md transition-shadow">
-                            <div className="aspect-square overflow-hidden rounded-xl bg-neutral-10">
-                                <img
+                            <div className="relative aspect-square overflow-hidden rounded-xl bg-neutral-10">
+                                <Image
                                     src={getPreviewSrc(item.image_url)}
                                     alt={item.title}
-                                    className="h-full w-full object-cover"
+                                    fill
+                                    sizes="(min-width: 1280px) 30vw, (min-width: 768px) 45vw, 90vw"
+                                    className="object-cover"
                                 />
                             </div>
                             <div className="mt-4">

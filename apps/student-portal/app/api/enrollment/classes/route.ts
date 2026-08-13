@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listPortalClasses } from "@repo/database";
-import { requireStudent } from "@/app/lib/enrollment-auth";
+import { requirePortalUser } from "@/app/lib/enrollment-auth";
 
 export async function GET(request: NextRequest) {
-    const student = await requireStudent(request);
+    const student = await requirePortalUser(request);
     if (!student) return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
     const params = request.nextUrl.searchParams;
     const data = await listPortalClasses({

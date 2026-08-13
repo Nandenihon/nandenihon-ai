@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import type { Testimony } from "@repo/types";
 import ImageUploadField from "@/app/components/ImageUploadField";
 
@@ -218,7 +219,7 @@ export default function TestimonialsPage() {
                             <div className="flex items-start justify-between gap-3 mb-4">
                                 <div className="flex items-center gap-3">
                                     {t.photo ? (
-                                        <img src={t.photo} alt={t.nickname || ""} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                                        <Image src={t.photo} alt={t.nickname || ""} width={40} height={40} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
                                     ) : (
                                         <div className="w-10 h-10 rounded-full bg-primary-20 flex items-center justify-center text-primary-base font-bold flex-shrink-0">
                                             {(t.nickname || "?").charAt(0).toUpperCase()}

@@ -97,42 +97,6 @@ export default function ArticleSidebar({
   return (
     <aside className="hidden lg:block lg:col-span-1">
       <div className="sticky top-32 space-y-6">
-        {/* Table of Contents */}
-        {tocItems.length > 0 && (
-          <div className="bg-neutral-0 rounded-2xl p-5 border border-neutral-10">
-            <h3 className="text-sm font-bold text-neutral-80 uppercase tracking-wider mb-4">
-              Daftar Isi
-            </h3>
-            <nav>
-              <ul className="space-y-1">
-                {tocItems.map((item) => (
-                  <li key={item.id}>
-                    <button
-                      onClick={() => scrollToHeading(item.id)}
-                      className={`w-full text-left text-sm py-1.5 px-3 rounded-lg transition-all duration-200 block
-                        ${
-                          item.level === 3
-                            ? "pl-6"
-                            : item.level === 4
-                              ? "pl-9"
-                              : ""
-                        }
-                        ${
-                          activeId === item.id
-                            ? "text-primary-base font-semibold bg-primary-10 border-l-2 border-primary-base"
-                            : "text-neutral-50 hover:text-neutral-80 hover:bg-neutral-10"
-                        }
-                      `}
-                    >
-                      {item.text}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </div>
-        )}
-
         {/* Social Share */}
         <div className="bg-neutral-0 rounded-2xl p-5 border border-neutral-10">
           <h3 className="text-sm font-bold text-neutral-80 uppercase tracking-wider mb-4">

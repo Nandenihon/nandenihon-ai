@@ -6,6 +6,7 @@
 export type UserRole =
     | "super_admin"
     | "student"
+    | "pre_student"
     | "lecture"
     | "medkom"
     | "riset_jurnal"

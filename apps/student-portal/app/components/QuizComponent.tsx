@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
 export interface QuizQuestion {
     id: string;
@@ -281,9 +282,9 @@ export default function QuizComponent({
                             Coba Lagi
                         </button>
                     )}
-                    <a href={backHref} className="btn text-sm px-6 py-2.5">
+                    <Link href={backHref} className="btn text-sm px-6 py-2.5">
                         {backLabel}
-                    </a>
+                    </Link>
                 </div>
             </div>
         );

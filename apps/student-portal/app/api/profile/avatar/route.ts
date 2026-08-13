@@ -15,7 +15,7 @@ const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 export async function POST(request: NextRequest) {
     try {
         const session = await getProfileSession(request);
-        if (!session || session.role !== "student") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        if (!session || (session.role !== "student" && session.role !== "pre_student")) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         const formData = await request.formData();
         const file = formData.get("file");
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
     try {
         const session = await getProfileSession(request);
-        if (!session || session.role !== "student") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        if (!session || (session.role !== "student" && session.role !== "pre_student")) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const preStudentId = await resolvePreStudentId(session.id, session.email);
         if (preStudentId) {
             await ensureRegistrationTables();

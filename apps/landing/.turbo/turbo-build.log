@@ -2,270 +2,39 @@
 > landing@0.1.0 build
 > next build
 
-▲ Next.js 16.1.4 (Turbopack)
-- Environments: .env.local
+   ▲ Next.js 15.5.20
+   - Environments: .env.local
 
-  Creating an optimized production build ...
-✓ Compiled successfully in 2.3s
-  Running TypeScript ...
-  Collecting page data using 7 workers ...
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 1646ms
+   Linting and checking validity of types ...
+
+ ⚠ The Next.js plugin was not detected in your ESLint configuration. See https://nextjs.org/docs/app/api-reference/config/eslint#migrating-existing-config
+   Collecting page data ...
 News triggers were not created because the MySQL user lacks trigger/binlog privileges. Falling back to sync-on-read.
-  Generating static pages using 7 workers (0/62) ...
-Error occurred prerendering page "/article/formulir-pendaftaran-webinar". Read more: https://nextjs.org/docs/messages/prerender-error
-Error occurred prerendering page "/article/mengenal-gaya-hidup-kebersihan-di-jepang-yang-sudah-mengakar-sejak-dini". Read more: https://nextjs.org/docs/messages/prerender-error
-Error: PROCEDURE sync_news_post already exists
-    at o (.next/server/chunks/ssr/_e4005859._.js:1:5285)
-    at async v (.next/server/chunks/ssr/_e4005859._.js:1:6168)
-    at async (.next/server/chunks/ssr/_e4005859._.js:230:529) {
-  code: 'ER_SP_ALREADY_EXISTS',
-  errno: 1304,
-  sqlState: '42000',
-  sqlMessage: 'PROCEDURE sync_news_post already exists',
-  sql: '\n' +
-    '        CREATE PROCEDURE sync_news_post(IN source_post_id BIGINT UNSIGNED)\n' +
-    '        BEGIN\n' +
-    '            IF EXISTS (\n' +
-    '                SELECT 1\n' +
-    '                FROM `wp_posts`\n' +
-    '                WHERE ID = source_post_id\n' +
-    "                    AND post_type = 'post'\n" +
-    "                    AND post_status = 'publish'\n" +
-    '            ) THEN\n' +
-    '                INSERT INTO news (\n' +
-    '                    wp_post_id,\n' +
-    '                    slug,\n' +
-    '                    title,\n' +
-    '                    excerpt,\n' +
-    '                    content,\n' +
-    '                    status,\n' +
-    '                    type,\n' +
-    '                    author_id,\n' +
-    '                    author_name,\n' +
-    '                    category_id,\n' +
-    '                    category_name,\n' +
-    '                    category_slug,\n' +
-    '                    categories,\n' +
-    '                    featured_image_id,\n' +
-    '                    featured_image_url,\n' +
-    '                    source_url,\n' +
-    '                    published_at,\n' +
-    '                    modified_at\n' +
-    '                )\n' +
-    '                SELECT\n' +
-    '                    p.ID,\n' +
-    '                    p.post_name,\n' +
-    '                    p.post_title,\n' +
-    "                    NULLIF(p.post_excerpt, ''),\n" +
-    '                    p.post_content,\n' +
-    '                    p.post_status,\n' +
-    '                    p.post_type,\n' +
-    '                    p.post_author,\n' +
-    '                    u.display_name,\n' +
-    '                    (\n' +
-    '                        SELECT t.term_id\n' +
-    '                        FROM `wp_term_relationships` tr\n' +
-    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
-    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
-    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
-    '                        ORDER BY t.term_id ASC\n' +
-    '                        LIMIT 1\n' +
-    '                    ),\n' +
-    '                    (\n' +
-    '                        SELECT t.name\n' +
-    '                        FROM `wp_term_relationships` tr\n' +
-    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
-    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
-    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
-    '                        ORDER BY t.term_id ASC\n' +
-    '                        LIMIT 1\n' +
-    '                    ),\n' +
-    '                    (\n' +
-    '                        SELECT t.slug\n' +
-    '                        FROM `wp_term_relationships` tr\n' +
-    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
-    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
-    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
-    '                        ORDER BY t.term_id ASC\n' +
-    '                        LIMIT 1\n' +
-    '                    ),\n' +
-    '                    (\n' +
-    "                        SELECT GROUP_CONCAT(t.name ORDER BY t.name SEPARATOR ', ')\n" +
-    '                        FROM `wp_term_relationships` tr\n' +
-    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
-    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
-    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
-    '                    ),\n' +
-    "                    CAST(NULLIF(pm.meta_value, '') AS UNSIGNED),\n" +
-    '                    attachment.guid,\n' +
-    '                    CONCAT(\n' +
-    "                        COALESCE((SELECT option_value FROM `wp_options` WHERE option_name = 'home' LIMIT 1), ''),\n" +
-    "                        '/blog/',\n" +
-    '                        p.post_name,\n' +
-    "                        '/'\n" +
-    '                    ),\n' +
-    '                    p.post_date,\n' +
-    '                    p.post_modified\n' +
-    '                FROM `wp_posts` p\n' +
-    '                LEFT JOIN `wp_users` u ON u.ID = p.post_author\n' +
-    "                LEFT JOIN `wp_postmeta` pm ON pm.post_id = p.ID AND pm.meta_key = '_thumbnail_id'\n" +
-    "                LEFT JOIN `wp_posts` attachment ON attachment.ID = CAST(NULLIF(pm.meta_value, '') AS UNSIGNED)\n" +
-    '                WHERE p.ID = source_post_id\n' +
-    '                ON DUPLICATE KEY UPDATE\n' +
-    '                    slug = VALUES(slug),\n' +
-    '                    title = VALUES(title),\n' +
-    '                    excerpt = VALUES(excerpt),\n' +
-    '                    content = VALUES(content),\n' +
-    '                    status = VALUES(status),\n' +
-    '                    type = VALUES(type),\n' +
-    '                    author_id = VALUES(author_id),\n' +
-    '                    author_name = VALUES(author_name),\n' +
-    '                    category_id = VALUES(category_id),\n' +
-    '                    category_name = VALUES(category_name),\n' +
-    '                    category_slug = VALUES(category_slug),\n' +
-    '                    categories = VALUES(categories),\n' +
-    '                    featured_image_id = VALUES(featured_image_id),\n' +
-    '                    featured_image_url = VALUES(featured_image_url),\n' +
-    '                    source_url = VALUES(source_url),\n' +
-    '                    published_at = VALUES(published_at),\n' +
-    '                    modified_at = VALUES(modified_at),\n' +
-    '                    synced_at = CURRENT_TIMESTAMP;\n' +
-    '            ELSE\n' +
-    '                DELETE FROM news WHERE wp_post_id = source_post_id;\n' +
-    '            END IF;\n' +
-    '        END\n' +
-    '    ',
-  digest: '950790084'
+   Generating static pages (0/65) ...
+   Generating static pages (16/65) 
+News triggers were not created because the MySQL user lacks trigger/binlog privileges. Falling back to sync-on-read.
+News triggers were not created because the MySQL user lacks trigger/binlog privileges. Falling back to sync-on-read.
+Error occurred prerendering page "/article/matcha-101-kiat-kiat-jepang-untuk-menjaga-keaslian-matcha". Read more: https://nextjs.org/docs/messages/prerender-error
+Error: Deadlock found when trying to get lock; try restarting transaction
+    at s (.next/server/chunks/231.js:1:5025)
+    at async D (.next/server/chunks/231.js:230:654)
+    at async H (.next/server/chunks/231.js:230:1915)
+    at async u (.next/server/app/article/[slug]/page.js:1:22006) {
+  code: 'ER_LOCK_DEADLOCK',
+  errno: 1213,
+  sqlState: '40001',
+  sqlMessage: 'Deadlock found when trying to get lock; try restarting transaction',
+  sql: 'CALL sync_all_news()',
+  digest: '1615220104'
 }
-Export encountered an error on /article/[slug]/page: /article/formulir-pendaftaran-webinar, exiting the build.
-Error: PROCEDURE sync_news_post already exists
-    at o (.next/server/chunks/ssr/_e4005859._.js:1:5285)
-    at async v (.next/server/chunks/ssr/_e4005859._.js:1:6168)
-    at async (.next/server/chunks/ssr/_e4005859._.js:230:529) {
-  code: 'ER_SP_ALREADY_EXISTS',
-  errno: 1304,
-  sqlState: '42000',
-  sqlMessage: 'PROCEDURE sync_news_post already exists',
-  sql: '\n' +
-    '        CREATE PROCEDURE sync_news_post(IN source_post_id BIGINT UNSIGNED)\n' +
-    '        BEGIN\n' +
-    '            IF EXISTS (\n' +
-    '                SELECT 1\n' +
-    '                FROM `wp_posts`\n' +
-    '                WHERE ID = source_post_id\n' +
-    "                    AND post_type = 'post'\n" +
-    "                    AND post_status = 'publish'\n" +
-    '            ) THEN\n' +
-    '                INSERT INTO news (\n' +
-    '                    wp_post_id,\n' +
-    '                    slug,\n' +
-    '                    title,\n' +
-    '                    excerpt,\n' +
-    '                    content,\n' +
-    '                    status,\n' +
-    '                    type,\n' +
-    '                    author_id,\n' +
-    '                    author_name,\n' +
-    '                    category_id,\n' +
-    '                    category_name,\n' +
-    '                    category_slug,\n' +
-    '                    categories,\n' +
-    '                    featured_image_id,\n' +
-    '                    featured_image_url,\n' +
-    '                    source_url,\n' +
-    '                    published_at,\n' +
-    '                    modified_at\n' +
-    '                )\n' +
-    '                SELECT\n' +
-    '                    p.ID,\n' +
-    '                    p.post_name,\n' +
-    '                    p.post_title,\n' +
-    "                    NULLIF(p.post_excerpt, ''),\n" +
-    '                    p.post_content,\n' +
-    '                    p.post_status,\n' +
-    '                    p.post_type,\n' +
-    '                    p.post_author,\n' +
-    '                    u.display_name,\n' +
-    '                    (\n' +
-    '                        SELECT t.term_id\n' +
-    '                        FROM `wp_term_relationships` tr\n' +
-    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
-    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
-    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
-    '                        ORDER BY t.term_id ASC\n' +
-    '                        LIMIT 1\n' +
-    '                    ),\n' +
-    '                    (\n' +
-    '                        SELECT t.name\n' +
-    '                        FROM `wp_term_relationships` tr\n' +
-    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
-    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
-    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
-    '                        ORDER BY t.term_id ASC\n' +
-    '                        LIMIT 1\n' +
-    '                    ),\n' +
-    '                    (\n' +
-    '                        SELECT t.slug\n' +
-    '                        FROM `wp_term_relationships` tr\n' +
-    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
-    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
-    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
-    '                        ORDER BY t.term_id ASC\n' +
-    '                        LIMIT 1\n' +
-    '                    ),\n' +
-    '                    (\n' +
-    "                        SELECT GROUP_CONCAT(t.name ORDER BY t.name SEPARATOR ', ')\n" +
-    '                        FROM `wp_term_relationships` tr\n' +
-    '                        INNER JOIN `wp_term_taxonomy` tt ON tt.term_taxonomy_id = tr.term_taxonomy_id\n' +
-    '                        INNER JOIN `wp_terms` t ON t.term_id = tt.term_id\n' +
-    "                        WHERE tr.object_id = p.ID AND tt.taxonomy = 'category'\n" +
-    '                    ),\n' +
-    "                    CAST(NULLIF(pm.meta_value, '') AS UNSIGNED),\n" +
-    '                    attachment.guid,\n' +
-    '                    CONCAT(\n' +
-    "                        COALESCE((SELECT option_value FROM `wp_options` WHERE option_name = 'home' LIMIT 1), ''),\n" +
-    "                        '/blog/',\n" +
-    '                        p.post_name,\n' +
-    "                        '/'\n" +
-    '                    ),\n' +
-    '                    p.post_date,\n' +
-    '                    p.post_modified\n' +
-    '                FROM `wp_posts` p\n' +
-    '                LEFT JOIN `wp_users` u ON u.ID = p.post_author\n' +
-    "                LEFT JOIN `wp_postmeta` pm ON pm.post_id = p.ID AND pm.meta_key = '_thumbnail_id'\n" +
-    "                LEFT JOIN `wp_posts` attachment ON attachment.ID = CAST(NULLIF(pm.meta_value, '') AS UNSIGNED)\n" +
-    '                WHERE p.ID = source_post_id\n' +
-    '                ON DUPLICATE KEY UPDATE\n' +
-    '                    slug = VALUES(slug),\n' +
-    '                    title = VALUES(title),\n' +
-    '                    excerpt = VALUES(excerpt),\n' +
-    '                    content = VALUES(content),\n' +
-    '                    status = VALUES(status),\n' +
-    '                    type = VALUES(type),\n' +
-    '                    author_id = VALUES(author_id),\n' +
-    '                    author_name = VALUES(author_name),\n' +
-    '                    category_id = VALUES(category_id),\n' +
-    '                    category_name = VALUES(category_name),\n' +
-    '                    category_slug = VALUES(category_slug),\n' +
-    '                    categories = VALUES(categories),\n' +
-    '                    featured_image_id = VALUES(featured_image_id),\n' +
-    '                    featured_image_url = VALUES(featured_image_url),\n' +
-    '                    source_url = VALUES(source_url),\n' +
-    '                    published_at = VALUES(published_at),\n' +
-    '                    modified_at = VALUES(modified_at),\n' +
-    '                    synced_at = CURRENT_TIMESTAMP;\n' +
-    '            ELSE\n' +
-    '                DELETE FROM news WHERE wp_post_id = source_post_id;\n' +
-    '            END IF;\n' +
-    '        END\n' +
-    '    ',
-  digest: '950790084'
-}
-Export encountered an error on /article/[slug]/page: /article/mengenal-gaya-hidup-kebersihan-di-jepang-yang-sudah-mengakar-sejak-dini, exiting the build.
-⨯ Next.js build worker exited with code: 1 and signal: null
+Export encountered an error on /article/[slug]/page: /article/matcha-101-kiat-kiat-jepang-untuk-menjaga-keaslian-matcha, exiting the build.
+ ⨯ Next.js build worker exited with code: 1 and signal: null
 npm error Lifecycle script `build` failed with error:
 npm error code 1
-npm error path /Applications/nandenihon-ai/apps/landing
+npm error path /Applications/Project/nandenihon-ai/apps/landing
 npm error workspace landing@0.1.0
-npm error location /Applications/nandenihon-ai/apps/landing
+npm error location /Applications/Project/nandenihon-ai/apps/landing
 npm error command failed
 npm error command sh -c next build

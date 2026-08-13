@@ -2,10 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import LessonSidebar from "../../components/LessonSidebar";
-import ContentPlayer from "../../components/ContentPlayer";
-import QuizComponent, { type QuizQuestion } from "../../components/QuizComponent";
+import type { QuizQuestion } from "../../components/QuizComponent";
 import type { LmsLesson } from "@repo/database";
+
+// Only one of these renders at a time (quiz vs. regular lesson content) — split
+// into separate chunks so a lesson page never ships the code for the other.
+const ContentPlayer = dynamic(() => import("../../components/ContentPlayer"), { ssr: false });
+const QuizComponent = dynamic(() => import("../../components/QuizComponent"), { ssr: false });
 
 interface LessonWithProgress extends LmsLesson {
     isCompleted: boolean;

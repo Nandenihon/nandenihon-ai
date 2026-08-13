@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 export type WebinarItemProps = {
   id: number;
@@ -13,9 +14,11 @@ const WebinarItem = (props: WebinarItemProps) => {
   return (
     <div className="bg-white p-5 shadow-[0px_0px_20px_2px_#0000001A] rounded-2xl ">
       <div className="relative h-52.5 w-auto">
-        <img
+        <Image
           src={props.image}
-          className=" h-full rounded-lg object-cover w-full"
+          fill
+          sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw"
+          className="rounded-lg object-cover"
           alt="placeholder"
         />
         <div className="absolute  left-1.5 top-1.5 border border-primary-100 bg-primary-30 text-primary-100 text-xs font-bold rounded-full px-3 py-1">

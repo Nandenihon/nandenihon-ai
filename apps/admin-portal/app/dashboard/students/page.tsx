@@ -1,20 +1,21 @@
 export const dynamic = "force-dynamic";
 
-import { queryMySQL, type RowDataPacket } from "@repo/database";
+import { ensureStudentsTable, queryMySQL, type RowDataPacket } from "@repo/database";
 
 interface Student {
     id: number;
+    user_id: number;
     full_name: string;
     email: string;
     whatsapp: string | null;
-    level: string | null;
-    test_status: string;
-    pass_status: string;
-    created_at: Date;
+    japanese_level: string | null;
+    activated_at: Date | null;
+    class_code: string | null;
+    class_name: string | null;
 }
 
 interface StudentsPageProps {
-    searchParams?: Promise<{ page?: string; level?: string; status?: string }>;
+    searchParams?: Promise<{ page?: string; search?: string }>;
 }
 
 const PAGE_SIZE = 10;
@@ -28,61 +29,45 @@ function formatDate(date: Date | null): string {
     }).format(new Date(date));
 }
 
-function getStatusLabel(testStatus: string, passStatus: string): string {
-    if (testStatus === "completed") {
-        return passStatus === "passed" ? "Lulus" : "Tidak Lulus";
-    }
-    if (testStatus === "in_progress") return "Dalam Tes";
-    return "Aktif";
-}
-
-function getStatusColor(testStatus: string, passStatus: string): string {
-    if (testStatus === "completed") {
-        return passStatus === "passed"
-            ? "bg-success-10 text-success-base"
-            : "bg-error-10 text-error-base";
-    }
-    if (testStatus === "in_progress") return "bg-warning-10 text-warning-100";
-    return "bg-primary-10 text-primary-base";
-}
-
 export default async function StudentsPage({ searchParams }: StudentsPageProps) {
     const params = searchParams ? await searchParams : {};
     const page = Math.max(1, parseInt(params.page ?? "1", 10));
-    const levelFilter = params.level ?? "";
-    const statusFilter = params.status ?? "";
+    const search = params.search ?? "";
     const offset = (page - 1) * PAGE_SIZE;
 
-    const conditions: string[] = [];
+    // Active students from the admission flow only (user_id set once payment is
+    // verified — see admission-test-mysql.ts verifyPayment). Legacy leads from the
+    // retired public quiz never had a users row, so they're intentionally excluded.
+    const conditions: string[] = ["s.user_id IS NOT NULL"];
     const queryParams: unknown[] = [];
 
-    if (levelFilter) {
-        conditions.push("level = ?");
-        queryParams.push(levelFilter);
-    }
-    if (statusFilter === "active") {
-        conditions.push("test_status != 'completed'");
-    } else if (statusFilter === "completed") {
-        conditions.push("test_status = 'completed'");
+    if (search) {
+        conditions.push("(s.full_name LIKE ? OR s.email LIKE ? OR s.whatsapp LIKE ?)");
+        const term = `%${search}%`;
+        queryParams.push(term, term, term);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause = `WHERE ${conditions.join(" AND ")}`;
 
     let students: Student[] = [];
     let total = 0;
 
     try {
+        await ensureStudentsTable();
         const countRows = await queryMySQL<RowDataPacket[]>(
-            `SELECT COUNT(*) as total FROM students ${whereClause}`,
+            `SELECT COUNT(*) as total FROM students s ${whereClause}`,
             queryParams
         );
         total = Number(countRows[0]?.total ?? 0);
 
         const rows = await queryMySQL<RowDataPacket[]>(
-            `SELECT id, full_name, email, whatsapp, level, test_status, pass_status, created_at
-             FROM students
+            `SELECT s.id, s.user_id, s.full_name, s.email, s.whatsapp, s.japanese_level, s.activated_at,
+                    c.code AS class_code, c.name AS class_name
+             FROM students s
+             LEFT JOIN class_memberships m ON m.user_id = s.user_id AND m.status = 'active'
+             LEFT JOIN enrollment_classes c ON c.id = m.class_id
              ${whereClause}
-             ORDER BY created_at DESC
+             ORDER BY s.activated_at DESC
              LIMIT ? OFFSET ?`,
             [...queryParams, PAGE_SIZE, offset]
         );
@@ -93,13 +78,10 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
 
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-    function buildUrl(newPage: number, newLevel?: string, newStatus?: string) {
+    function buildUrl(newPage: number) {
         const p = new URLSearchParams();
         if (newPage > 1) p.set("page", String(newPage));
-        const lv = newLevel ?? levelFilter;
-        const st = newStatus ?? statusFilter;
-        if (lv) p.set("level", lv);
-        if (st) p.set("status", st);
+        if (search) p.set("search", search);
         return `/dashboard/students${p.size > 0 ? `?${p}` : ""}`;
     }
 
@@ -121,53 +103,16 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
                             </svg>
                         </div>
                         <form method="GET" action="/dashboard/students">
-                            {levelFilter && <input type="hidden" name="level" value={levelFilter} />}
-                            {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
                             <input
                                 type="search"
                                 name="search"
+                                defaultValue={search}
                                 placeholder="Cari siswa..."
                                 className="w-64 bg-absolute-white border border-neutral-20 rounded-xl py-2 pl-9 pr-4 text-sm text-neutral-70 placeholder:text-neutral-40 outline-none focus:border-primary-base transition-all"
                             />
                         </form>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <a
-                            href={buildUrl(1, "", statusFilter)}
-                            className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${!levelFilter ? "bg-primary-base text-absolute-white border-primary-base" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}
-                        >
-                            Semua Level
-                        </a>
-                        {["N5", "N4", "N3", "N2", "N1"].map((lv) => (
-                            <a
-                                key={lv}
-                                href={buildUrl(1, lv, statusFilter)}
-                                className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${levelFilter === lv ? "bg-primary-base text-absolute-white border-primary-base" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}
-                            >
-                                {lv}
-                            </a>
-                        ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <a
-                            href={buildUrl(1, levelFilter, "")}
-                            className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${!statusFilter ? "bg-neutral-80 text-absolute-white border-neutral-80" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}
-                        >
-                            Semua Status
-                        </a>
-                        <a
-                            href={buildUrl(1, levelFilter, "active")}
-                            className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${statusFilter === "active" ? "bg-neutral-80 text-absolute-white border-neutral-80" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}
-                        >
-                            Aktif
-                        </a>
-                        <a
-                            href={buildUrl(1, levelFilter, "completed")}
-                            className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${statusFilter === "completed" ? "bg-neutral-80 text-absolute-white border-neutral-80" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}
-                        >
-                            Selesai
-                        </a>
-                    </div>
+                    <span className="text-sm text-neutral-50">{new Intl.NumberFormat("id-ID").format(total)} siswa aktif</span>
                 </div>
             </div>
 
@@ -180,15 +125,15 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
                                 <th className="text-left text-xs font-semibold text-neutral-50 px-6 py-3.5">Siswa</th>
                                 <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">No. HP</th>
                                 <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Level</th>
-                                <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Bergabung</th>
-                                <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Status</th>
+                                <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Kelas</th>
+                                <th className="text-left text-xs font-semibold text-neutral-50 px-4 py-3.5">Aktif sejak</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-10">
                             {students.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-10 text-center text-sm text-neutral-50">
-                                        Belum ada data siswa.
+                                        Belum ada siswa aktif.
                                     </td>
                                 </tr>
                             ) : (
@@ -208,16 +153,18 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
                                         <td className="px-4 py-4 text-sm text-neutral-60">{student.whatsapp ?? "-"}</td>
                                         <td className="px-4 py-4">
                                             <span className="bg-primary-10 text-primary-base text-xs font-semibold px-2.5 py-1 rounded-full">
-                                                {student.level ?? "-"}
+                                                {student.japanese_level ?? "-"}
                                             </span>
+                                        </td>
+                                        <td className="px-4 py-4 text-sm text-neutral-70">
+                                            {student.class_code ? (
+                                                <span className="font-semibold">{student.class_code} · {student.class_name}</span>
+                                            ) : (
+                                                <span className="text-neutral-30">Belum ada kelas aktif</span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-4 text-sm text-neutral-60">
-                                            {formatDate(student.created_at)}
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getStatusColor(student.test_status, student.pass_status)}`}>
-                                                {getStatusLabel(student.test_status, student.pass_status)}
-                                            </span>
+                                            {formatDate(student.activated_at)}
                                         </td>
                                     </tr>
                                 ))

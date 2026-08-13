@@ -6,17 +6,19 @@ import {
     type ResultSetHeader,
     type RowDataPacket,
 } from "@repo/database";
+import { CLASS_MANAGER_ROLES, requireEnrollmentActor } from "@/app/lib/enrollment-auth";
 
-const VALID_LEVELS = new Set(["N5", "N4"]);
+const VALID_LEVELS = new Set(["N5 Basic", "N5 Menengah", "N5 Lanjutan", "N4"]);
 
 interface QuestionRow extends RowDataPacket {
     id: number;
     text: string;
     options: string;
     correct_answer: string;
+    points: number;
     time_limit: number;
     category: string | null;
-    level: "N5" | "N4";
+    level: string;
     created_at: Date;
     updated_at: Date;
 }
@@ -42,6 +44,7 @@ function mapQuestion(row: QuestionRow) {
         text: row.text,
         options: parseOptions(row.options),
         correctAnswer: row.correct_answer,
+        points: Number(row.points ?? 1),
         timeLimit: row.time_limit,
         category: row.category,
         level: row.level,
@@ -54,6 +57,7 @@ function validateQuestionPayload(body: Record<string, unknown>) {
     const text = typeof body.text === "string" ? body.text.trim() : "";
     const options = Array.isArray(body.options) ? body.options : [];
     const correctAnswer = typeof body.correctAnswer === "string" ? body.correctAnswer.trim() : "";
+    const points = Number(body.points ?? 1);
     const timeLimit = Number(body.timeLimit ?? 30);
     const category = typeof body.category === "string" && body.category.trim() ? body.category.trim() : null;
     const level = typeof body.level === "string" ? body.level : "";
@@ -64,14 +68,16 @@ function validateQuestionPayload(body: Record<string, unknown>) {
     }
     if (!correctAnswer) return { error: "correctAnswer wajib diisi" };
     if (!options.includes(correctAnswer)) return { error: "correctAnswer harus ada di options" };
+    if (!Number.isInteger(points) || points < 1) return { error: "points harus angka positif" };
     if (!Number.isInteger(timeLimit) || timeLimit < 1) return { error: "timeLimit harus angka positif" };
-    if (!VALID_LEVELS.has(level)) return { error: "level harus N5 atau N4" };
+    if (!VALID_LEVELS.has(level)) return { error: `level harus salah satu dari: ${[...VALID_LEVELS].join(", ")}` };
 
     return {
         data: {
             text,
             options: options.map((option) => String(option).trim()),
             correctAnswer,
+            points,
             timeLimit,
             category,
             level,
@@ -83,6 +89,8 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const actor = await requireEnrollmentActor(request, CLASS_MANAGER_ROLES);
+    if (!actor) return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
     try {
         await ensureQuizTables();
 
@@ -108,6 +116,8 @@ export async function PUT(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const actor = await requireEnrollmentActor(request, CLASS_MANAGER_ROLES);
+    if (!actor) return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
     try {
         await ensureQuizTables();
 
@@ -121,18 +131,19 @@ export async function PUT(
             return NextResponse.json({ error: validation.error }, { status: 400 });
         }
 
-        const { text, options, correctAnswer, timeLimit, category, level } = validation.data;
+        const { text, options, correctAnswer, points, timeLimit, category, level } = validation.data;
         const result = await queryMySQL<ResultSetHeader>(
             `UPDATE questions
              SET text = ?,
                  options = ?,
                  correct_answer = ?,
+                 points = ?,
                  time_limit = ?,
                  category = ?,
                  level = ?,
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = ?`,
-            [text, JSON.stringify(options), correctAnswer, timeLimit, category, level, id]
+            [text, JSON.stringify(options), correctAnswer, points, timeLimit, category, level, id]
         );
 
         if (result.affectedRows === 0) {
@@ -152,6 +163,8 @@ export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const actor = await requireEnrollmentActor(request, CLASS_MANAGER_ROLES);
+    if (!actor) return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
     try {
         await ensureQuizTables();
 

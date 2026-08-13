@@ -17,6 +17,9 @@ export interface PortalClassInput {
     startAt: string;
     endAt: string;
     ownerTeacherId: number;
+    testPassScore?: number;
+    testTimeLimitMinutes?: number;
+    testQuestionCount?: number;
 }
 
 type ApplicationRow = RowDataPacket & {
@@ -43,7 +46,19 @@ async function addColumnIfMissing(table: string, column: string, definition: str
     if (!rows[0]) await queryMySQL(`ALTER TABLE \`${table}\` ADD COLUMN ${definition}`);
 }
 
+let enrollmentTablesReady: Promise<void> | null = null;
+
 export async function ensureEnrollmentTables(): Promise<void> {
+    if (!enrollmentTablesReady) {
+        enrollmentTablesReady = ensureEnrollmentTablesUncached().catch((error) => {
+            enrollmentTablesReady = null;
+            throw error;
+        });
+    }
+    await enrollmentTablesReady;
+}
+
+async function ensureEnrollmentTablesUncached(): Promise<void> {
     // Keep the module independently bootstrappable. The registration module
     // owns these records, but admin class setup may run before the first signup.
     await queryMySQL(`
@@ -210,6 +225,11 @@ export async function ensureEnrollmentTables(): Promise<void> {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     await addColumnIfMissing("pre_students", "promoted_user_id", "promoted_user_id BIGINT UNSIGNED NULL AFTER registration_completed_at");
+    // Admission test config, per class. Questions are drawn from the shared `questions`
+    // bank (see quiz-mysql.ts) filtered by this class's `level` — see admission-test-mysql.ts.
+    await addColumnIfMissing("enrollment_classes", "test_pass_score", "test_pass_score INT UNSIGNED NOT NULL DEFAULT 60 AFTER level");
+    await addColumnIfMissing("enrollment_classes", "test_time_limit_minutes", "test_time_limit_minutes INT UNSIGNED NOT NULL DEFAULT 30 AFTER test_pass_score");
+    await addColumnIfMissing("enrollment_classes", "test_question_count", "test_question_count INT UNSIGNED NOT NULL DEFAULT 25 AFTER test_time_limit_minutes");
 }
 
 export async function createPortalClass(input: PortalClassInput, actorId: number) {
@@ -217,10 +237,12 @@ export async function createPortalClass(input: PortalClassInput, actorId: number
     const result = await queryMySQL<ResultSetHeader>(
         `INSERT INTO enrollment_classes
          (code, name, description, level, program, schedule, capacity,
-          enrollment_open_at, enrollment_close_at, start_at, end_at, owner_teacher_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          enrollment_open_at, enrollment_close_at, start_at, end_at, owner_teacher_id,
+          test_pass_score, test_time_limit_minutes, test_question_count)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [input.code.toUpperCase(), input.name, input.description, input.level, input.program, input.schedule,
-            input.capacity, input.enrollmentOpenAt, input.enrollmentCloseAt, input.startAt, input.endAt, input.ownerTeacherId]
+            input.capacity, input.enrollmentOpenAt, input.enrollmentCloseAt, input.startAt, input.endAt, input.ownerTeacherId,
+            input.testPassScore ?? 60, input.testTimeLimitMinutes ?? 30, input.testQuestionCount ?? 25]
     );
     await queryMySQL("INSERT INTO class_teachers (class_id, teacher_id, role) VALUES (?, ?, 'owner')", [result.insertId, input.ownerTeacherId]);
     await queryMySQL("INSERT INTO class_groups (class_id, name) VALUES (?, ?)", [result.insertId, `${input.name} — Main Group`]);
@@ -274,7 +296,8 @@ export async function updatePortalClass(classId: number, input: Partial<PortalCl
         code: "code", name: "name", description: "description", level: "level", program: "program",
         schedule: "schedule", capacity: "capacity", enrollmentOpenAt: "enrollment_open_at",
         enrollmentCloseAt: "enrollment_close_at", startAt: "start_at", endAt: "end_at",
-        ownerTeacherId: "owner_teacher_id",
+        ownerTeacherId: "owner_teacher_id", testPassScore: "test_pass_score",
+        testTimeLimitMinutes: "test_time_limit_minutes", testQuestionCount: "test_question_count",
     };
     const fields: string[] = [];
     const values: unknown[] = [];
@@ -463,7 +486,11 @@ async function promoteCandidate(connection: PoolConnection, preStudentId: number
     const [candidateRows] = await connection.query<RowDataPacket[]>("SELECT * FROM pre_students WHERE id = ? FOR UPDATE", [preStudentId]);
     const candidate = candidateRows[0];
     if (!candidate) throw new Error("CANDIDATE_NOT_FOUND");
-    if (candidate.promoted_user_id) return Number(candidate.promoted_user_id);
+    if (candidate.promoted_user_id) {
+        // Candidate may already have a 'pre_student' users row created at registration.
+        await connection.query("UPDATE users SET role = 'student' WHERE id = ? AND role = 'pre_student'", [candidate.promoted_user_id]);
+        return Number(candidate.promoted_user_id);
+    }
     const [existingUsers] = await connection.query<RowDataPacket[]>("SELECT id FROM users WHERE email = ? LIMIT 1", [candidate.email]);
     let userId = existingUsers[0] ? Number(existingUsers[0].id) : 0;
     if (!userId) {
@@ -564,6 +591,23 @@ export async function acceptApplication(applicationId: number, actorId: number, 
     } finally {
         connection.release();
     }
+}
+
+/** A student's own active class enrollments, for the student-portal learning dashboard. */
+export async function listActiveClassMembershipsForUser(userId: number) {
+    await ensureEnrollmentTables();
+    return queryMySQL<RowDataPacket[]>(
+        `SELECT m.id AS membership_id, m.joined_at,
+                c.id AS class_id, c.code, c.name, c.description, c.level, c.program, c.schedule,
+                c.start_at, c.end_at, c.status AS class_status,
+                u.username AS teacher_name, u.email AS teacher_email
+         FROM class_memberships m
+         JOIN enrollment_classes c ON c.id = m.class_id
+         LEFT JOIN users u ON u.id = c.owner_teacher_id
+         WHERE m.user_id = ? AND m.status = 'active'
+         ORDER BY m.joined_at DESC`,
+        [userId]
+    );
 }
 
 export async function listClassMembers(classId: number) {

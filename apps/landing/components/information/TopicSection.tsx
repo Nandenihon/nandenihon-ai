@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import type { LandingTranslations } from "@/lib/i18n";
 
 type TopicSectionProps = {
@@ -25,9 +26,11 @@ function TopicSection({ t }: TopicSectionProps) {
             className="relative flex flex-col items-center bg-[#F0F0F0] px-8 pb-10 pt-24 rounded-[40px] text-center hover:shadow-lg transition-shadow duration-300"
           >
             <div className="absolute -top-16">
-              <img
+              <Image
                 src={topic.image}
                 alt={topic.title}
+                width={160}
+                height={160}
                 className="w-40 h-40 object-contain drop-shadow-lg"
               />
             </div>

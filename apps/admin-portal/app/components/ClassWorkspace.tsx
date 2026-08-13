@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import AssignmentManager from "./AssignmentManager";
 
 type Tab = "overview" | "admissions" | "assignments" | "roster";
@@ -19,6 +19,11 @@ export default function ClassWorkspace({ classId, teacherMode = false }: { class
     const [teacherOptions, setTeacherOptions] = useState<TeacherOption[]>([]);
     const [selectedTeacher, setSelectedTeacher] = useState("");
     const [message, setMessage] = useState("");
+
+    const unassignedTeacherOptions = useMemo(
+        () => teacherOptions.filter((option) => !teachers.some((teacher) => teacher.teacher_id === option.id)),
+        [teacherOptions, teachers]
+    );
 
     const load = useCallback(async () => {
         const requests = [
@@ -94,7 +99,7 @@ export default function ClassWorkspace({ classId, teacherMode = false }: { class
             </nav>
             {tab === "overview" && <section className="rounded-2xl bg-white p-6 shadow-sm">
                 <div className="flex items-center justify-between"><div><h2 className="text-xl font-bold">Pengajar kelas</h2><p className="text-sm text-neutral-50">Hanya pengajar dalam daftar ini yang dapat mengakses workspace kelas.</p></div></div>
-                {!teacherMode && <div className="mt-5 flex gap-3"><select className="flex-1 rounded-xl border border-neutral-20 px-4 py-3" value={selectedTeacher} onChange={(event) => setSelectedTeacher(event.target.value)}><option value="">Pilih pengajar...</option>{teacherOptions.filter((option) => !teachers.some((teacher) => teacher.teacher_id === option.id)).map((option) => <option key={option.id} value={option.id}>{option.name} — {option.email}</option>)}</select><button onClick={assignTeacher} disabled={!selectedTeacher} className="rounded-xl bg-primary-base px-5 font-bold text-white disabled:bg-neutral-30">Assign</button></div>}
+                {!teacherMode && <div className="mt-5 flex gap-3"><select className="flex-1 rounded-xl border border-neutral-20 px-4 py-3" value={selectedTeacher} onChange={(event) => setSelectedTeacher(event.target.value)}><option value="">Pilih pengajar...</option>{unassignedTeacherOptions.map((option) => <option key={option.id} value={option.id}>{option.name} — {option.email}</option>)}</select><button onClick={assignTeacher} disabled={!selectedTeacher} className="rounded-xl bg-primary-base px-5 font-bold text-white disabled:bg-neutral-30">Assign</button></div>}
                 <div className="mt-5 grid gap-3 md:grid-cols-2">{teachers.map((teacher) => <article key={teacher.teacher_id} className="flex items-center justify-between rounded-xl border border-neutral-10 p-4"><div><p className="font-bold">{teacher.name}</p><p className="text-sm text-neutral-50">{teacher.email}</p><span className="mt-1 inline-block rounded-full bg-primary-10 px-2 py-1 text-xs font-bold text-primary-base">{teacher.role}</span></div>{!teacherMode && teacher.role !== "owner" && <button onClick={() => removeTeacher(teacher.teacher_id)} className="text-sm font-semibold text-error-base">Hapus</button>}</article>)}</div>
             </section>}
             {tab === "admissions" && <section className="space-y-3">{applications.length === 0 ? <div className="rounded-2xl bg-white p-10 text-center text-neutral-50">Belum ada aplikasi untuk kelas ini.</div> : applications.map((application) => <article key={application.id} className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm sm:flex-row sm:items-center"><div className="flex-1"><span className="rounded-full bg-neutral-10 px-3 py-1 text-xs font-bold">{application.status}</span><h3 className="mt-2 text-lg font-bold">{application.full_name} ({application.nickname})</h3><p className="text-sm text-neutral-50">{application.email} · {application.japanese_level}</p></div>{!teacherMode && ["submitted", "under_review"].includes(application.status) && <div className="flex gap-2">{application.status === "submitted" && <Action onClick={() => decide(application.id, "review")}>Review</Action>}<Action onClick={() => decide(application.id, "accept")}>Accept</Action><Action danger onClick={() => decide(application.id, "reject")}>Reject</Action></div>}</article>)}</section>}
