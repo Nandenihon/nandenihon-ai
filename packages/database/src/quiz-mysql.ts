@@ -3,7 +3,7 @@ import { queryMySQL, type ResultSetHeader, type RowDataPacket } from "./mysql-co
 // "N5"/"N4" are kept for the legacy public landing-site quiz (apps/landing/app/class/*),
 // which still only ever passes those two literal levels. The other three are the
 // canonical levels used by the admin question bank / class-linked test flow.
-export type QuizLevel = "N5" | "N4" | "N5 Basic" | "N5 Menengah" | "N5 Lanjutan";
+export type QuizLevel = "N5" | "N4" | "N5 Basic" | "N5 Intermediate" | "N5 Advanced";
 
 export interface QuizQuestion {
     id: number;
