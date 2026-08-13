@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -13,16 +13,25 @@ type Attempt = {
 
 const OPTION_LETTERS = ["A", "B", "C", "D"];
 
+function formatClock(totalSeconds: number): string {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
 export default function TestRunnerPage() {
     const params = useParams<{ attemptId: string }>();
     const attemptId = Number(params.attemptId);
     const router = useRouter();
     const [attempt, setAttempt] = useState<Attempt | null>(null);
     const [questions, setQuestions] = useState<Question[]>([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [finishing, setFinishing] = useState(false);
     const [result, setResult] = useState<{ score: number; passStatus: string } | null>(null);
+    const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+    const finishingRef = useRef(false);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -38,22 +47,44 @@ export default function TestRunnerPage() {
     }, [attemptId]);
     useEffect(() => { void load(); }, [load]);
 
+    const finish = useCallback(async (auto = false) => {
+        if (finishingRef.current) return;
+        if (!auto && !window.confirm("Selesaikan tes sekarang? Jawaban tidak dapat diubah setelah ini.")) return;
+        finishingRef.current = true;
+        setFinishing(true);
+        const response = await fetch(`/api/tests/attempts/${attemptId}/finish`, { method: "POST" });
+        const data = await response.json();
+        setFinishing(false);
+        if (!response.ok) {
+            finishingRef.current = false;
+            setError(data.error || "Gagal menyelesaikan tes");
+            return;
+        }
+        setResult(data);
+    }, [attemptId]);
+
+    // Countdown timer, based on the class's configured time limit — auto-submits when it hits zero.
+    useEffect(() => {
+        if (!attempt || attempt.status !== "in_progress") return;
+        const deadline = new Date(attempt.startedAt).getTime() + attempt.timeLimitMinutes * 60_000;
+
+        const tick = () => {
+            const secs = Math.max(0, Math.round((deadline - Date.now()) / 1000));
+            setRemainingSeconds(secs);
+            if (secs <= 0) void finish(true);
+        };
+
+        tick();
+        const interval = setInterval(tick, 1000);
+        return () => clearInterval(interval);
+    }, [attempt, finish]);
+
     async function selectAnswer(questionId: number, value: string) {
         setQuestions((current) => current.map((q) => (q.id === questionId ? { ...q, selectedValue: value } : q)));
         await fetch(`/api/tests/attempts/${attemptId}/answer`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ questionId, selectedValue: value }),
         });
-    }
-
-    async function finish() {
-        if (!window.confirm("Selesaikan tes sekarang? Jawaban tidak dapat diubah setelah ini.")) return;
-        setFinishing(true);
-        const response = await fetch(`/api/tests/attempts/${attemptId}/finish`, { method: "POST" });
-        const data = await response.json();
-        setFinishing(false);
-        if (!response.ok) { setError(data.error || "Gagal menyelesaikan tes"); return; }
-        setResult(data);
     }
 
     if (loading) return <p className="py-16 text-center">Memuat tes...</p>;
@@ -89,36 +120,93 @@ export default function TestRunnerPage() {
         );
     }
 
+    const question = questions[currentIndex];
     const answeredCount = questions.filter((q) => q.selectedValue).length;
+    const isLast = currentIndex === questions.length - 1;
+    const lowTime = remainingSeconds !== null && remainingSeconds <= 60;
 
     return (
-        <div className="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-8">
-            <section className="portal-card p-6">
-                <h1 className="text-xl font-black text-[#14213d]">Tes Penempatan {attempt.className}</h1>
-                <p className="mt-1 text-sm text-neutral-50">{answeredCount}/{questions.length} soal terjawab · batas waktu {attempt.timeLimitMinutes} menit</p>
-            </section>
-            {error && <div role="alert" className="rounded-xl bg-error-10 p-4 text-error-base">{error}</div>}
-            <div className="space-y-4">
-                {questions.map((question, index) => (
-                    <article key={question.id} className="portal-card p-6">
-                        <p className="font-bold text-neutral-80">{index + 1}. {question.text}</p>
-                        <div className="mt-4 space-y-2">
-                            {question.options.map((option, optionIndex) => {
-                                const letter = OPTION_LETTERS[optionIndex];
-                                const active = question.selectedValue === letter;
-                                return (
-                                    <label key={letter} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm ${active ? "border-primary-base bg-primary-10 font-bold text-primary-base" : "border-neutral-20"}`}>
-                                        <input type="radio" name={`question-${question.id}`} className="sr-only" checked={active} onChange={() => selectAnswer(question.id, letter)} />
-                                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs font-bold">{letter}</span>
-                                        {option}
-                                    </label>
-                                );
-                            })}
+        <div className="mx-auto max-w-2xl space-y-5 px-4 py-8 sm:px-8">
+            <section className="portal-card p-5">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <h1 className="truncate text-lg font-black text-[#14213d]">Tes Penempatan {attempt.className}</h1>
+                        <p className="mt-0.5 text-xs text-neutral-50">Soal {currentIndex + 1} dari {questions.length} · {answeredCount} terjawab</p>
+                    </div>
+                    {remainingSeconds !== null && (
+                        <div
+                            className={`shrink-0 rounded-xl px-4 py-2 text-center font-mono text-lg font-black ${lowTime ? "bg-error-10 text-error-base" : "bg-primary-10 text-primary-base"}`}
+                            role="timer"
+                            aria-live="polite"
+                            aria-label={`Sisa waktu ${formatClock(remainingSeconds)}`}
+                        >
+                            {formatClock(remainingSeconds)}
                         </div>
-                    </article>
+                    )}
+                </div>
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-neutral-10">
+                    <div className="h-full rounded-full bg-primary-base transition-all" style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }} />
+                </div>
+            </section>
+
+            {/* Quick question nav */}
+            <div className="flex flex-wrap gap-1.5">
+                {questions.map((q, index) => (
+                    <button
+                        key={q.id}
+                        onClick={() => setCurrentIndex(index)}
+                        aria-label={`Soal ${index + 1}${q.selectedValue ? " (terjawab)" : ""}`}
+                        aria-current={index === currentIndex ? "step" : undefined}
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition-all ${
+                            index === currentIndex
+                                ? "bg-primary-base text-white"
+                                : q.selectedValue
+                                ? "bg-success-10 text-success-100"
+                                : "bg-neutral-10 text-neutral-50"
+                        }`}
+                    >
+                        {index + 1}
+                    </button>
                 ))}
             </div>
-            <button onClick={finish} disabled={finishing} className="btn w-full">{finishing ? "Menyimpan..." : "Selesaikan tes"}</button>
+
+            {error && <div role="alert" className="rounded-xl bg-error-10 p-4 text-error-base">{error}</div>}
+
+            {question && (
+                <article className="portal-card p-6">
+                    <p className="font-bold text-neutral-80">{question.text}</p>
+                    <div className="mt-4 space-y-2">
+                        {question.options.map((option, optionIndex) => {
+                            const letter = OPTION_LETTERS[optionIndex];
+                            const active = question.selectedValue === letter;
+                            return (
+                                <label key={letter} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm ${active ? "border-primary-base bg-primary-10 font-bold text-primary-base" : "border-neutral-20"}`}>
+                                    <input type="radio" name={`question-${question.id}`} className="sr-only" checked={active} onChange={() => selectAnswer(question.id, letter)} />
+                                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs font-bold">{letter}</span>
+                                    {option}
+                                </label>
+                            );
+                        })}
+                    </div>
+                </article>
+            )}
+
+            <div className="flex gap-3">
+                <button
+                    onClick={() => setCurrentIndex((index) => Math.max(0, index - 1))}
+                    disabled={currentIndex === 0}
+                    className="rounded-xl border border-neutral-20 px-5 py-3 text-sm font-bold text-neutral-70 disabled:opacity-40"
+                >
+                    ← Sebelumnya
+                </button>
+                {isLast ? (
+                    <button onClick={() => finish()} disabled={finishing} className="btn flex-1">{finishing ? "Menyimpan..." : "Selesaikan tes"}</button>
+                ) : (
+                    <button onClick={() => setCurrentIndex((index) => Math.min(questions.length - 1, index + 1))} className="btn flex-1">
+                        Selanjutnya →
+                    </button>
+                )}
+            </div>
         </div>
     );
 }

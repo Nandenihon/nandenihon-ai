@@ -53,11 +53,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     const actor = await requireEnrollmentActor(request, CLASS_MANAGER_ROLES);
     if (!actor) return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
-    if (!["super_admin", "admin_2"].includes(actor.role)) {
-        return NextResponse.json({ error: "Hanya admin yang dapat membuat kelas" }, { status: 403 });
-    }
     try {
-        const input = parseInput(await request.json(), actor.id);
+        const body = await request.json();
+        // Teachers always own the class they create — they can't hand it to someone else.
+        if (actor.role === "lecture") delete body.ownerTeacherId;
+        const input = parseInput(body, actor.id);
         const error = validate(input);
         if (error) return NextResponse.json({ error }, { status: 400 });
         const data = await createPortalClass(input, actor.id);

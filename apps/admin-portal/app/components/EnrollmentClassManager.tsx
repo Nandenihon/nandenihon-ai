@@ -91,11 +91,11 @@ export default function EnrollmentClassManager({ teacherMode = false }: { teache
         <div className="space-y-6">
             <div className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                 <div><h1 className="text-2xl font-bold text-neutral-90">Portal Kelas</h1><p className="text-sm text-neutral-50">Kelola lifecycle kelas, kuota, dan enrollment.</p></div>
-                {!teacherMode && <button className="rounded-xl bg-primary-base px-5 py-3 text-sm font-semibold text-white" onClick={() => setShowForm((value) => !value)}>{showForm ? "Tutup form" : "Buat kelas"}</button>}
+                <button className="rounded-xl bg-primary-base px-5 py-3 text-sm font-semibold text-white" onClick={() => setShowForm((value) => !value)}>{showForm ? "Tutup form" : "Buat kelas"}</button>
             </div>
             {error && <div role="alert" className="rounded-xl bg-error-10 p-4 text-sm text-error-base">{error}</div>}
             {notice && <div role="status" className="rounded-xl bg-success-10 p-4 text-sm text-success-100">{notice}</div>}
-            {showForm && !teacherMode && (
+            {showForm && (
                 <form onSubmit={create} className="grid gap-4 rounded-2xl bg-white p-6 shadow-sm md:grid-cols-2">
                     <Input label="Kode unik" value={form.code} onChange={(value) => setForm({ ...form, code: value })} />
                     <Input label="Nama kelas" value={form.name} onChange={(value) => setForm({ ...form, name: value })} />
@@ -103,7 +103,7 @@ export default function EnrollmentClassManager({ teacherMode = false }: { teache
                     <Input label="Program" value={form.program} onChange={(value) => setForm({ ...form, program: value })} />
                     <Input label="Kapasitas" type="number" value={String(form.capacity)} onChange={(value) => setForm({ ...form, capacity: Number(value) })} />
                     <Input label="Nilai kelulusan (%)" type="number" value={String(form.testPassScore)} onChange={(value) => setForm({ ...form, testPassScore: Number(value) })} />
-                    <label className="text-sm font-semibold text-neutral-70">Owner teacher<select required className="mt-2 w-full rounded-xl border border-neutral-20 px-4 py-3" value={form.ownerTeacherId} onChange={(event) => setForm({ ...form, ownerTeacherId: event.target.value })}><option value="">Pilih pengajar</option>{teacherOptions.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name} — {teacher.email}</option>)}</select></label>
+                    {!teacherMode && <label className="text-sm font-semibold text-neutral-70">Owner teacher<select required className="mt-2 w-full rounded-xl border border-neutral-20 px-4 py-3" value={form.ownerTeacherId} onChange={(event) => setForm({ ...form, ownerTeacherId: event.target.value })}><option value="">Pilih pengajar</option>{teacherOptions.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name} — {teacher.email}</option>)}</select></label>}
                     <Input label="Enrollment dibuka" type="datetime-local" value={form.enrollmentOpenAt} onChange={(value) => setForm({ ...form, enrollmentOpenAt: value })} />
                     <Input label="Enrollment ditutup" type="datetime-local" value={form.enrollmentCloseAt} onChange={(value) => setForm({ ...form, enrollmentCloseAt: value })} />
                     <Input label="Kelas dimulai" type="datetime-local" value={form.startAt} onChange={(value) => setForm({ ...form, startAt: value })} />

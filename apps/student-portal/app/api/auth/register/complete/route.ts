@@ -75,6 +75,10 @@ export async function POST(request: NextRequest) {
         response.cookies.delete(REGISTRATION_COOKIE_NAME);
         return response;
     } catch (error) {
+        const mysqlError = error as { code?: string; sqlMessage?: string };
+        if (mysqlError.code === "ER_DUP_ENTRY" && mysqlError.sqlMessage?.includes("email")) {
+            return NextResponse.json({ error: "Email sudah terdaftar. Silakan login." }, { status: 409 });
+        }
         console.error("Complete registration error:", error);
         return NextResponse.json({ error: "Pendaftaran gagal. Coba lagi nanti." }, { status: 500 });
     }

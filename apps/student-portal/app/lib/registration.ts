@@ -162,6 +162,12 @@ export async function ensureRegistrationTables(): Promise<void> {
  * Ensures a pre-student has a row in the shared `users` table (role = 'pre_student')
  * and that `pre_students.promoted_user_id` points to it. Called eagerly at
  * registration, and lazily on login for accounts registered before this existed.
+ *
+ * Registration's real uniqueness key is email (enforced by pre_students'
+ * UNIQUE(email) and checked explicitly at the OTP-request step). `users` also has
+ * a legacy UNIQUE constraint on `username`, which we populate from the nickname —
+ * two different people are allowed to pick the same nickname, so on a username
+ * collision we disambiguate and retry instead of failing the registration.
  */
 export async function ensurePreStudentUserId(input: {
     preStudentId: number;
@@ -172,14 +178,29 @@ export async function ensurePreStudentUserId(input: {
     const existingUsers = await queryMySQL<RowDataPacket[]>("SELECT id FROM users WHERE email = ? LIMIT 1", [input.email]);
     let userId = existingUsers[0] ? Number(existingUsers[0].id) : 0;
     if (!userId) {
-        const result = await queryMySQL<ResultSetHeader>(
-            "INSERT INTO users (username, email, password, role, is_active) VALUES (?, ?, ?, 'pre_student', 1)",
-            [input.nickname, input.email, input.passwordHash]
-        );
-        userId = result.insertId;
+        userId = await insertPreStudentUser(input.nickname, input.email, input.passwordHash);
     }
     await queryMySQL("UPDATE pre_students SET promoted_user_id = ? WHERE id = ?", [userId, input.preStudentId]);
     return userId;
+}
+
+async function insertPreStudentUser(nickname: string, email: string, passwordHash: string): Promise<number> {
+    let candidateUsername = nickname;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+        try {
+            const result = await queryMySQL<ResultSetHeader>(
+                "INSERT INTO users (username, email, password, role, is_active) VALUES (?, ?, ?, 'pre_student', 1)",
+                [candidateUsername, email, passwordHash]
+            );
+            return result.insertId;
+        } catch (error) {
+            const mysqlError = error as { code?: string; sqlMessage?: string };
+            const isUsernameCollision = mysqlError.code === "ER_DUP_ENTRY" && Boolean(mysqlError.sqlMessage?.includes("username"));
+            if (!isUsernameCollision) throw error;
+            candidateUsername = `${nickname}-${crypto.randomBytes(2).toString("hex")}`;
+        }
+    }
+    throw new Error("Gagal membuat akun: username bentrok berulang kali");
 }
 
 export async function findUserRoleById(userId: number): Promise<string | null> {
