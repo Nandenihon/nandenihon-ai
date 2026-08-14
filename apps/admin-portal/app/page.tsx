@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import LoginForm from "./components/LoginForm";
+import { Analytics } from '@vercel/analytics/next';
 
 export default function HomePage() {
     const router = useRouter();
@@ -31,5 +32,10 @@ export default function HomePage() {
         }
     };
 
-    return <LoginForm onLogin={handleLogin} externalError={loginError} />;
+    return (
+        <>
+            <LoginForm onLogin={handleLogin} externalError={loginError} />
+            <Analytics />
+        </>
+    )
 }

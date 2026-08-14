@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
             ATTEMPT_NOT_PASSED: "Attempt ini belum lolos tes",
             PAYMENT_ALREADY_EXISTS: "Pembayaran untuk attempt ini sudah diajukan",
         };
+        if (!errors[message]) console.error("Upload payment proof error:", error);
         return NextResponse.json({ error: errors[message] || "Gagal mengunggah bukti pembayaran" }, { status: 400 });
     }
 }
