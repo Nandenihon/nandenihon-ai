@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { NandeNihonLogo } from "@repo/ui";
+import Image from "next/image";
 
 interface NavItem {
     id: string;
@@ -94,9 +94,11 @@ export default function LecturerSidebar() {
             {/* Logo */}
             <div className="flex items-center gap-3 px-6 py-5 border-b border-neutral-20">
                 <div className="bg-secondary-base rounded-xl p-2">
-                    <NandeNihonLogo
-                        variant="favicon"
-                        colorMode="white"
+                    <Image
+                        src="/images/logo-icon.svg"
+                        alt="Nande Nihon"
+                        width={32}
+                        height={32}
                         className="w-8 h-8"
                     />
                 </div>

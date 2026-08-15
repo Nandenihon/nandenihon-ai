@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { NandeNihonLogo } from "@repo/ui";
+import Image from "next/image";
 import Link from "next/link";
 import {
     BackpackIcon, BarChartIcon, CalendarIcon, ChatBubbleIcon, CheckCircledIcon,
@@ -136,7 +136,7 @@ export default function StudentSidebar({ role = "student" }: { role?: "student" 
             <aside className="lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:flex-shrink-0 lg:flex-col lg:border-r lg:border-white/80 lg:bg-white/80 lg:backdrop-blur-xl">
                 <div className="hidden h-16 items-center gap-3 border-b border-neutral-10 px-5 lg:flex">
                     <div className="rounded-xl bg-primary-base p-1.5">
-                        <NandeNihonLogo variant="favicon" colorMode="white" className="h-6 w-6" />
+                        <Image src="/images/logo-icon.svg" alt="Nande Nihon" width={24} height={24} className="h-6 w-6" />
                     </div>
                     <div>
                         <p className="text-sm font-bold text-neutral-90">Calon Siswa</p>
@@ -161,7 +161,7 @@ export default function StudentSidebar({ role = "student" }: { role?: "student" 
         <aside className="lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:flex-shrink-0 lg:flex-col lg:border-r lg:border-white/80 lg:bg-white/80 lg:backdrop-blur-xl">
             <div className="hidden h-16 items-center gap-3 border-b border-neutral-10 px-5 lg:flex">
                 <div className="rounded-xl bg-primary-base p-1.5">
-                    <NandeNihonLogo variant="favicon" colorMode="white" className="h-6 w-6" />
+                    <Image src="/images/logo-icon.svg" alt="Nande Nihon" width={24} height={24} className="h-6 w-6" />
                 </div>
                 <div>
                     <p className="text-sm font-bold text-neutral-90">Student Portal</p>

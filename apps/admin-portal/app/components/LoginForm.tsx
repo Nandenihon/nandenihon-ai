@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { NandeNihonLogo } from "@repo/ui";
+import Image from "next/image";
 
 interface LoginFormProps {
     onLogin: (email: string, password: string) => void;
@@ -51,9 +51,11 @@ export default function LoginForm({ onLogin, externalError }: LoginFormProps) {
                 </div>
 
                 <div className="relative z-10 flex flex-col items-center gap-8 px-12 text-center">
-                    <NandeNihonLogo
-                        variant="favicon"
-                        colorMode="white"
+                    <Image
+                        src="/images/logo-icon.svg"
+                        alt="Nande Nihon"
+                        width={80}
+                        height={80}
                         className="w-20 h-20"
                     />
 
@@ -98,9 +100,11 @@ export default function LoginForm({ onLogin, externalError }: LoginFormProps) {
                     {/* Mobile Logo */}
                     <div className="lg:hidden flex justify-center mb-8">
                         <div className="flex items-center gap-3">
-                            <NandeNihonLogo
-                                variant="favicon"
-                                colorMode="white"
+                            <Image
+                                src="/images/logo-icon.svg"
+                                alt="Nande Nihon"
+                                width={48}
+                                height={48}
                                 className="w-12 h-12"
                             />
                             <span className="text-xl font-bold text-primary-base">
