@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { Class } from "@repo/types";
+import { DatePicker } from "@repo/ui";
 
 interface StudentAttendance {
     studentId: number;
@@ -153,13 +154,11 @@ export default function ClassAttendancePage() {
                     )}
                 </div>
 
-                <div className="flex flex-col gap-1.5 min-w-[180px]">
-                    <label className="text-sm font-semibold text-neutral-70">Tanggal</label>
-                    <input
-                        type="date"
+                <div className="flex flex-col min-w-[180px]">
+                    <DatePicker
+                        label="Tanggal"
                         value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="bg-neutral-0 border border-neutral-20 rounded-xl py-2.2 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all"
+                        onChange={setSelectedDate}
                     />
                 </div>
             </div>

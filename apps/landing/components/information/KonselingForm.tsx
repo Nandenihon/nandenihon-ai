@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { DatePicker } from "@repo/ui";
+
+const TODAY_ISO = new Date().toISOString().split("T")[0];
 
 const EDUCATION_OPTIONS = ["SD", "SMP/SLTP", "SMA/SMK/SLTA", "D3", "S1", "S2", "S3"] as const;
 const TOPIC_OPTIONS = ["Pendidikan", "Karir", "Keluarga", "Relationship"] as const;
@@ -265,11 +268,11 @@ export default function KonselingForm() {
                 </div>
                 <div>
                   <label className={labelClass}>Tanggal Lahir</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={tanggalLahir}
-                    onChange={(e) => setTanggalLahir(e.target.value)}
-                    className={inputClass}
+                    onChange={setTanggalLahir}
+                    max={TODAY_ISO}
+                    placeholder="Pilih tanggal lahir"
                     required
                   />
                 </div>
