@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import type { Class, CreateClassInput, UpdateClassInput } from "@repo/types";
+import { DateTimePicker } from "@repo/ui";
 import ImageUploadField from "@/app/components/ImageUploadField";
 import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
 
@@ -187,26 +188,18 @@ function ClassModal({ isOpen, mode, classItem, onClose, onSave }: ClassModalProp
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-semibold text-neutral-70">Pendaftaran Dibuka *</label>
-                            <input
-                                type="datetime-local"
-                                value={form.register_start}
-                                onChange={(event) => setForm({ ...form, register_start: event.target.value })}
-                                className="w-full bg-neutral-0 border border-neutral-20 rounded-xl py-2.5 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all"
-                                required
-                            />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-semibold text-neutral-70">Pendaftaran Ditutup *</label>
-                            <input
-                                type="datetime-local"
-                                value={form.register_end}
-                                onChange={(event) => setForm({ ...form, register_end: event.target.value })}
-                                className="w-full bg-neutral-0 border border-neutral-20 rounded-xl py-2.5 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all"
-                                required
-                            />
-                        </div>
+                        <DateTimePicker
+                            label="Pendaftaran Dibuka *"
+                            value={form.register_start}
+                            onChange={(v) => setForm({ ...form, register_start: v })}
+                            required
+                        />
+                        <DateTimePicker
+                            label="Pendaftaran Ditutup *"
+                            value={form.register_end}
+                            onChange={(v) => setForm({ ...form, register_end: v })}
+                            required
+                        />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

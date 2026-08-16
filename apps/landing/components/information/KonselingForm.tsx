@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DatePicker } from "@repo/ui";
+import { DatePicker, DateTimePicker } from "@repo/ui";
 
 const TODAY_ISO = new Date().toISOString().split("T")[0];
 
@@ -347,11 +347,11 @@ export default function KonselingForm() {
               {/* Waktu */}
               <div>
                 <label className={labelClass}>Waktu Konsultasi</label>
-                <input
-                  type="datetime-local"
+                <DateTimePicker
                   value={waktu}
-                  onChange={(e) => setWaktu(e.target.value)}
-                  className={inputClass}
+                  onChange={setWaktu}
+                  min={TODAY_ISO}
+                  placeholder="Pilih tanggal & waktu"
                   required
                 />
               </div>

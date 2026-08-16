@@ -30,6 +30,8 @@ export interface CalendarProps {
   min?: string;
   /** Latest selectable date (YYYY-MM-DD). */
   max?: string;
+  /** Render without the card container (border/rounded/shadow/fixed width) for embedding. */
+  bare?: boolean;
   className?: string;
 }
 
@@ -44,7 +46,7 @@ function parseISO(value?: string): { year: number; month: number; day: number } 
   return { year: Number(match[1]), month: Number(match[2]) - 1, day: Number(match[3]) };
 }
 
-export default function Calendar({ value, onChange, min, max, className }: CalendarProps) {
+export default function Calendar({ value, onChange, min, max, bare = false, className }: CalendarProps) {
   const selected = parseISO(value);
   const now = new Date();
   const todayISO = toISO(now.getFullYear(), now.getMonth(), now.getDate());
@@ -72,12 +74,12 @@ export default function Calendar({ value, onChange, min, max, className }: Calen
 
   const isDisabled = (iso: string) => (!!min && iso < min) || (!!max && iso > max);
 
+  const containerClasses = bare
+    ? "w-full bg-absolute-white pt-2 pb-4"
+    : "w-[340px] rounded-2xl border border-neutral-10 bg-absolute-white pt-2 pb-4 shadow-[0_0_20px_2px_#0000001A]";
+
   return (
-    <div
-      className={`w-[340px] rounded-2xl border border-neutral-10 bg-absolute-white pt-2 pb-4 shadow-[0_0_20px_2px_#0000001A] ${
-        className || ""
-      }`}
-    >
+    <div className={`${containerClasses} ${className || ""}`}>
       {/* Month navigation */}
       <div className="flex items-center justify-between px-4 py-2">
         <button

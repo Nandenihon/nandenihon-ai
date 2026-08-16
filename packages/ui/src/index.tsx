@@ -20,4 +20,5 @@ export { default as Chips } from "./components/Chips";
 export { default as Article } from "./components/Article";
 export { default as Calendar } from "./components/Calendar";
 export { default as DatePicker } from "./components/DatePicker";
+export { default as DateTimePicker } from "./components/DateTimePicker";
 export * from "./icons";

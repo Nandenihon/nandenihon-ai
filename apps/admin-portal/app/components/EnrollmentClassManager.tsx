@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { DateTimePicker } from "@repo/ui";
 
 type ClassItem = {
     id: number; code: string; name: string; description: string; level: string; program: string;
@@ -214,6 +215,9 @@ export default function EnrollmentClassManager({ teacherMode = false }: { teache
 }
 
 function Input({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (value: string) => void; type?: string }) {
+    if (type === "datetime-local") {
+        return <DateTimePicker label={label} value={value} onChange={onChange} required />;
+    }
     return <label className="text-sm font-semibold text-neutral-70">{label}<input required type={type} className="mt-2 w-full rounded-xl border border-neutral-20 px-4 py-3" value={value} onChange={(event) => onChange(event.target.value)} /></label>;
 }
 function Action({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
