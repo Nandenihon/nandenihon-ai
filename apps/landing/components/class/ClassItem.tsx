@@ -1,6 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import type { LandingTranslations } from "@/lib/i18n";
+import { getStudentPortalUrl } from "@/lib/studentPortal";
 
 export type ClassItemProps = {
   id: number;
@@ -10,6 +11,8 @@ export type ClassItemProps = {
   price: string;
   description: string;
   slot: boolean;
+  registrationStart?: string;
+  registrationEnd?: string;
 };
 
 type ClassItemComponentProps = ClassItemProps & {
