@@ -39,10 +39,6 @@ const navItems: NavItem[] = [
                 <path d="M16 3.13a4 4 0 010 7.75" />
             </svg>
         ),
-        children: [
-            { label: "Daftar Siswa", href: "/dashboard/students" },
-            { label: "Tambah Siswa", href: "/dashboard/students/add" },
-        ],
     },
     {
         id: "pre-students",
@@ -66,10 +62,6 @@ const navItems: NavItem[] = [
                 <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
             </svg>
         ),
-        children: [
-            { label: "Daftar Kelas", href: "/dashboard/classes" },
-            { label: "Tambah Kelas", href: "/dashboard/classes/add" },
-        ],
     },
     {
         id: "enrollment-classes",
@@ -319,15 +311,12 @@ export default function DashboardSidebar() {
         <aside className="h-screen w-full flex flex-col bg-absolute-white border-r border-neutral-20">
             {/* Logo */}
             <div className="flex items-center gap-3 px-6 py-5 border-b border-neutral-20">
-                <div className="bg-primary-base rounded-xl p-2">
-                    <Image
-                        src="/images/logo-icon.svg"
-                        alt="Nande Nihon"
-                        width={32}
-                        height={32}
-                        className="w-8 h-8"
-                    />
-                </div>
+                <Image
+                    src="/images/logo-icon.svg"
+                    alt="Nande Nihon"
+                    width={42}
+                    height={42}
+                />
                 <div>
                     <p className="text-base font-bold text-neutral-90 leading-tight">
                         Nande Nihon
@@ -359,8 +348,8 @@ export default function DashboardSidebar() {
                                         }
                                     }}
                                     className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${active
-                                            ? "bg-primary-base text-absolute-white"
-                                            : "text-neutral-70 hover:bg-primary-10 hover:text-primary-base"
+                                        ? "bg-primary-base text-absolute-white"
+                                        : "text-neutral-70 hover:bg-primary-10 hover:text-primary-base"
                                         }`}
                                 >
                                     <div className="flex items-center gap-3">
@@ -391,8 +380,8 @@ export default function DashboardSidebar() {
                                 {hasChildren && (
                                     <div
                                         className={`overflow-hidden transition-all duration-200 ${isOpen
-                                                ? "max-h-48 opacity-100 mt-1"
-                                                : "max-h-0 opacity-0"
+                                            ? "max-h-48 opacity-100 mt-1"
+                                            : "max-h-0 opacity-0"
                                             }`}
                                     >
                                         <div className="ml-9 flex flex-col gap-1">
@@ -401,8 +390,8 @@ export default function DashboardSidebar() {
                                                     key={child.href}
                                                     onClick={() => router.push(child.href)}
                                                     className={`text-left px-3 py-2 rounded-lg text-sm transition-all ${pathname === child.href
-                                                            ? "text-primary-base font-semibold bg-primary-10"
-                                                            : "text-neutral-60 hover:text-primary-base hover:bg-primary-10"
+                                                        ? "text-primary-base font-semibold bg-primary-10"
+                                                        : "text-neutral-60 hover:text-primary-base hover:bg-primary-10"
                                                         }`}
                                                 >
                                                     {child.label}
