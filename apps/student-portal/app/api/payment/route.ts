@@ -5,6 +5,7 @@ import { requirePreStudent } from "@/app/lib/enrollment-auth";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+const PAYMENT_AMOUNT = 50000;
 
 export async function GET(request: NextRequest) {
     const session = await requirePreStudent(request);
@@ -22,11 +23,9 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const attemptId = Number(formData.get("attemptId"));
-    const amount = Number(formData.get("amount"));
     const file = formData.get("file");
 
     if (!attemptId) return NextResponse.json({ error: "attemptId wajib diisi" }, { status: 400 });
-    if (!Number.isFinite(amount) || amount <= 0) return NextResponse.json({ error: "Jumlah pembayaran tidak valid" }, { status: 400 });
     if (!(file instanceof File) || file.size === 0) return NextResponse.json({ error: "Pilih bukti pembayaran terlebih dahulu" }, { status: 400 });
     if (file.size > MAX_FILE_SIZE) return NextResponse.json({ error: "Ukuran file maksimal 5MB" }, { status: 400 });
     if (!ALLOWED_TYPES.has(file.type)) return NextResponse.json({ error: "Format harus JPG, PNG, WebP, atau PDF" }, { status: 400 });
@@ -38,7 +37,7 @@ export async function POST(request: NextRequest) {
             folder: `test-payment-${session.id}`,
             originalFilename: file.name,
         });
-        const paymentId = await createPayment({ attemptId, userId: session.id, amount, proofUrl: upload.pathname });
+        const paymentId = await createPayment({ attemptId, userId: session.id, amount: PAYMENT_AMOUNT, proofUrl: upload.pathname });
         return NextResponse.json({ paymentId, message: "Bukti pembayaran berhasil diunggah. Menunggu verifikasi admin." }, { status: 201 });
     } catch (error) {
         const message = error instanceof Error ? error.message : "";

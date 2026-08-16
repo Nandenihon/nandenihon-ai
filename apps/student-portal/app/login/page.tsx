@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -47,9 +48,15 @@ export default function LoginPage() {
                 {/* Card */}
                 <div className="card p-8">
                     {/* Logo + Heading */}
+
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-base mb-4 shadow-lg shadow-primary-base/30">
-                            <span className="text-white text-2xl font-black jp-text">日</span>
+                        <div className="flex items-center justify-center w-full h-full mb-4" >
+                            <Image
+                                src="/images/logo-icon.svg"
+                                alt="Nande Nihon"
+                                width={80}
+                                height={80}
+                            />
                         </div>
                         <h1 className="text-2xl font-bold text-neutral-90">Nande Nihon</h1>
                         <p className="text-sm text-neutral-50 mt-1">Portal Siswa — Masuk ke akun Anda</p>
@@ -156,6 +163,6 @@ export default function LoginPage() {
                     日本語を楽しく学ぼう！
                 </p>
             </div>
-        </main>
+        </main >
     );
 }

@@ -19,5 +19,3 @@ export { default as CategoryTag } from "./components/CategoryTag";
 export { default as Chips } from "./components/Chips";
 export { default as Article } from "./components/Article";
 export * from "./icons";
-export * from "./icons/3d-icons";
-export * from "./logo";

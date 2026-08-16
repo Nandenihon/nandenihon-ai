@@ -19,6 +19,20 @@ const EMPTY = {
     enrollmentOpenAt: "", enrollmentCloseAt: "", startAt: "", endAt: "", ownerTeacherId: "", testPassScore: 60,
 };
 
+function toDatetimeLocal(value: string): string {
+    return value ? String(value).replace(" ", "T").slice(0, 16) : "";
+}
+
+function toEditForm(item: ClassItem) {
+    return {
+        code: item.code, name: item.name, description: item.description, level: item.level, program: item.program,
+        schedule: item.schedule, capacity: item.capacity,
+        enrollmentOpenAt: toDatetimeLocal(item.enrollment_open_at), enrollmentCloseAt: toDatetimeLocal(item.enrollment_close_at),
+        startAt: toDatetimeLocal(item.start_at), endAt: toDatetimeLocal(item.end_at),
+        ownerTeacherId: item.owner_teacher_id ? String(item.owner_teacher_id) : "", testPassScore: item.test_pass_score,
+    };
+}
+
 export default function EnrollmentClassManager({ teacherMode = false }: { teacherMode?: boolean }) {
     const [items, setItems] = useState<ClassItem[]>([]);
     const [teacherOptions, setTeacherOptions] = useState<TeacherOption[]>([]);
@@ -30,6 +44,11 @@ export default function EnrollmentClassManager({ teacherMode = false }: { teache
     const [saving, setSaving] = useState(false);
     const [notice, setNotice] = useState("");
     const [error, setError] = useState("");
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editForm, setEditForm] = useState(EMPTY);
+    const [editSaving, setEditSaving] = useState(false);
+
+    const visibleItems = status === "archived" ? items : items.filter((item) => item.status !== "archived");
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -77,6 +96,36 @@ export default function EnrollmentClassManager({ teacherMode = false }: { teache
         } finally { setSaving(false); }
     }
 
+    function startEdit(item: ClassItem) {
+        setEditingId(item.id);
+        setEditForm(toEditForm(item));
+        setError(""); setNotice("");
+    }
+
+    function cancelEdit() {
+        setEditingId(null);
+    }
+
+    async function saveEdit(event: React.FormEvent, id: number) {
+        event.preventDefault(); setEditSaving(true); setError(""); setNotice("");
+        try {
+            const response = await fetch(`/api/enrollment/classes/${id}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ...editForm,
+                    capacity: Number(editForm.capacity),
+                    ownerTeacherId: Number(editForm.ownerTeacherId) || undefined,
+                    testPassScore: Number(editForm.testPassScore),
+                }),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error);
+            setEditingId(null); setNotice("Kelas berhasil diperbarui."); await load();
+        } catch (saveError) {
+            setError(saveError instanceof Error ? saveError.message : "Gagal memperbarui kelas");
+        } finally { setEditSaving(false); }
+    }
+
     async function transition(id: number, action: string) {
         setError(""); setNotice("");
         const response = await fetch(`/api/enrollment/classes/${id}/transition`, {
@@ -117,20 +166,45 @@ export default function EnrollmentClassManager({ teacherMode = false }: { teache
                 <input aria-label="Cari kelas" placeholder="Cari nama atau kode..." className="flex-1 rounded-xl border border-neutral-20 px-4 py-2" value={search} onChange={(event) => setSearch(event.target.value)} />
                 <select aria-label="Filter status" className="rounded-xl border border-neutral-20 px-4 py-2" value={status} onChange={(event) => setStatus(event.target.value)}><option value="">Semua status</option>{["draft", "published", "closed", "archived"].map((value) => <option key={value}>{value}</option>)}</select>
             </div>
-            {loading ? <p className="p-8 text-center text-neutral-50">Memuat kelas...</p> : items.length === 0 ? <p className="rounded-2xl bg-white p-10 text-center text-neutral-50">Belum ada kelas.</p> : (
+            {loading ? <p className="p-8 text-center text-neutral-50">Memuat kelas...</p> : visibleItems.length === 0 ? <p className="rounded-2xl bg-white p-10 text-center text-neutral-50">{status === "archived" ? "Belum ada kelas yang diarsipkan." : "Belum ada kelas."}</p> : (
                 <div className="grid gap-4 lg:grid-cols-2">
-                    {items.map((item) => (
+                    {visibleItems.map((item) => (
                         <article key={item.id} className="rounded-2xl bg-white p-5 shadow-sm">
-                            <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold text-primary-base">{item.code} · {item.level}</p><h2 className="mt-1 text-lg font-bold text-neutral-90">{item.name}</h2></div><span className="rounded-full bg-neutral-10 px-3 py-1 text-xs font-semibold">{item.status}</span></div>
-                            <p className="mt-3 line-clamp-2 text-sm text-neutral-60">{item.description}</p>
-                            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-neutral-40">Teacher</dt><dd className="font-semibold">{item.teacher_name || `#${item.owner_teacher_id}`}</dd></div><div><dt className="text-neutral-40">Seat</dt><dd className="font-semibold">{item.occupied_seats}/{item.capacity}</dd></div><div><dt className="text-neutral-40">Jadwal</dt><dd className="font-semibold">{item.schedule}</dd></div><div><dt className="text-neutral-40">Enrollment</dt><dd className="font-semibold">{item.enrollment_closed ? "Ditutup" : "Dibuka"}</dd></div><div><dt className="text-neutral-40">Nilai kelulusan</dt><dd className="font-semibold">{item.test_pass_score}%</dd></div></dl>
-                            <div className="mt-5 flex flex-wrap gap-2">
-                                <Link className="rounded-lg bg-primary-base px-3 py-2 text-xs font-semibold text-white" href={teacherMode ? `/dashboard/lecturer/classes/${item.id}` : `/dashboard/enrollment-classes/${item.id}`}>Buka workspace</Link>
-                                {item.status === "draft" && <Action onClick={() => transition(item.id, "publish")}>Publish</Action>}
-                                {item.status === "published" && !item.enrollment_closed && <Action onClick={() => transition(item.id, "close-enrollment")}>Tutup enrollment</Action>}
-                                {item.status === "published" && <Action onClick={() => transition(item.id, "close")}>Tutup kelas</Action>}
-                                {item.status === "closed" && <Action onClick={() => transition(item.id, "archive")}>Archive</Action>}
-                            </div>
+                            {editingId === item.id ? (
+                                <form onSubmit={(event) => saveEdit(event, item.id)} className="grid gap-4 sm:grid-cols-2">
+                                    <Input label="Kode unik" value={editForm.code} onChange={(value) => setEditForm({ ...editForm, code: value })} />
+                                    <Input label="Nama kelas" value={editForm.name} onChange={(value) => setEditForm({ ...editForm, name: value })} />
+                                    <label className="text-sm font-semibold text-neutral-70">Level soal test<select required className="mt-2 w-full rounded-xl border border-neutral-20 px-4 py-3" value={editForm.level} onChange={(event) => setEditForm({ ...editForm, level: event.target.value })}>{TEST_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}</select></label>
+                                    <Input label="Program" value={editForm.program} onChange={(value) => setEditForm({ ...editForm, program: value })} />
+                                    <Input label="Kapasitas" type="number" value={String(editForm.capacity)} onChange={(value) => setEditForm({ ...editForm, capacity: Number(value) })} />
+                                    <Input label="Nilai kelulusan (%)" type="number" value={String(editForm.testPassScore)} onChange={(value) => setEditForm({ ...editForm, testPassScore: Number(value) })} />
+                                    {!teacherMode && <label className="text-sm font-semibold text-neutral-70">Owner teacher<select required className="mt-2 w-full rounded-xl border border-neutral-20 px-4 py-3" value={editForm.ownerTeacherId} onChange={(event) => setEditForm({ ...editForm, ownerTeacherId: event.target.value })}><option value="">Pilih pengajar</option>{teacherOptions.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name} — {teacher.email}</option>)}</select></label>}
+                                    <Input label="Enrollment dibuka" type="datetime-local" value={editForm.enrollmentOpenAt} onChange={(value) => setEditForm({ ...editForm, enrollmentOpenAt: value })} />
+                                    <Input label="Enrollment ditutup" type="datetime-local" value={editForm.enrollmentCloseAt} onChange={(value) => setEditForm({ ...editForm, enrollmentCloseAt: value })} />
+                                    <Input label="Kelas dimulai" type="datetime-local" value={editForm.startAt} onChange={(value) => setEditForm({ ...editForm, startAt: value })} />
+                                    <Input label="Kelas selesai" type="datetime-local" value={editForm.endAt} onChange={(value) => setEditForm({ ...editForm, endAt: value })} />
+                                    <label className="sm:col-span-2 text-sm font-semibold text-neutral-70">Jadwal<textarea required rows={2} className="mt-2 w-full rounded-xl border border-neutral-20 p-3" value={editForm.schedule} onChange={(event) => setEditForm({ ...editForm, schedule: event.target.value })} /></label>
+                                    <label className="sm:col-span-2 text-sm font-semibold text-neutral-70">Deskripsi<textarea required rows={4} className="mt-2 w-full rounded-xl border border-neutral-20 p-3" value={editForm.description} onChange={(event) => setEditForm({ ...editForm, description: event.target.value })} /></label>
+                                    <div className="sm:col-span-2 flex gap-2">
+                                        <button disabled={editSaving} className="flex-1 rounded-xl bg-primary-base p-3 font-semibold text-white">{editSaving ? "Menyimpan..." : "Simpan perubahan"}</button>
+                                        <button type="button" onClick={cancelEdit} className="rounded-xl border border-neutral-20 px-5 py-3 font-semibold text-neutral-70">Batal</button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <>
+                                    <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-bold text-primary-base">{item.code} · {item.level}</p><h2 className="mt-1 text-lg font-bold text-neutral-90">{item.name}</h2></div><span className="rounded-full bg-neutral-10 px-3 py-1 text-xs font-semibold">{item.status}</span></div>
+                                    <p className="mt-3 line-clamp-2 text-sm text-neutral-60">{item.description}</p>
+                                    <dl className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-neutral-40">Teacher</dt><dd className="font-semibold">{item.teacher_name || `#${item.owner_teacher_id}`}</dd></div><div><dt className="text-neutral-40">Seat</dt><dd className="font-semibold">{item.occupied_seats}/{item.capacity}</dd></div><div><dt className="text-neutral-40">Jadwal</dt><dd className="font-semibold">{item.schedule}</dd></div><div><dt className="text-neutral-40">Enrollment</dt><dd className="font-semibold">{item.enrollment_closed ? "Ditutup" : "Dibuka"}</dd></div><div><dt className="text-neutral-40">Nilai kelulusan</dt><dd className="font-semibold">{item.test_pass_score}%</dd></div></dl>
+                                    <div className="mt-5 flex flex-wrap gap-2">
+                                        <Link className="rounded-lg bg-primary-base px-3 py-2 text-xs font-semibold text-white" href={teacherMode ? `/dashboard/lecturer/classes/${item.id}` : `/dashboard/enrollment-classes/${item.id}`}>Buka workspace</Link>
+                                        <Action onClick={() => startEdit(item)}>Edit</Action>
+                                        {item.status === "draft" && <Action onClick={() => transition(item.id, "publish")}>Publish</Action>}
+                                        {item.status === "published" && !item.enrollment_closed && <Action onClick={() => transition(item.id, "close-enrollment")}>Tutup enrollment</Action>}
+                                        {item.status === "published" && <Action onClick={() => transition(item.id, "close")}>Tutup kelas</Action>}
+                                        {item.status === "closed" && <Action onClick={() => transition(item.id, "archive")}>Archive</Action>}
+                                    </div>
+                                </>
+                            )}
                         </article>
                     ))}
                 </div>

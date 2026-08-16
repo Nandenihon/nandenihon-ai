@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { NandeNihonLogo } from "@repo/ui";
+import Image from "next/image";
 import Link from "next/link";
 import {
     BackpackIcon, BarChartIcon, CalendarIcon, ChatBubbleIcon, CheckCircledIcon,
@@ -118,11 +118,10 @@ function SidebarLink({ item }: { item: { href: string; label: string; icon: Reac
         <Link
             href={item.href}
             aria-current={isActive ? "page" : undefined}
-            className={`${item.mobile === false ? "hidden lg:flex" : "flex"} portal-focus h-12 flex-col items-center justify-center gap-1 rounded-xl px-3 text-[10px] font-semibold transition-all lg:h-11 lg:flex-row lg:justify-start lg:gap-3 lg:text-sm ${
-                isActive
-                    ? "bg-primary-base text-white shadow-lg shadow-primary-base/20"
-                    : "text-neutral-50 hover:bg-primary-10 hover:text-primary-base"
-            }`}
+            className={`${item.mobile === false ? "hidden lg:flex" : "flex"} portal-focus h-12 flex-col items-center justify-center gap-1 rounded-xl px-3 text-[10px] font-semibold transition-all lg:h-11 lg:flex-row lg:justify-start lg:gap-3 lg:text-sm ${isActive
+                ? "bg-primary-base text-white shadow-lg shadow-primary-base/20"
+                : "text-neutral-50 hover:bg-primary-10 hover:text-primary-base"
+                }`}
         >
             <MenuIcon name={item.icon} />
             <span>{item.label}</span>
@@ -135,9 +134,14 @@ export default function StudentSidebar({ role = "student" }: { role?: "student" 
         return (
             <aside className="lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:flex-shrink-0 lg:flex-col lg:border-r lg:border-white/80 lg:bg-white/80 lg:backdrop-blur-xl">
                 <div className="hidden h-16 items-center gap-3 border-b border-neutral-10 px-5 lg:flex">
-                    <div className="rounded-xl bg-primary-base p-1.5">
-                        <NandeNihonLogo variant="favicon" colorMode="white" className="h-6 w-6" />
-                    </div>
+
+                    <Image
+                        src="/images/logo-icon.svg"
+                        alt="Nande Nihon"
+                        width={40}
+                        height={40}
+                    />
+
                     <div>
                         <p className="text-sm font-bold text-neutral-90">Calon Siswa</p>
                         <p className="text-xs text-neutral-40 jp-text">入学テスト</p>
@@ -161,7 +165,7 @@ export default function StudentSidebar({ role = "student" }: { role?: "student" 
         <aside className="lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:flex-shrink-0 lg:flex-col lg:border-r lg:border-white/80 lg:bg-white/80 lg:backdrop-blur-xl">
             <div className="hidden h-16 items-center gap-3 border-b border-neutral-10 px-5 lg:flex">
                 <div className="rounded-xl bg-primary-base p-1.5">
-                    <NandeNihonLogo variant="favicon" colorMode="white" className="h-6 w-6" />
+                    <Image src="/images/logo-icon.svg" alt="Nande Nihon" width={24} height={24} className="h-6 w-6" />
                 </div>
                 <div>
                     <p className="text-sm font-bold text-neutral-90">Student Portal</p>
