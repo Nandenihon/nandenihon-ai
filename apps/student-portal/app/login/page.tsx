@@ -48,7 +48,6 @@ export default function LoginPage() {
                 {/* Card */}
                 <div className="card p-8">
                     {/* Logo + Heading */}
-
                     <div className="text-center mb-8">
                         <div className="flex items-center justify-center w-full h-full mb-4" >
                             <Image

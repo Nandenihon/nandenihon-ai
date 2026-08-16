@@ -16,10 +16,16 @@ function formatCurrency(value: number | string): string {
   }).format(Number(value) || 0);
 }
 
+function formatDate(value: Date | string): string {
+  return new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(
+    new Date(value)
+  );
+}
+
 async function getClasses(): Promise<ClassItemProps[]> {
   try {
     const rows = await queryMySQL<RowDataPacket[]>(
-      "SELECT id, class_name, level, description, register_fee, status, image_banner FROM `class` ORDER BY id DESC LIMIT 6"
+      "SELECT id, class_name, level, description, register_start, register_end, register_fee, status, image_banner FROM `class` ORDER BY id DESC LIMIT 6"
     );
 
     return (rows as Class[]).map((item) => ({
@@ -30,6 +36,8 @@ async function getClasses(): Promise<ClassItemProps[]> {
       price: formatCurrency(item.register_fee),
       description: item.description,
       slot: item.status === "active",
+      registrationStart: formatDate(item.register_start),
+      registrationEnd: formatDate(item.register_end),
     }));
   } catch (error) {
     console.error("Failed to fetch classes:", error);

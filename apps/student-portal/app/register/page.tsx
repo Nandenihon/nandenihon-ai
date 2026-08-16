@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { EyeClosedIcon, EyeOpenIcon } from "@radix-ui/react-icons";
+import Image from "next/image";
 
 type Step = "identity" | "otp" | "profile";
 
@@ -109,8 +110,13 @@ export default function RegisterPage() {
             <div className="relative w-full max-w-lg">
                 <div className="card p-8">
                     <div className="text-center mb-7">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-base mb-4 shadow-lg shadow-primary-base/30">
-                            <span className="text-white text-2xl font-black jp-text">日</span>
+                        <div className="flex items-center justify-center w-full h-full mb-4" >
+                            <Image
+                                src="/images/logo-icon.svg"
+                                alt="Nande Nihon"
+                                width={80}
+                                height={80}
+                            />
                         </div>
                         <h1 className="text-2xl font-bold text-neutral-90">Daftar Siswa</h1>
                         <p className="text-sm text-neutral-50 mt-1">
