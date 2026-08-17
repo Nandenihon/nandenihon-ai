@@ -6,6 +6,7 @@ import {
   languages,
   type Language,
 } from "@/lib/i18n";
+import { getStudentPortalUrl } from "@/lib/studentPortal";
 import { ChevronDown, MenuIcon, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -26,9 +27,7 @@ export default function NewNavbar() {
   const currentLanguage =
     languages.find((item) => item.code === language) ?? languages[0];
   const t = homeTranslations[language].nav;
-  const studentPortalUrl = (process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL ||
-    (process.env.NODE_ENV === "development" ? "http://localhost:3001" : "https://student.nandenihon.com")
-  ).replace(/\/$/, "");
+  const studentPortalUrl = getStudentPortalUrl();
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "unset";

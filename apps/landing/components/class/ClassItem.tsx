@@ -1,6 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import type { LandingTranslations } from "@/lib/i18n";
+import { getStudentPortalUrl } from "@/lib/studentPortal";
 
 export type ClassItemProps = {
   id: number;
@@ -10,6 +11,8 @@ export type ClassItemProps = {
   price: string;
   description: string;
   slot: boolean;
+  registrationStart?: string;
+  registrationEnd?: string;
 };
 
 type ClassItemComponentProps = ClassItemProps & {
@@ -17,6 +20,8 @@ type ClassItemComponentProps = ClassItemProps & {
 };
 
 const ClassItem = (props: ClassItemComponentProps) => {
+  const registerHref = `${getStudentPortalUrl()}/register`;
+
   return (
     <div className="bg-white p-5 shadow-[0px_0px_20px_2px_#0000001A] rounded-2xl ">
       <div className="relative h-52.5 w-auto">
@@ -37,17 +42,39 @@ const ClassItem = (props: ClassItemComponentProps) => {
       <div className="mt-4">
         <h4 className="text-lg font-semibold">{props.title}</h4>
         <p className="mt-4 leading-6 text-neutral-80">{props.description}</p>
+        {(props.registrationStart || props.registrationEnd) && (
+          <div className="mt-3 flex items-center gap-2 text-sm text-neutral-70">
+            <svg
+              className="h-4 w-4 flex-shrink-0 text-primary-base"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+            <span>
+              {props.t.registrationLabel}: {props.registrationStart} - {props.registrationEnd}
+            </span>
+          </div>
+        )}
       </div>
       {props.slot ? (
-        <button className="btn block w-full mt-10">
+        <a href={registerHref} className="btn block w-full mt-10 text-center">
           {props.t.availableButton}
-        </button>
+        </a>
       ) : (
         <div className="flex space-x-2">
-          <button className="btn block w-full mt-10">{props.t.openButton}</button>
-          <button className="btn block bg-white text-primary-base border-2 border-primary-base w-full mt-10">
+          <a href={registerHref} className="btn block w-full mt-10 text-center">
+            {props.t.openButton}
+          </a>
+          <a
+            href={registerHref}
+            className="btn block bg-white text-primary-base border-2 border-primary-base w-full mt-10 text-center"
+          >
             {props.t.detailButton}
-          </button>
+          </a>
         </div>
       )}
     </div>

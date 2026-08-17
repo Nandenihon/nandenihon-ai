@@ -1,11 +1,8 @@
 import Link from "next/link";
-
-const studentPortalUrl = (
-  process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL ||
-  (process.env.NODE_ENV === "development" ? "http://localhost:3001" : "https://student.nandenihon.com")
-).replace(/\/$/, "");
+import { getStudentPortalUrl } from "@/lib/studentPortal";
 
 export default function RetiredFlowNotice() {
+  const studentPortalUrl = getStudentPortalUrl();
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center gap-4 px-6 py-16 text-center">
       <div className="rounded-2xl bg-basic/60 p-8">
