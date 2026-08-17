@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import type { Team, CreateTeamInput, UpdateTeamInput } from "@repo/types";
+import { DatePicker } from "@repo/ui";
 import ImageUploadField from "@/app/components/ImageUploadField";
+
+const TODAY_ISO = new Date().toISOString().split("T")[0];
 
 interface TeamModalProps {
     isOpen: boolean;
@@ -175,11 +178,12 @@ export default function TeamModal({ isOpen, mode, member, onClose, onSave }: Tea
                                 placeholder="Kota kelahiran"
                                 className="w-full bg-neutral-0 border border-neutral-20 rounded-xl py-2.5 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all" />
                         </div>
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-semibold text-neutral-70">Tanggal Lahir</label>
-                            <input type="date" value={form.birth_date || ""} onChange={(e) => set("birth_date", e.target.value)}
-                                className="w-full bg-neutral-0 border border-neutral-20 rounded-xl py-2.5 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all" />
-                        </div>
+                        <DatePicker
+                            label="Tanggal Lahir"
+                            value={form.birth_date || ""}
+                            onChange={(v) => set("birth_date", v)}
+                            max={TODAY_ISO}
+                        />
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-semibold text-neutral-70">Domisili</label>
                             <input value={form.domicile || ""} onChange={(e) => set("domicile", e.target.value)}
@@ -230,11 +234,11 @@ export default function TeamModal({ isOpen, mode, member, onClose, onSave }: Tea
                                 {subDivisionOptions.map((option) => <option key={option} value={option}>{option}</option>)}
                             </select>
                         </div>
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-semibold text-neutral-70">Tanggal Bergabung</label>
-                            <input type="date" value={form.join_date || ""} onChange={(e) => set("join_date", e.target.value)}
-                                className="w-full bg-neutral-0 border border-neutral-20 rounded-xl py-2.5 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all" />
-                        </div>
+                        <DatePicker
+                            label="Tanggal Bergabung"
+                            value={form.join_date || ""}
+                            onChange={(v) => set("join_date", v)}
+                        />
                     </div>
 
                     <div className="flex flex-col gap-1.5">

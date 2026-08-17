@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Seminar, CreateSeminarInput, UpdateSeminarInput } from "@repo/types";
+import { DatePicker } from "@repo/ui";
 import ImageUploadField from "@/app/components/ImageUploadField";
 
 interface SeminarModalProps {
@@ -107,16 +108,12 @@ export default function SeminarModal({ isOpen, mode, seminar, onClose, onSave }:
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-semibold text-neutral-70">Tanggal *</label>
-                            <input
-                                type="date"
-                                value={form.event_date}
-                                onChange={(e) => setForm({ ...form, event_date: e.target.value })}
-                                className="w-full bg-neutral-0 border border-neutral-20 rounded-xl py-2.5 px-4 text-sm text-neutral-80 outline-none focus:border-primary-base transition-all"
-                                required
-                            />
-                        </div>
+                        <DatePicker
+                            label="Tanggal *"
+                            value={form.event_date}
+                            onChange={(v) => setForm({ ...form, event_date: v })}
+                            required
+                        />
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-semibold text-neutral-70">Waktu *</label>
                             <input
