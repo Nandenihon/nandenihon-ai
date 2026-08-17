@@ -11,7 +11,7 @@ const PAGE_SIZE = 20;
 
 function formatDate(date: Date | string | null): string {
     if (!date) return "-";
-    return new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(new Date(date));
+    return new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" }).format(new Date(date));
 }
 
 function formatCurrency(amount: number | string | null): string {

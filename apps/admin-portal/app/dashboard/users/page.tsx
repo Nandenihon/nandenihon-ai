@@ -288,7 +288,7 @@ export default function UsersPage() {
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 text-sm text-neutral-40 truncate">
-                                            {u.created_at ? new Date(u.created_at).toLocaleDateString("id-ID") : "-"}
+                                            {u.created_at ? new Date(u.created_at).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" }) : "-"}
                                         </td>
                                         <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex items-center justify-end gap-2">
@@ -366,7 +366,7 @@ export default function UsersPage() {
                             </div>
                             <div className="border-t border-neutral-10 pt-3 flex flex-col gap-1">
                                 <p className="text-xs text-neutral-45 font-semibold uppercase">Tanggal Dibuat</p>
-                                <p className="text-sm text-neutral-80">{detailsUser.created_at ? new Date(detailsUser.created_at).toLocaleString("id-ID") : "-"}</p>
+                                <p className="text-sm text-neutral-80">{detailsUser.created_at ? new Date(detailsUser.created_at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }) : "-"}</p>
                             </div>
                             <div className="flex justify-end pt-3 border-t border-neutral-10">
                                 <button onClick={() => setDetailsUser(null)} className="py-2.5 px-6 rounded-xl bg-neutral-10 hover:bg-neutral-20 text-sm font-semibold text-neutral-70 transition-all">Tutup</button>

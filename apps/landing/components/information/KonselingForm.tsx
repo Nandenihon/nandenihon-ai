@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { datetimeLocalToJakartaUtc } from "@repo/utils/jakarta-time";
 
 const EDUCATION_OPTIONS = ["SD", "SMP/SLTP", "SMA/SMK/SLTA", "D3", "S1", "S2", "S3"] as const;
 const TOPIC_OPTIONS = ["Pendidikan", "Karir", "Keluarga", "Relationship"] as const;
@@ -21,6 +22,7 @@ function SuccessModal({ data, onClose }: { data: SuccessData; onClose: () => voi
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Jakarta",
   });
 
   return (
@@ -149,7 +151,7 @@ export default function KonselingForm() {
           last_education: pendidikan,
           topic: tema,
           story: cerita,
-          consultation_time: waktu,
+          consultation_time: datetimeLocalToJakartaUtc(waktu),
         }),
       });
 

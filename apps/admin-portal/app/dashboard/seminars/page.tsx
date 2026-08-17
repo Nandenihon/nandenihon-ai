@@ -19,7 +19,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 function formatDate(d: Date | string | null): string {
     if (!d) return "-";
-    return new Date(d).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+    return new Date(d).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" });
 }
 
 export default function SeminarsPage() {

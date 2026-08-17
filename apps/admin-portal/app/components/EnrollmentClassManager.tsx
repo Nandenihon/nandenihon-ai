@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { datetimeLocalToJakartaUtc, utcToJakartaDatetimeLocal } from "@repo/utils/jakarta-time";
 
 type ClassItem = {
     id: number; code: string; name: string; description: string; level: string; program: string;
@@ -19,16 +20,12 @@ const EMPTY = {
     enrollmentOpenAt: "", enrollmentCloseAt: "", startAt: "", endAt: "", ownerTeacherId: "", testPassScore: 60,
 };
 
-function toDatetimeLocal(value: string): string {
-    return value ? String(value).replace(" ", "T").slice(0, 16) : "";
-}
-
 function toEditForm(item: ClassItem) {
     return {
         code: item.code, name: item.name, description: item.description, level: item.level, program: item.program,
         schedule: item.schedule, capacity: item.capacity,
-        enrollmentOpenAt: toDatetimeLocal(item.enrollment_open_at), enrollmentCloseAt: toDatetimeLocal(item.enrollment_close_at),
-        startAt: toDatetimeLocal(item.start_at), endAt: toDatetimeLocal(item.end_at),
+        enrollmentOpenAt: utcToJakartaDatetimeLocal(item.enrollment_open_at), enrollmentCloseAt: utcToJakartaDatetimeLocal(item.enrollment_close_at),
+        startAt: utcToJakartaDatetimeLocal(item.start_at), endAt: utcToJakartaDatetimeLocal(item.end_at),
         ownerTeacherId: item.owner_teacher_id ? String(item.owner_teacher_id) : "", testPassScore: item.test_pass_score,
     };
 }
@@ -86,6 +83,10 @@ export default function EnrollmentClassManager({ teacherMode = false }: { teache
                     capacity: Number(form.capacity),
                     ownerTeacherId: Number(form.ownerTeacherId) || undefined,
                     testPassScore: Number(form.testPassScore),
+                    enrollmentOpenAt: datetimeLocalToJakartaUtc(form.enrollmentOpenAt),
+                    enrollmentCloseAt: datetimeLocalToJakartaUtc(form.enrollmentCloseAt),
+                    startAt: datetimeLocalToJakartaUtc(form.startAt),
+                    endAt: datetimeLocalToJakartaUtc(form.endAt),
                 }),
             });
             const data = await response.json();
@@ -116,6 +117,10 @@ export default function EnrollmentClassManager({ teacherMode = false }: { teache
                     capacity: Number(editForm.capacity),
                     ownerTeacherId: Number(editForm.ownerTeacherId) || undefined,
                     testPassScore: Number(editForm.testPassScore),
+                    enrollmentOpenAt: datetimeLocalToJakartaUtc(editForm.enrollmentOpenAt),
+                    enrollmentCloseAt: datetimeLocalToJakartaUtc(editForm.enrollmentCloseAt),
+                    startAt: datetimeLocalToJakartaUtc(editForm.startAt),
+                    endAt: datetimeLocalToJakartaUtc(editForm.endAt),
                 }),
             });
             const data = await response.json();

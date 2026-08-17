@@ -9,6 +9,7 @@ function formatDate(date: Date | null) {
         day: "numeric",
         month: "short",
         year: "numeric",
+        timeZone: "Asia/Jakarta",
     }).format(new Date(date));
 }
 

@@ -14,6 +14,7 @@ function formatDate(date: Date | string | null): string {
         day: "numeric",
         month: "short",
         year: "numeric",
+        timeZone: "Asia/Jakarta",
     }).format(new Date(date));
 }
 
@@ -26,6 +27,7 @@ function formatDateTime(date: Date | string | null): string {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
+        timeZone: "Asia/Jakarta",
     }).format(new Date(date));
 }
 

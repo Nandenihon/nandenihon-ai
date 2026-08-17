@@ -81,18 +81,20 @@ async function getUpcomingClasses(): Promise<UpcomingClass[]> {
              LIMIT 4`
         );
 
+        const jakartaDateKey = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "Asia/Jakarta",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+        });
         const now = new Date();
-        const todayStr = now.toDateString();
-        const tomorrowStr = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate() + 1
-        ).toDateString();
+        const todayStr = jakartaDateKey.format(now);
+        const tomorrowStr = jakartaDateKey.format(new Date(now.getTime() + 24 * 60 * 60 * 1000));
 
         return rows.map((row) => {
             const start = new Date(row.register_start);
             const end = new Date(row.register_end);
-            const startStr = start.toDateString();
+            const startStr = jakartaDateKey.format(start);
 
             let dateLabel: string;
             if (startStr === todayStr) {
@@ -103,6 +105,7 @@ async function getUpcomingClasses(): Promise<UpcomingClass[]> {
                 dateLabel = start.toLocaleDateString("id-ID", {
                     day: "numeric",
                     month: "short",
+                    timeZone: "Asia/Jakarta",
                 });
             }
 
@@ -111,6 +114,7 @@ async function getUpcomingClasses(): Promise<UpcomingClass[]> {
                     hour: "2-digit",
                     minute: "2-digit",
                     hour12: false,
+                    timeZone: "Asia/Jakarta",
                 });
 
             return {
@@ -213,6 +217,7 @@ export default async function DashboardPage() {
                                 year: "numeric",
                                 month: "long",
                                 day: "numeric",
+                                timeZone: "Asia/Jakarta",
                             })}
                         </span>
                     </div>
