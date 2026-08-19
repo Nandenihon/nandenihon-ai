@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { listStudentsOverview, listPortalClasses, type StudentStatus } from "@repo/database";
 import StudentRowActions from "@/app/components/StudentRowActions";
-import ClassFilterSelect from "@/app/components/ClassFilterSelect";
+import FilterSelect from "@/app/components/FilterSelect";
 
 interface StudentsPageProps {
     searchParams?: Promise<{ page?: string; search?: string; classId?: string; status?: string }>;
@@ -95,16 +95,22 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
                             />
                         </div>
                     </form>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-semibold text-neutral-40 uppercase tracking-wide">Status:</span>
-                        <a href={buildUrl({ status: "", page: 1 })} className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${!statusParam ? "bg-neutral-80 text-absolute-white border-neutral-80" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}>Semua</a>
-                        <a href={buildUrl({ status: "active", page: 1 })} className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${statusParam === "active" ? "bg-neutral-80 text-absolute-white border-neutral-80" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}>Aktif</a>
-                        <a href={buildUrl({ status: "inactive", page: 1 })} className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${statusParam === "inactive" ? "bg-neutral-80 text-absolute-white border-neutral-80" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}>Non-aktif</a>
-                    </div>
-                    <ClassFilterSelect
-                        classOptions={classOptions}
+                    <FilterSelect
+                        options={[
+                            { value: "", label: "Semua status" },
+                            { value: "active", label: "Aktif" },
+                            { value: "inactive", label: "Non-aktif" },
+                        ]}
+                        value={statusParam}
+                        buildUrl={buildUrl({ status: "__VALUE__", page: 1 })}
+                    />
+                    <FilterSelect
+                        options={[
+                            { value: "", label: "Semua kelas" },
+                            ...classOptions.map((option) => ({ value: String(option.id), label: `${option.code} — ${option.name}` })),
+                        ]}
                         value={params.classId ?? ""}
-                        buildUrl={buildUrl({ classId: "__CLASS_ID__", page: 1 })}
+                        buildUrl={buildUrl({ classId: "__VALUE__", page: 1 })}
                     />
                     <span className="text-sm text-neutral-50">{new Intl.NumberFormat("id-ID").format(total)} siswa</span>
                 </div>
