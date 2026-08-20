@@ -313,6 +313,7 @@ async function queryMySQLViaSshStream<T extends RowDataPacket[] | ResultSetHeade
         password: config.mysql.password,
         database: config.mysql.database,
         connectTimeout: 10000,
+        timezone: "Z",
     });
 
     try {
@@ -430,6 +431,7 @@ export async function connectMySQL(): Promise<Pool> {
                 connectionLimit: isVercelRuntime() ? 1 : 10,
                 queueLimit: 0,
                 connectTimeout: 10000,
+                timezone: "Z",
             });
 
             return cached.pool;
@@ -451,6 +453,7 @@ export async function connectMySQL(): Promise<Pool> {
             waitForConnections: true,
             connectionLimit: 10,
             queueLimit: 0,
+            timezone: "Z",
         });
 
         return cached.pool;

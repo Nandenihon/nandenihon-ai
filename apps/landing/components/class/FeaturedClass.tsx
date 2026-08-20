@@ -17,7 +17,7 @@ function formatCurrency(value: number | string): string {
 }
 
 function formatDate(value: Date | string): string {
-  return new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(
+  return new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" }).format(
     new Date(value)
   );
 }

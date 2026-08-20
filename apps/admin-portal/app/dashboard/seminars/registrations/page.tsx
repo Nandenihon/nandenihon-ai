@@ -24,6 +24,7 @@ function formatDate(date: Date | null): string {
         day: "numeric",
         month: "short",
         year: "numeric",
+        timeZone: "Asia/Jakarta",
     }).format(new Date(date));
 }
 

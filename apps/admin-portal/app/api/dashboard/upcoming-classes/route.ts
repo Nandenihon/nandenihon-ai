@@ -15,17 +15,19 @@ export async function GET() {
              LIMIT 4`
         );
 
+        const jakartaDateKey = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "Asia/Jakarta",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+        });
         const now = new Date();
-        const todayStr = now.toDateString();
-        const tomorrowStr = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate() + 1
-        ).toDateString();
+        const todayStr = jakartaDateKey.format(now);
+        const tomorrowStr = jakartaDateKey.format(new Date(now.getTime() + 24 * 60 * 60 * 1000));
 
         const classes = rows.map((row) => {
             const start = new Date(row.register_start);
-            const startStr = start.toDateString();
+            const startStr = jakartaDateKey.format(start);
 
             let dateLabel: string;
             if (startStr === todayStr) {
@@ -36,6 +38,7 @@ export async function GET() {
                 dateLabel = start.toLocaleDateString("id-ID", {
                     day: "numeric",
                     month: "short",
+                    timeZone: "Asia/Jakarta",
                 });
             }
 
@@ -43,6 +46,7 @@ export async function GET() {
                 hour: "2-digit",
                 minute: "2-digit",
                 hour12: false,
+                timeZone: "Asia/Jakarta",
             });
 
             const end = new Date(row.register_end);
@@ -50,6 +54,7 @@ export async function GET() {
                 hour: "2-digit",
                 minute: "2-digit",
                 hour12: false,
+                timeZone: "Asia/Jakarta",
             });
 
             return {

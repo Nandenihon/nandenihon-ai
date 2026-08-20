@@ -126,6 +126,9 @@ export async function ensureStudentsTable(): Promise<void> {
     if (!names.has("activated_at")) {
         await queryMySQL("ALTER TABLE students ADD COLUMN activated_at DATETIME NULL AFTER pre_student_id");
     }
+    if (!names.has("status")) {
+        await queryMySQL("ALTER TABLE students ADD COLUMN status ENUM('active','inactive') NOT NULL DEFAULT 'active' AFTER activated_at");
+    }
     studentsTableEnsured = true;
 }
 
@@ -686,4 +689,167 @@ export async function findPreStudentDetail(preStudentId: number) {
         : [[], []];
 
     return { profile, attempts, payments };
+}
+
+export type StudentStatus = "active" | "inactive";
+
+export interface ListStudentsOptions {
+    search?: string;
+    classId?: number;
+    status?: StudentStatus;
+    page?: number;
+    pageSize?: number;
+}
+
+/**
+ * Active-student roster (students.user_id IS NOT NULL) with each student's
+ * current class membership, for the admin "Siswa" page: search, filter by
+ * class/status, CSV export, status toggle, and class transfer all read from
+ * this same shape.
+ */
+export async function listStudentsOverview(options: ListStudentsOptions = {}) {
+    await ensureStudentsTable();
+    const page = Math.max(1, options.page ?? 1);
+    const pageSize = Math.min(500, Math.max(1, options.pageSize ?? 20));
+    const offset = (page - 1) * pageSize;
+
+    const where: string[] = ["s.user_id IS NOT NULL"];
+    const params: unknown[] = [];
+    if (options.search) {
+        where.push("(s.full_name LIKE ? OR s.email LIKE ? OR s.whatsapp LIKE ?)");
+        const term = `%${options.search}%`;
+        params.push(term, term, term);
+    }
+    if (options.status) { where.push("s.status = ?"); params.push(options.status); }
+    if (options.classId) { where.push("m.class_id = ?"); params.push(options.classId); }
+    const whereClause = `WHERE ${where.join(" AND ")}`;
+
+    const countRows = await queryMySQL<RowDataPacket[]>(
+        `SELECT COUNT(*) AS total
+         FROM students s
+         LEFT JOIN class_memberships m ON m.user_id = s.user_id AND m.status = 'active'
+         ${whereClause}`,
+        params
+    );
+    const total = Number(countRows[0]?.total ?? 0);
+
+    const rows = await queryMySQL<RowDataPacket[]>(
+        `SELECT s.id, s.user_id, s.pre_student_id, s.full_name, s.email, s.whatsapp, s.japanese_level,
+                s.activated_at, s.status,
+                c.id AS class_id, c.code AS class_code, c.name AS class_name
+         FROM students s
+         LEFT JOIN class_memberships m ON m.user_id = s.user_id AND m.status = 'active'
+         LEFT JOIN enrollment_classes c ON c.id = m.class_id
+         ${whereClause}
+         ORDER BY s.activated_at DESC
+         LIMIT ? OFFSET ?`,
+        [...params, pageSize, offset]
+    );
+
+    return { data: rows, total, page, pageSize, totalPages: Math.max(1, Math.ceil(total / pageSize)) };
+}
+
+export async function updateStudentStatus(studentId: number, status: StudentStatus, actorId: number) {
+    await ensureStudentsTable();
+    const [before] = await queryMySQL<RowDataPacket[]>("SELECT id, status FROM students WHERE id = ? LIMIT 1", [studentId]);
+    if (!before) throw new Error("STUDENT_NOT_FOUND");
+    await queryMySQL("UPDATE students SET status = ? WHERE id = ?", [status, studentId]);
+    await queryMySQL(
+        `INSERT INTO audit_logs (actor_id, action, entity_type, entity_id, before_data, after_data)
+         VALUES (?, 'student_status_updated', 'student', ?, ?, ?)`,
+        [actorId, studentId, JSON.stringify({ status: before.status }), JSON.stringify({ status })]
+    );
+    return { id: studentId, status };
+}
+
+/**
+ * Moves a student's active class membership to a different class: closes out
+ * the old membership (frees its seat) and opens/reactivates one in the target
+ * class (claims a seat there), in one transaction. Mirrors the seat/group
+ * bookkeeping in verifyPayment/acceptApplication.
+ */
+export async function transferStudentToClass(studentId: number, targetClassId: number, actorId: number) {
+    await ensureStudentsTable();
+    const connection = await getConnection();
+    try {
+        await connection.beginTransaction();
+
+        const [studentRows] = await connection.query<RowDataPacket[]>(
+            "SELECT id, user_id FROM students WHERE id = ? FOR UPDATE",
+            [studentId]
+        );
+        const student = studentRows[0];
+        if (!student || !student.user_id) throw new Error("STUDENT_NOT_FOUND");
+        const userId = Number(student.user_id);
+
+        const [targetClassRows] = await connection.query<RowDataPacket[]>(
+            "SELECT id, capacity, occupied_seats FROM enrollment_classes WHERE id = ? FOR UPDATE",
+            [targetClassId]
+        );
+        const targetClass = targetClassRows[0];
+        if (!targetClass) throw new Error("CLASS_NOT_FOUND");
+
+        const [currentMembershipRows] = await connection.query<RowDataPacket[]>(
+            "SELECT id, class_id, status FROM class_memberships WHERE user_id = ? AND status = 'active' FOR UPDATE",
+            [userId]
+        );
+        const currentMembership = currentMembershipRows[0];
+        if (currentMembership && Number(currentMembership.class_id) === targetClassId) {
+            await connection.commit();
+            return { studentId, classId: targetClassId, alreadyInClass: true };
+        }
+
+        if (Number(targetClass.occupied_seats) >= Number(targetClass.capacity)) throw new Error("CLASS_FULL");
+
+        if (currentMembership) {
+            await connection.query(
+                "UPDATE class_memberships SET status = 'removed', removed_at = UTC_TIMESTAMP() WHERE id = ?",
+                [currentMembership.id]
+            );
+            await connection.query(
+                "UPDATE enrollment_classes SET occupied_seats = GREATEST(occupied_seats - 1, 0) WHERE id = ?",
+                [currentMembership.class_id]
+            );
+        }
+
+        const [groupRows] = await connection.query<RowDataPacket[]>(
+            "SELECT id FROM class_groups WHERE class_id = ? LIMIT 1",
+            [targetClassId]
+        );
+        let groupId = groupRows[0] ? Number(groupRows[0].id) : 0;
+        if (!groupId) {
+            const [groupResult] = await connection.query<ResultSetHeader>(
+                "INSERT INTO class_groups (class_id, name) VALUES (?, ?)",
+                [targetClassId, `Class ${targetClassId} — Main Group`]
+            );
+            groupId = groupResult.insertId;
+        }
+
+        await connection.query(
+            `INSERT INTO class_memberships (group_id, class_id, user_id, status)
+             VALUES (?, ?, ?, 'active')
+             ON DUPLICATE KEY UPDATE group_id = VALUES(group_id), status = 'active',
+                 joined_at = UTC_TIMESTAMP(), removed_at = NULL, completed_at = NULL`,
+            [groupId, targetClassId, userId]
+        );
+        await connection.query("UPDATE enrollment_classes SET occupied_seats = occupied_seats + 1 WHERE id = ?", [targetClassId]);
+
+        await connection.query(
+            `INSERT INTO audit_logs (actor_id, action, entity_type, entity_id, before_data, after_data)
+             VALUES (?, 'student_transferred', 'student', ?, ?, ?)`,
+            [
+                actorId, studentId,
+                JSON.stringify({ classId: currentMembership ? Number(currentMembership.class_id) : null }),
+                JSON.stringify({ classId: targetClassId }),
+            ]
+        );
+
+        await connection.commit();
+        return { studentId, classId: targetClassId, alreadyInClass: false };
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
 }

@@ -7,7 +7,8 @@
     "exports": {
         ".": "./src/index.ts",
         "./logger": "./src/logger.ts",
-        "./r2-upload": "./src/r2-upload.ts"
+        "./r2-upload": "./src/r2-upload.ts",
+        "./jakarta-time": "./src/jakarta-time.ts"
     },
     "devDependencies": {
         "@types/node": "^20",

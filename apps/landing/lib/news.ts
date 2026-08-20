@@ -23,6 +23,7 @@ export function formatNewsDate(date: Date | string | null) {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "Asia/Jakarta",
   }).format(new Date(date));
 }
 

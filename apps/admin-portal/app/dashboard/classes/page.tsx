@@ -6,6 +6,7 @@ import type { Class, CreateClassInput, UpdateClassInput } from "@repo/types";
 import { DateTimePicker } from "@repo/ui";
 import ImageUploadField from "@/app/components/ImageUploadField";
 import { useDebouncedValue } from "@/app/hooks/useDebouncedValue";
+import { datetimeLocalToJakartaUtc, utcToJakartaDatetimeLocal } from "@repo/utils/jakarta-time";
 
 const DEFAULT_FORM: CreateClassInput = {
     class_name: "",
@@ -46,18 +47,11 @@ const statusColors: Record<string, string> = {
     finished: "bg-primary-base text-absolute-white",
 };
 
-function toDateTimeLocal(value: Date | string | undefined): string {
-    if (!value) return "";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "";
-    const timezoneOffset = date.getTimezoneOffset() * 60000;
-    return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
-}
-
 function formatDate(value: Date | string): string {
     return new Date(value).toLocaleString("id-ID", {
         dateStyle: "medium",
         timeStyle: "short",
+        timeZone: "Asia/Jakarta",
     });
 }
 
@@ -88,8 +82,8 @@ function ClassModal({ isOpen, mode, classItem, onClose, onSave }: ClassModalProp
                 class_name: classItem.class_name || "",
                 level: classItem.level || "",
                 description: classItem.description || "",
-                register_start: toDateTimeLocal(classItem.register_start),
-                register_end: toDateTimeLocal(classItem.register_end),
+                register_start: utcToJakartaDatetimeLocal(String(classItem.register_start)),
+                register_end: utcToJakartaDatetimeLocal(String(classItem.register_end)),
                 register_fee: Number(classItem.register_fee) || 0,
                 status: classItem.status || "active",
                 image_banner: classItem.image_banner || "",
@@ -119,6 +113,8 @@ function ClassModal({ isOpen, mode, classItem, onClose, onSave }: ClassModalProp
             await onSave({
                 ...form,
                 register_fee: Number(form.register_fee),
+                register_start: datetimeLocalToJakartaUtc(form.register_start),
+                register_end: datetimeLocalToJakartaUtc(form.register_end),
             });
         } catch (saveError) {
             setError(saveError instanceof Error ? saveError.message : "Gagal menyimpan kelas.");

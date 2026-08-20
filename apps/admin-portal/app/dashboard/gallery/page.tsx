@@ -47,6 +47,7 @@ function formatDate(value: GalleryItem["created_at"]) {
         day: "2-digit",
         month: "short",
         year: "numeric",
+        timeZone: "Asia/Jakarta",
     });
 }
 

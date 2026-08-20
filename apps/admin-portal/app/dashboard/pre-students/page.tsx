@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { listPreStudentsOverview, type AttemptPassStatus, type PaymentStatus, type PreStudentOverviewStatus } from "@repo/database";
+import FilterSelect from "@/app/components/FilterSelect";
 
 interface PreStudentsPageProps {
     searchParams?: Promise<{ page?: string; search?: string; status?: string; passStatus?: string; paymentStatus?: string }>;
@@ -11,7 +12,7 @@ const PAGE_SIZE = 20;
 
 function formatDate(date: Date | string | null): string {
     if (!date) return "-";
-    return new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(new Date(date));
+    return new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" }).format(new Date(date));
 }
 
 function formatCurrency(amount: number | string | null): string {
@@ -77,9 +78,34 @@ export default async function PreStudentsPage({ searchParams }: PreStudentsPageP
     return (
         <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                    <h1 className="text-xl font-bold text-neutral-90">Pra-Siswa</h1>
-                    <p className="text-sm text-neutral-50">Data lengkap calon siswa beserta hasil tes penempatan dan status pembayarannya.</p>
+                <div className="flex flex-wrap items-center gap-2">
+                    <FilterSelect
+                        options={[
+                            { value: "", label: "Semua status" },
+                            { value: "pre_student", label: "Calon Siswa" },
+                            { value: "student", label: "Siswa Aktif" },
+                        ]}
+                        value={status}
+                        buildUrl={buildUrl({ status: "__VALUE__", page: 1 })}
+                    />
+                    <FilterSelect
+                        options={[
+                            { value: "", label: "Semua nilai" },
+                            { value: "passed", label: "Lulus" },
+                            { value: "failed", label: "Tidak Lulus" },
+                        ]}
+                        value={passStatus}
+                        buildUrl={buildUrl({ passStatus: "__VALUE__", page: 1 })}
+                    />
+                    <FilterSelect
+                        options={[
+                            { value: "", label: "Semua pembayaran" },
+                            { value: "pending", label: "Menunggu" },
+                            { value: "verified", label: "Terverifikasi" },
+                        ]}
+                        value={paymentStatus}
+                        buildUrl={buildUrl({ paymentStatus: "__VALUE__", page: 1 })}
+                    />
                 </div>
                 <form method="GET" action="/dashboard/pre-students" className="relative">
                     {status && <input type="hidden" name="status" value={status} />}
@@ -95,22 +121,7 @@ export default async function PreStudentsPage({ searchParams }: PreStudentsPageP
                 </form>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold text-neutral-40 uppercase tracking-wide mr-1">Status:</span>
-                <a href={buildUrl({ status: "", page: 1 })} className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${!status ? "bg-neutral-80 text-absolute-white border-neutral-80" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}>Semua</a>
-                <a href={buildUrl({ status: "pre_student", page: 1 })} className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${status === "pre_student" ? "bg-neutral-80 text-absolute-white border-neutral-80" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}>Calon Siswa</a>
-                <a href={buildUrl({ status: "student", page: 1 })} className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${status === "student" ? "bg-neutral-80 text-absolute-white border-neutral-80" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}>Siswa Aktif</a>
 
-                <span className="text-xs font-semibold text-neutral-40 uppercase tracking-wide ml-3 mr-1">Nilai:</span>
-                <a href={buildUrl({ passStatus: "", page: 1 })} className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${!passStatus ? "bg-primary-base text-absolute-white border-primary-base" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}>Semua</a>
-                <a href={buildUrl({ passStatus: "passed", page: 1 })} className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${passStatus === "passed" ? "bg-primary-base text-absolute-white border-primary-base" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}>Lulus</a>
-                <a href={buildUrl({ passStatus: "failed", page: 1 })} className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${passStatus === "failed" ? "bg-primary-base text-absolute-white border-primary-base" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}>Tidak Lulus</a>
-
-                <span className="text-xs font-semibold text-neutral-40 uppercase tracking-wide ml-3 mr-1">Pembayaran:</span>
-                <a href={buildUrl({ paymentStatus: "", page: 1 })} className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${!paymentStatus ? "bg-secondary-base text-absolute-white border-secondary-base" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}>Semua</a>
-                <a href={buildUrl({ paymentStatus: "pending", page: 1 })} className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${paymentStatus === "pending" ? "bg-secondary-base text-absolute-white border-secondary-base" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}>Menunggu</a>
-                <a href={buildUrl({ paymentStatus: "verified", page: 1 })} className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${paymentStatus === "verified" ? "bg-secondary-base text-absolute-white border-secondary-base" : "border-neutral-20 text-neutral-60 hover:bg-neutral-10"}`}>Terverifikasi</a>
-            </div>
 
             {error && <div className="rounded-xl bg-error-10 p-4 text-sm text-error-base">{error}</div>}
 

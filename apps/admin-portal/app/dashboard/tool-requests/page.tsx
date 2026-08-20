@@ -573,7 +573,7 @@ export default function ToolRequestsPage() {
                             <div className="border-t border-neutral-10 pt-3">
                                 <p className="text-xs text-neutral-45 font-semibold uppercase">Diajukan Oleh</p>
                                 <p className="text-sm font-medium text-neutral-80">{detailsRequest.requester_name} ({detailsRequest.requester_email})</p>
-                                <p className="text-xs text-neutral-40">Pada: {new Date(detailsRequest.created_at).toLocaleString("id-ID")}</p>
+                                <p className="text-xs text-neutral-40">Pada: {new Date(detailsRequest.created_at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}</p>
                             </div>
 
                             <div className="border-t border-neutral-10 pt-3">
