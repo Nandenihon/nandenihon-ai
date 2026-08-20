@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Ensure Tailwind generates classes used inside the shared @repo/ui package. */
+@source "../packages/ui/src";
+
 @theme {
   --font-sans: var(--font-noto-sans), ui-sans-serif, system-ui, sans-serif;
 

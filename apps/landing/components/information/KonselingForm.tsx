@@ -267,11 +267,11 @@ export default function KonselingForm() {
                 </div>
                 <div>
                   <label className={labelClass}>Tanggal Lahir</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={tanggalLahir}
-                    onChange={(e) => setTanggalLahir(e.target.value)}
-                    className={inputClass}
+                    onChange={setTanggalLahir}
+                    max={TODAY_ISO}
+                    placeholder="Pilih tanggal lahir"
                     required
                   />
                 </div>
@@ -346,11 +346,11 @@ export default function KonselingForm() {
               {/* Waktu */}
               <div>
                 <label className={labelClass}>Waktu Konsultasi</label>
-                <input
-                  type="datetime-local"
+                <DateTimePicker
                   value={waktu}
-                  onChange={(e) => setWaktu(e.target.value)}
-                  className={inputClass}
+                  onChange={setWaktu}
+                  min={TODAY_ISO}
+                  placeholder="Pilih tanggal & waktu"
                   required
                 />
               </div>
