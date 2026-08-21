@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { findPreStudentDetail } from "@repo/database";
+import { findPreStudentDetail, findAttemptDetailForAdmin } from "@repo/database";
 
 interface DetailPageProps {
     params: Promise<{ id: string }>;
@@ -69,6 +69,11 @@ export default async function PreStudentDetailPage({ params }: DetailPageProps) 
 
     const { profile, attempts, payments } = detail;
     const role = ROLE_BADGE[profile.current_role as string] ?? ROLE_BADGE.pre_student;
+
+    const completedAttempts = attempts.filter((attempt) => attempt.status === "completed");
+    const answerDetails = (
+        await Promise.all(completedAttempts.map((attempt) => findAttemptDetailForAdmin(Number(attempt.id))))
+    ).filter((attemptDetail): attemptDetail is NonNullable<typeof attemptDetail> => Boolean(attemptDetail));
 
     return (
         <div className="flex flex-col gap-6">
@@ -144,6 +149,68 @@ export default async function PreStudentDetailPage({ params }: DetailPageProps) 
                         </tbody>
                     </table>
                 </div>
+            </section>
+
+            {/* Detail jawaban tes, untuk verifikasi koreksi/nilai */}
+            <section className="rounded-2xl bg-absolute-white border border-neutral-20 p-6">
+                <h2 className="text-lg font-bold text-neutral-90">Detail Jawaban Tes</h2>
+                <p className="text-sm text-neutral-50 mb-4">Jawaban per soal beserta koreksi benar/salah, untuk memastikan nilai sudah sesuai.</p>
+                {answerDetails.length === 0 ? (
+                    <p className="text-sm text-neutral-50">Belum ada tes yang selesai dikerjakan.</p>
+                ) : (
+                    <div className="flex flex-col gap-3">
+                        {answerDetails.map(({ attempt, questions }) => {
+                            const badge = PASS_STATUS_BADGE[attempt.passStatus] ?? PASS_STATUS_BADGE.pending;
+                            const correctCount = questions.filter((q) => q.isCorrect).length;
+                            return (
+                                <details key={attempt.id} className="rounded-xl border border-neutral-20 overflow-hidden group">
+                                    <summary className="cursor-pointer list-none px-4 py-3 bg-neutral-0 flex items-center justify-between gap-3 flex-wrap">
+                                        <span className="text-sm font-semibold text-neutral-80">{attempt.className} · {formatDateTime(attempt.submittedAt)}</span>
+                                        <span className="flex items-center gap-2 text-xs">
+                                            <span className="font-bold text-neutral-70">{correctCount}/{questions.length} benar · {attempt.score}%</span>
+                                            <span className={`font-semibold px-2.5 py-1 rounded-full ${badge.className}`}>{badge.label}</span>
+                                            <span className="text-neutral-40 group-open:rotate-180 transition-transform">▾</span>
+                                        </span>
+                                    </summary>
+                                    <div className="divide-y divide-neutral-10 border-t border-neutral-20">
+                                        {questions.map((question, index) => (
+                                            <div key={question.id} className={`p-4 text-sm ${question.isCorrect ? "bg-success-10/40" : "bg-error-10/40"}`}>
+                                                <p className="font-medium text-neutral-80 mb-2">{index + 1}. {question.text}</p>
+                                                <div className="grid gap-1.5 sm:grid-cols-2">
+                                                    {question.options.map((option, optionIndex) => {
+                                                        const letter = String.fromCharCode(65 + optionIndex);
+                                                        const isSelected = letter === question.selectedValue;
+                                                        const isCorrectOption = letter === question.correctAnswer;
+                                                        return (
+                                                            <div
+                                                                key={letter}
+                                                                className={`text-xs px-2.5 py-1.5 rounded-lg border ${
+                                                                    isCorrectOption
+                                                                        ? "border-success-base bg-success-10 text-success-base font-semibold"
+                                                                        : isSelected
+                                                                            ? "border-error-base bg-error-10 text-error-base font-semibold"
+                                                                            : "border-neutral-20 text-neutral-60"
+                                                                }`}
+                                                            >
+                                                                {letter}. {option}
+                                                                {isCorrectOption && " ✓"}
+                                                                {isSelected && !isCorrectOption && " ✗ (jawaban siswa)"}
+                                                                {isSelected && isCorrectOption && " (jawaban siswa)"}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                                {!question.selectedValue && (
+                                                    <p className="mt-2 text-xs text-neutral-50 italic">Siswa tidak menjawab soal ini.</p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </details>
+                            );
+                        })}
+                    </div>
+                )}
             </section>
 
             {/* Pembayaran */}
