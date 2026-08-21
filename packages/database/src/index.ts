@@ -168,6 +168,7 @@ export {
     finishAttempt,
     listAttemptsForUser,
     findAttemptWithQuestions,
+    findAttemptDetailForAdmin,
     findPassedAttemptWithoutPayment,
     findMyPayments,
     createPayment,

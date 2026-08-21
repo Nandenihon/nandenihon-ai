@@ -407,6 +407,67 @@ export async function findAttemptWithQuestions(attemptId: number, userId: number
     };
 }
 
+/**
+ * Same shape as findAttemptWithQuestions but with no ownership check and no
+ * correct-answer redaction — for the admin "Riwayat Nilai Tes" detail view,
+ * where staff need to verify grading (selected answer vs. correct answer,
+ * per-question) regardless of attempt status.
+ */
+export async function findAttemptDetailForAdmin(attemptId: number) {
+    await ensureAdmissionTestTables();
+    const rows = await queryMySQL<RowDataPacket[]>(
+        "SELECT * FROM class_test_attempts WHERE id = ? LIMIT 1",
+        [attemptId]
+    );
+    const attempt = rows[0];
+    if (!attempt) return null;
+    const classInfo = await getClassTestInfo(Number(attempt.class_id));
+
+    const questionIds = parseIdArray(attempt.question_ids);
+    const questionRows = questionIds.length
+        ? await queryMySQL<RowDataPacket[]>(
+            `SELECT * FROM questions WHERE id IN (${questionIds.map(() => "?").join(",")})`,
+            questionIds
+        )
+        : [];
+    const questionById = new Map(questionRows.map((row) => [Number(row.id), row]));
+
+    const answers = await queryMySQL<RowDataPacket[]>(
+        "SELECT question_id, selected_value, is_correct FROM class_test_answers WHERE attempt_id = ?",
+        [attemptId]
+    );
+    const answerById = new Map(answers.map((row) => [Number(row.question_id), row]));
+
+    return {
+        attempt: {
+            id: Number(attempt.id),
+            classId: Number(attempt.class_id),
+            status: attempt.status as AttemptStatus,
+            score: Number(attempt.score),
+            passStatus: attempt.pass_status as AttemptPassStatus,
+            startedAt: attempt.started_at as Date,
+            submittedAt: attempt.submitted_at as Date | null,
+            className: classInfo?.name ?? "-",
+            passScore: classInfo?.testPassScore ?? 0,
+        },
+        questions: questionIds
+            .map((id) => questionById.get(id))
+            .filter((row): row is RowDataPacket => Boolean(row))
+            .map((row) => {
+                const answer = answerById.get(Number(row.id));
+                return {
+                    id: Number(row.id),
+                    text: String(row.text),
+                    options: parseOptions(row.options),
+                    points: Number(row.points ?? 1),
+                    correctAnswer: String(row.correct_answer),
+                    selectedValue: (answer?.selected_value as string | null | undefined) ?? null,
+                    isCorrect: Boolean(answer?.is_correct),
+                };
+            }),
+    };
+}
+
 export async function findPassedAttemptWithoutPayment(userId: number) {
     await ensureAdmissionTestTables();
     const rows = await queryMySQL<RowDataPacket[]>(
