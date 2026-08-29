@@ -55,7 +55,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // Already logged in → skip login page
-    if (pathname === "/login" || pathname === "/register" || pathname === "/") {
+    if (pathname === "/login" || pathname === "/register" || pathname === "/forgot-password" || pathname === "/") {
         const token = request.cookies.get(COOKIE_NAME)?.value;
         if (token) {
             const session = await verifyToken(token);
@@ -69,5 +69,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/", "/login", "/register", "/dashboard/:path*"],
+    matcher: ["/", "/login", "/register", "/forgot-password", "/dashboard/:path*"],
 };
