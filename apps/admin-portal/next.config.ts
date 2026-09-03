@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
         root: path.resolve(__dirname, "../../"),
     },
     images: {
+        unoptimized: true,
         remotePatterns: [
             {
                 protocol: "https",
@@ -33,6 +34,7 @@ const nextConfig: NextConfig = {
                 hostname: "dev-pub-3100e4c32b054e6598de798c71120dc1.r2.dev",
                 pathname: "/**",
             },
+
         ],
     },
 };
