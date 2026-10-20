@@ -150,6 +150,7 @@ export {
     findAssignment,
     listAssignmentsForTeacher,
     listAssignmentsForStudent,
+    assertCanSubmit,
     recordSubmission,
     listAssignmentSubmissions,
     gradeSubmission,
