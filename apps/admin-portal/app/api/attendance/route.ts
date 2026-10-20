@@ -1,33 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-    isAttendanceStatus,
-    listClassAttendance,
-    saveClassAttendance,
-    teacherCanManageClass,
-} from "@repo/database";
+import { isAttendanceStatus, listClassAttendance, saveClassAttendance } from "@repo/database";
 import { CLASS_MANAGER_ROLES, requireEnrollmentActor } from "@/app/lib/enrollment-auth";
+import { canManageAttendance, validateAttendanceDate } from "@/app/lib/attendance";
 
 const SAVE_ERRORS: Record<string, [string, number]> = {
     CLASS_NOT_FOUND: ["Kelas tidak ditemukan", 404],
     CLASS_NOT_RECORDABLE: ["Absensi hanya bisa diisi untuk kelas yang dipublikasikan atau ditutup", 409],
     NOT_CLASS_MEMBER: ["Ada siswa yang bukan anggota aktif kelas ini. Muat ulang daftar siswa.", 409],
 };
-
-function jakartaToday() {
-    return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date());
-}
-
-/** Returns an error message, or null when the date is a real YYYY-MM-DD date that is not in the future. */
-function validateDate(date: string) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(new Date(`${date}T00:00:00Z`).getTime())) return "Format tanggal tidak valid";
-    if (date > jakartaToday()) return "Absensi tidak bisa diisi untuk tanggal yang akan datang";
-    return null;
-}
-
-async function canManage(actor: { id: number; role: string }, classId: number) {
-    // Lecturers only see their own classes; super_admin and admin_2 manage every class.
-    return actor.role !== "lecture" || teacherCanManageClass(actor.id, classId);
-}
 
 /**
  * GET /api/attendance?classId=&date=YYYY-MM-DD
@@ -40,9 +20,9 @@ export async function GET(request: NextRequest) {
     const classId = Number(request.nextUrl.searchParams.get("classId"));
     const date = String(request.nextUrl.searchParams.get("date") ?? "");
     if (!Number.isInteger(classId) || classId < 1) return NextResponse.json({ error: "Pilih kelas terlebih dahulu" }, { status: 400 });
-    const dateError = validateDate(date);
+    const dateError = validateAttendanceDate(date);
     if (dateError) return NextResponse.json({ error: dateError }, { status: 400 });
-    if (!await canManage(actor, classId)) return NextResponse.json({ error: "Anda bukan pengajar kelas ini" }, { status: 403 });
+    if (!await canManageAttendance(actor, classId)) return NextResponse.json({ error: "Anda bukan pengajar kelas ini" }, { status: 403 });
 
     try {
         const rows = await listClassAttendance(classId, date);
@@ -76,7 +56,7 @@ export async function POST(request: NextRequest) {
     if (!Number.isInteger(classId) || classId < 1 || !Array.isArray(body?.attendance)) {
         return NextResponse.json({ error: "Parameter tidak valid" }, { status: 400 });
     }
-    const dateError = validateDate(date);
+    const dateError = validateAttendanceDate(date);
     if (dateError) return NextResponse.json({ error: dateError }, { status: 400 });
 
     const entries: { userId: number; status: "present" | "late" | "excused" | "absent"; notes: string }[] = [];
@@ -88,7 +68,7 @@ export async function POST(request: NextRequest) {
         entries.push({ userId, status: item.status, notes: String(item.notes ?? "").slice(0, 500) });
     }
     if (entries.length === 0) return NextResponse.json({ error: "Belum ada kehadiran yang diisi" }, { status: 400 });
-    if (!await canManage(actor, classId)) return NextResponse.json({ error: "Anda bukan pengajar kelas ini" }, { status: 403 });
+    if (!await canManageAttendance(actor, classId)) return NextResponse.json({ error: "Anda bukan pengajar kelas ini" }, { status: 403 });
 
     try {
         const result = await saveClassAttendance({ classId, date, recordedBy: actor.id, entries });

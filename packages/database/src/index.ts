@@ -166,6 +166,7 @@ export {
     listClassAttendance,
     saveClassAttendance,
     getStudentAttendance,
+    getClassAttendanceExport,
     type AttendanceStatus,
 } from "./attendance-mysql";
 

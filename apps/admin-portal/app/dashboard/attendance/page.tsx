@@ -37,6 +37,12 @@ function jakartaToday() {
     return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date());
 }
 
+type ExportFormat = "rekap" | "detail";
+
+function filenameFromDisposition(header: string | null, fallback: string) {
+    return header?.match(/filename="([^"]+)"/)?.[1] ?? fallback;
+}
+
 export default function ClassAttendancePage() {
     const [classes, setClasses] = useState<ClassOption[]>([]);
     const [selectedClassId, setSelectedClassId] = useState<string>("");
@@ -48,6 +54,10 @@ export default function ClassAttendancePage() {
     const [isSaving, setIsSaving] = useState(false);
 
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+    const [exportFrom, setExportFrom] = useState<string>(() => `${jakartaToday().slice(0, 8)}01`);
+    const [exportTo, setExportTo] = useState<string>(jakartaToday);
+    const [exporting, setExporting] = useState<ExportFormat | null>(null);
 
     useEffect(() => {
         fetch("/api/enrollment/classes")
@@ -127,6 +137,36 @@ export default function ClassAttendancePage() {
         }
     };
 
+    const handleExport = async (format: ExportFormat) => {
+        if (!selectedClassId) return;
+        if (!exportFrom || !exportTo || exportFrom > exportTo) {
+            setMessage({ type: "error", text: "Tanggal awal harus sebelum atau sama dengan tanggal akhir" });
+            return;
+        }
+        setExporting(format);
+        setMessage(null);
+        try {
+            const params = new URLSearchParams({ classId: selectedClassId, from: exportFrom, to: exportTo, format });
+            const res = await fetch(`/api/attendance/export?${params}`);
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || "Gagal mengunduh absensi");
+            }
+            const url = URL.createObjectURL(await res.blob());
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filenameFromDisposition(res.headers.get("Content-Disposition"), `absensi-${format}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            setMessage({ type: "error", text: err instanceof Error ? err.message : "Gagal mengunduh absensi" });
+        } finally {
+            setExporting(null);
+        }
+    };
+
     const selectedClass = classes.find((c) => String(c.id) === selectedClassId);
 
     return (
@@ -165,6 +205,46 @@ export default function ClassAttendancePage() {
                     <DatePicker label="Tanggal pertemuan" value={selectedDate} onChange={setSelectedDate} />
                 </div>
             </div>
+
+            {/* Export Section */}
+            {classes.length > 0 && (
+                <div className="bg-absolute-white p-5 rounded-2xl border border-neutral-20 flex flex-col gap-4">
+                    <div>
+                        <h3 className="text-sm font-bold text-neutral-90">Unduh Rekap Absensi</h3>
+                        <p className="text-xs text-neutral-50">
+                            File CSV untuk kelas {selectedClass ? `${selectedClass.code} · ${selectedClass.name}` : "yang dipilih"}, bisa dibuka di Excel atau Google Sheets.
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap gap-4 items-end">
+                        <div className="flex flex-col min-w-[180px]">
+                            <DatePicker label="Dari tanggal" value={exportFrom} onChange={setExportFrom} />
+                        </div>
+                        <div className="flex flex-col min-w-[180px]">
+                            <DatePicker label="Sampai tanggal" value={exportTo} onChange={setExportTo} />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                onClick={() => handleExport("rekap")}
+                                disabled={exporting !== null || !selectedClassId}
+                                title="Satu baris per siswa, satu kolom per pertemuan (H/T/I/A), lengkap dengan total dan persentase kehadiran"
+                                className="rounded-xl bg-primary-base px-4 py-2.5 text-sm font-semibold text-absolute-white hover:bg-primary-80 disabled:bg-neutral-30 transition-all"
+                            >
+                                {exporting === "rekap" ? "Menyiapkan..." : "Unduh Rekap per Siswa"}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleExport("detail")}
+                                disabled={exporting !== null || !selectedClassId}
+                                title="Satu baris per pertemuan per siswa, dengan keterangan dan pencatat"
+                                className="rounded-xl bg-primary-10 px-4 py-2.5 text-sm font-semibold text-primary-base hover:bg-primary-20 disabled:text-neutral-40 transition-all"
+                            >
+                                {exporting === "detail" ? "Menyiapkan..." : "Unduh Daftar Lengkap"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {message && (
                 <div

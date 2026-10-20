@@ -154,3 +154,46 @@ export async function getStudentAttendance(userId: number, recentLimit = 30) {
         })),
     };
 }
+
+/**
+ * Everything needed to export one class's attendance over a date range: the class, its students
+ * (active members plus anyone with a record in the range, e.g. students removed later) and every record.
+ */
+export async function getClassAttendanceExport(classId: number, from: string, to: string) {
+    await ensureAttendanceTables();
+    const classRows = await queryMySQL<RowDataPacket[]>(
+        "SELECT id, code, name, level FROM enrollment_classes WHERE id = ? LIMIT 1",
+        [classId]
+    );
+    if (!classRows[0]) return null;
+    const students = await queryMySQL<RowDataPacket[]>(
+        `SELECT u.id AS user_id, u.username AS student_name, u.email
+         FROM users u
+         WHERE u.id IN (
+             SELECT m.user_id FROM class_memberships m WHERE m.class_id = ? AND m.status = 'active'
+             UNION
+             SELECT a.user_id FROM enrollment_attendance a
+             WHERE a.class_id = ? AND a.attendance_date BETWEEN ? AND ?
+         )
+         ORDER BY u.username`,
+        [classId, classId, from, to]
+    );
+    const records = await queryMySQL<RowDataPacket[]>(
+        `SELECT a.user_id, DATE_FORMAT(a.attendance_date, '%Y-%m-%d') AS attendance_date, a.status, a.notes,
+                recorder.username AS recorded_by_name, a.updated_at
+         FROM enrollment_attendance a
+         LEFT JOIN users recorder ON recorder.id = a.recorded_by
+         WHERE a.class_id = ? AND a.attendance_date BETWEEN ? AND ?
+         ORDER BY a.attendance_date, a.user_id`,
+        [classId, from, to]
+    );
+    return {
+        classInfo: { id: Number(classRows[0].id), code: String(classRows[0].code), name: String(classRows[0].name), level: String(classRows[0].level) },
+        students: students.map((row) => ({ userId: Number(row.user_id), name: String(row.student_name), email: String(row.email) })),
+        records: records.map((row) => ({
+            userId: Number(row.user_id), date: String(row.attendance_date), status: row.status as AttendanceStatus,
+            notes: row.notes ? String(row.notes) : "", recordedBy: row.recorded_by_name ? String(row.recorded_by_name) : "",
+            updatedAt: row.updated_at as Date,
+        })),
+    };
+}
