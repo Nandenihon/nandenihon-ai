@@ -207,23 +207,33 @@ export async function listAssignmentsForStudent(userId: number) {
     );
 }
 
+/**
+ * Checks that a student may submit to an assignment. Call it before uploading the file so
+ * rejected submissions don't leave orphan objects in storage; recordSubmission re-checks it.
+ */
+export async function assertCanSubmit(assignmentId: number, studentId: number) {
+    await ensureAssignmentTables();
+    const assignment = await findAssignment(assignmentId);
+    if (!assignment || assignment.status !== "published") throw new Error("ASSIGNMENT_NOT_OPEN");
+    if (!(await studentHasActiveMembership(studentId, Number(assignment.class_id)))) throw new Error("NOT_CLASS_MEMBER");
+    const versions = await queryMySQL<RowDataPacket[]>(
+        "SELECT MAX(version) AS version FROM submissions WHERE assignment_id = ? AND student_id = ?",
+        [assignmentId, studentId]
+    );
+    const previousVersion = Number(versions[0]?.version || 0);
+    if (previousVersion && !assignment.allow_resubmission) throw new Error("RESUBMISSION_DISABLED");
+    return { assignment, previousVersion };
+}
+
 export async function recordSubmission(input: {
     assignmentId: number; studentId: number; fileKey: string; originalFilename: string;
     mimeType: string; size: number; checksum: string;
 }) {
-    await ensureAssignmentTables();
-    const assignment = await findAssignment(input.assignmentId);
-    if (!assignment || assignment.status !== "published") throw new Error("ASSIGNMENT_NOT_OPEN");
-    if (!(await studentHasActiveMembership(input.studentId, Number(assignment.class_id)))) throw new Error("NOT_CLASS_MEMBER");
-    const versions = await queryMySQL<RowDataPacket[]>(
-        "SELECT MAX(version) AS version FROM submissions WHERE assignment_id = ? AND student_id = ?",
-        [input.assignmentId, input.studentId]
-    );
-    const previousVersion = Number(versions[0]?.version || 0);
-    if (previousVersion && !assignment.allow_resubmission) throw new Error("RESUBMISSION_DISABLED");
+    const { assignment, previousVersion } = await assertCanSubmit(input.assignmentId, input.studentId);
     const version = previousVersion + 1;
     const isLate = Date.now() > new Date(assignment.deadline_at).getTime();
-    const status = previousVersion ? "resubmitted" : isLate ? "late" : "submitted";
+    // Lateness wins over resubmission so a late resubmission stays visible to the teacher.
+    const status = isLate ? "late" : previousVersion ? "resubmitted" : "submitted";
     const result = await queryMySQL<ResultSetHeader>(
         `INSERT INTO submissions
          (assignment_id, student_id, version, file_key, original_filename, mime_type, size, checksum, submitted_at, status)
