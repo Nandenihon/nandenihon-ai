@@ -160,6 +160,16 @@ export {
 } from "./assignment-mysql";
 
 export {
+    ATTENDANCE_STATUSES,
+    ensureAttendanceTables,
+    isAttendanceStatus,
+    listClassAttendance,
+    saveClassAttendance,
+    getStudentAttendance,
+    type AttendanceStatus,
+} from "./attendance-mysql";
+
+export {
     ensureAdmissionTestTables,
     ensureStudentsTable,
     getClassTestInfo,

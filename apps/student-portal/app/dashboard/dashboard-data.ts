@@ -4,6 +4,7 @@ import {
     ensureLmsTables,
     findLatestDailyQuizAttempt,
     getDailyQuizAttemptLeaderboard,
+    getStudentAttendance,
     getStudentDashboard,
     queryMySQL,
     type DailyQuizAttempt,
@@ -92,17 +93,34 @@ export async function getDailyQuizLeaderboard(limit = 10): Promise<LeaderboardIt
     }
 }
 
-export function getAttendanceSummary(dashboard: StudentDashboard) {
-    const totalLessons = dashboard.enrolledCourses.reduce((sum, course) => sum + course.totalLessons, 0);
-    const completedLessons = dashboard.enrolledCourses.reduce((sum, course) => sum + course.completedLessons, 0);
-    const remainingLessons = Math.max(0, totalLessons - completedLessons);
+export type StudentAttendance = Awaited<ReturnType<typeof getStudentAttendance>>;
+
+export async function getStudentAttendanceSafe(studentId: number): Promise<StudentAttendance> {
+    try {
+        return await getStudentAttendance(studentId);
+    } catch {
+        return { classes: [], recent: [] };
+    }
+}
+
+/** Attendance rate across all classes: present and late count as attended, out of every recorded session. */
+export function getAttendanceSummary(attendance: StudentAttendance) {
+    const totals = attendance.classes.reduce(
+        (sum, item) => ({
+            total: sum.total + item.total,
+            present: sum.present + item.present,
+            late: sum.late + item.late,
+            excused: sum.excused + item.excused,
+            absent: sum.absent + item.absent,
+        }),
+        { total: 0, present: 0, late: 0, excused: 0, absent: 0 }
+    );
+    const attended = totals.present + totals.late;
 
     return {
-        present: completedLessons,
-        total: totalLessons,
-        absent: 0,
-        remaining: remainingLessons,
-        percent: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
+        ...totals,
+        attended,
+        percent: totals.total > 0 ? Math.round((attended / totals.total) * 100) : 0,
     };
 }
 
