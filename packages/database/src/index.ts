@@ -154,6 +154,8 @@ export {
     recordSubmission,
     listAssignmentSubmissions,
     gradeSubmission,
+    findSubmissionForReview,
+    saveSubmissionCorrection,
     getAcademicReport,
     processNotificationOutbox,
     listNotifications,

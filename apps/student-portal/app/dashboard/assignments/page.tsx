@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 type Assignment = {
     id: number; class_code: string; title: string; description: string; subject: string; deadline_at: string;
     max_score: number; status: string; allow_resubmission: number | boolean;
-    submission_id: number | null; submission_status: string | null; score: number | null; feedback: string | null;
+    submission_id: number | null; submission_status: string | null; correction_uploaded_at: string | null;
+    score: number | null; feedback: string | null;
 };
 
 const SUBMISSION_STATUS_LABELS: Record<string, string> = {
@@ -63,6 +64,12 @@ export default function StudentAssignmentsPage() {
                                 {a.status === "closed" && <p className="mt-1 text-xs text-neutral-50">Tugas sudah ditutup.</p>}
                                 {submitted && a.status === "published" && a.score === null && !a.allow_resubmission && <p className="mt-1 text-xs text-neutral-50">Tugas ini tidak mengizinkan pengumpulan ulang.</p>}
                                 {a.score !== null && <div className="mt-3 rounded-xl bg-success-10 p-3"><b>Nilai {Number(a.score)}/{Number(a.max_score)}</b>{a.feedback && <p className="whitespace-pre-line">{a.feedback}</p>}</div>}
+                                {a.correction_uploaded_at && (
+                                    <a href={`/api/enrollment/submissions/${a.submission_id}/correction`} target="_blank" rel="noreferrer"
+                                        className="mt-3 inline-flex items-center gap-2 rounded-xl border border-primary-base bg-primary-10 px-4 py-2.5 text-sm font-bold text-primary-base">
+                                        ✏️ Lihat hasil koreksi pengajar
+                                    </a>
+                                )}
                             </div>
                             {canUpload && (
                                 <label className="h-fit shrink-0 cursor-pointer rounded-xl bg-primary-base px-4 py-3 text-center text-sm font-bold text-white">
