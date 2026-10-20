@@ -16,20 +16,35 @@ async function loadReviewableSubmission(request: NextRequest, context: Context) 
     return { actor, item };
 }
 
-/** GET /api/enrollment/submissions/:id/correction — the corrected PDF. */
-export async function GET(request: NextRequest, context: Context) {
-    const result = await loadReviewableSubmission(request, context);
-    if (result.error) return result.error;
-    if (!result.item.correction_file_key) return NextResponse.json({ error: "Belum ada koreksi" }, { status: 404 });
-    const object = await fetchR2Object(String(result.item.correction_file_key));
-    if (!object?.body) return NextResponse.json({ error: "File koreksi tidak ditemukan di storage" }, { status: 404 });
+async function streamPdf(fileKey: string, filename: string, source: "correction" | "original") {
+    const object = await fetchR2Object(fileKey);
+    if (!object?.body) return NextResponse.json({ error: "File tidak ditemukan di storage" }, { status: 404 });
     return new NextResponse(object.body, {
         headers: {
             "Content-Type": "application/pdf",
-            "Content-Disposition": `inline; filename="koreksi-${String(result.item.original_filename).replaceAll('"', "")}"`,
+            "Content-Disposition": `inline; filename="${filename.replaceAll('"', "")}"`,
             "Cache-Control": "private, no-store",
+            "X-Pdf-Source": source,
         },
     });
+}
+
+/**
+ * GET /api/enrollment/submissions/:id/correction — the corrected PDF.
+ * With ?fallback=original it returns the student's original file when no correction exists yet,
+ * so the correction screen can start loading the PDF without waiting for the submission details.
+ */
+export async function GET(request: NextRequest, context: Context) {
+    const result = await loadReviewableSubmission(request, context);
+    if (result.error) return result.error;
+    const { item } = result;
+    if (item.correction_file_key) {
+        return streamPdf(String(item.correction_file_key), `koreksi-${item.original_filename}`, "correction");
+    }
+    if (request.nextUrl.searchParams.get("fallback") === "original") {
+        return streamPdf(String(item.file_key), String(item.original_filename), "original");
+    }
+    return NextResponse.json({ error: "Belum ada koreksi" }, { status: 404 });
 }
 
 /** POST /api/enrollment/submissions/:id/correction — multipart "file": the annotated (or teacher-uploaded) PDF. */

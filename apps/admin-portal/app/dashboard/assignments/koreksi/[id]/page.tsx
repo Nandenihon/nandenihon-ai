@@ -34,14 +34,16 @@ export default function SubmissionCorrectionPage() {
     const router = useRouter();
     const [detail, setDetail] = useState<SubmissionDetail | null>(null);
     const [loadError, setLoadError] = useState("");
-    const [source, setSource] = useState<"original" | "correction">("original");
+    // "auto" loads the previous correction if there is one, otherwise the original file, in a single
+    // request that runs in parallel with the details request below.
+    const [source, setSource] = useState<"auto" | "original" | "correction">("auto");
     const [annotatorKey, setAnnotatorKey] = useState(0);
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [uploading, setUploading] = useState(false);
     const [grade, setGrade] = useState({ score: "", feedback: "" });
     const [savingGrade, setSavingGrade] = useState(false);
 
-    const load = useCallback(async (resetSource: boolean) => {
+    const load = useCallback(async (resetForm: boolean) => {
         const res = await fetch(`/api/enrollment/submissions/${id}`, { cache: "no-store" });
         const data = await res.json();
         if (!res.ok) {
@@ -50,9 +52,7 @@ export default function SubmissionCorrectionPage() {
         }
         const item = data.data as SubmissionDetail;
         setDetail(item);
-        if (resetSource) {
-            // Continue on top of an earlier correction by default so previous marks are kept.
-            setSource(item.hasCorrection ? "correction" : "original");
+        if (resetForm) {
             setGrade({ score: item.score !== null ? String(item.score) : "", feedback: item.feedback ?? "" });
         }
     }, [id]);
@@ -124,7 +124,10 @@ export default function SubmissionCorrectionPage() {
         );
     }
 
-    const sourceUrl = `/api/enrollment/submissions/${id}/${source === "correction" ? "correction" : "file"}`;
+    const sourceUrl = source === "auto"
+        ? `/api/enrollment/submissions/${id}/correction?fallback=original`
+        : `/api/enrollment/submissions/${id}/${source === "correction" ? "correction" : "file"}`;
+    const effectiveSource = source === "auto" ? (detail?.hasCorrection ? "correction" : "original") : source;
 
     return (
         <div className="flex flex-col gap-4">
@@ -157,19 +160,17 @@ export default function SubmissionCorrectionPage() {
                     <span className="text-neutral-60">Lanjutkan dari:</span>
                     {(["correction", "original"] as const).map((option) => (
                         <button key={option} type="button"
-                            onClick={() => { if (option !== source) { setSource(option); setAnnotatorKey((k) => k + 1); } }}
-                            aria-pressed={source === option}
-                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${source === option ? "bg-primary-base text-absolute-white" : "bg-primary-10 text-primary-base"}`}>
+                            onClick={() => { if (option !== effectiveSource) { setSource(option); setAnnotatorKey((k) => k + 1); } }}
+                            aria-pressed={effectiveSource === option}
+                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${effectiveSource === option ? "bg-primary-base text-absolute-white" : "bg-primary-10 text-primary-base"}`}>
                             {option === "correction" ? "Koreksi sebelumnya" : "File asli (mulai ulang)"}
                         </button>
                     ))}
                 </div>
             )}
 
-            {detail && (
-                <PdfAnnotator key={`${source}-${annotatorKey}`} sourceUrl={sourceUrl}
-                    onSave={(pdf) => uploadCorrection(pdf, `koreksi-${detail.originalFilename}`)} />
-            )}
+            <PdfAnnotator key={`${source}-${annotatorKey}`} sourceUrl={sourceUrl}
+                onSave={(pdf) => uploadCorrection(pdf, `koreksi-${detail?.originalFilename ?? "tugas.pdf"}`)} />
 
             <div className="grid gap-4 lg:grid-cols-2">
                 <form onSubmit={saveGrade} className="flex flex-col gap-3 rounded-2xl border border-neutral-20 bg-absolute-white p-5">
