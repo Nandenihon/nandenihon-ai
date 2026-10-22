@@ -8,7 +8,7 @@ type TopicSectionProps = {
 
 function TopicSection({ t }: TopicSectionProps) {
   return (
-    <section className="py-20 px-6 lg:px-0 max-w-7xl mx-auto text-center">
+    <section className="py-20 px-6 lg:px-8 max-w-7xl mx-auto text-center">
       <div className="inline-block bg-primary-20 border border-primary-50 text-primary-50 font-semibold text-sm px-4 py-1.5 rounded-full mb-4">
         {t.badge}
       </div>

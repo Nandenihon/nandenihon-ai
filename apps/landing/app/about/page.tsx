@@ -65,7 +65,7 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
         </h1>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-0 mt-16 lg:mt-24 relative">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 mt-16 lg:mt-24 relative">
         <div className="absolute z-0 -right-16 lg:-right-31 top-[-50px] w-[600px] lg:w-[700px] pointer-events-none">
           <svg
             width="100%"
@@ -120,7 +120,7 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-0 mt-32 relative z-10">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 mt-32 relative z-10">
         <div className="mb-20">
           <h2 className="font-bold text-[28px] lg:text-[36px] text-center mb-10 text-[#1A1A1A]">
             {t.foundersTitle}

@@ -10,7 +10,7 @@ type HeroSectionProps = {
 function HeroSection({ t }: HeroSectionProps) {
   return (
     <div className="relative lg:h-[800px] h-[600px] w-full bg-[url('/images/bg-class.png')] bg-cover bg-center ">
-      <div className="relative max-w-7xl z-10 flex pt-58 px-6 lg:px-0 mx-auto justify-between">
+      <div className="relative max-w-7xl z-10 flex pt-58 px-6 lg:px-8 mx-auto justify-between">
         <div>
           <div className="bg-primary-20 border-2 border-primary-50 inline-block px-2 py-1.5 rounded-full text-primary-50 font-bold text-sm mb-6">
             <div className="flex space-x-2">

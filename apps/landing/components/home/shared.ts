@@ -8,8 +8,15 @@ export const HOME_SECTION_TITLE_CLASS =
 
 export { LOCAL_IMAGE_FALLBACK };
 
-export function duplicateForMarquee<T>(items: readonly T[]): T[] {
-  return [...items, ...items];
+/**
+ * Marquees animate by -50%, so the track is two identical halves. Each half repeats the items until
+ * it holds at least `minPerHalf`, otherwise a short list leaves an empty gap on wide screens.
+ */
+export function duplicateForMarquee<T>(items: readonly T[], minPerHalf = 6): T[] {
+  if (items.length === 0) return [];
+  const half: T[] = [];
+  while (half.length < minPerHalf) half.push(...items);
+  return [...half, ...half];
 }
 
 export const resolveUploadUrl = resolveUploadImageUrl;

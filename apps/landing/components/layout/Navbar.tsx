@@ -144,8 +144,9 @@ export default function NewNavbar() {
 
   return (
     <>
-      <nav className="w-full fixed top-10 right-0 left-0 z-50 px-6 lg:px-10 flex justify-center">
-        <div className="bg-white/50 backdrop-blur-lg border border-white/20 shadow-sm/5 rounded-full px-6 py-5 flex items-center justify-between w-full max-w-7xl">
+      <nav className="w-full fixed top-4 sm:top-6 lg:top-10 right-0 left-0 z-50 px-4 sm:px-6 lg:px-10 flex justify-center">
+        {/* Mostly opaque glass: at 50% the blurred page text behind the bar showed through as grey smudges. */}
+        <div className="bg-white/85 backdrop-blur-xl border border-white/70 shadow-[0_8px_30px_rgba(38,70,130,0.10)] rounded-full px-5 py-4 sm:px-6 sm:py-5 flex items-center justify-between w-full max-w-7xl">
           <Link
             href={withLanguage("/", language)}
             className="flex items-center gap-2"
@@ -252,7 +253,13 @@ export default function NewNavbar() {
               </a>
             </div>
           </div>
-          <button onClick={() => setIsOpen(true)} className="lg:hidden block">
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="lg:hidden block rounded-full p-1.5 text-gray-800 hover:bg-primary-10"
+            aria-label="Buka menu"
+            aria-expanded={isOpen}
+          >
             <MenuIcon />
           </button>
         </div>
@@ -262,8 +269,10 @@ export default function NewNavbar() {
         <div className="fixed inset-0 z-60 bg-black/30 backdrop-blur-sm flex justify-end">
           <div className="bg-white/90 backdrop-blur-md w-full h-screen p-6 flex flex-col items-end animate-in slide-in-from-right duration-300">
             <button
+              type="button"
               onClick={() => setIsOpen(false)}
               className="p-2 mb-8 text-black"
+              aria-label="Tutup menu"
             >
               <X size={32} />
             </button>

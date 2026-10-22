@@ -45,27 +45,32 @@ const TestimonialCard = ({
   const name = item.nickname || t.anonymous;
 
   return (
-    <article className="w-132 flex-none shadow relative hover-lift">
-      <div className="px-5 pt-5 pb-8 bg-white rounded-t-2xl">
-        <p className="text-wrap text-gray-600">{item.testimonial_text || ""}</p>
+    // Right margin (not flex gap) keeps both marquee halves the same width, so the loop is seamless.
+    <div className="mr-5 flex flex-none sm:mr-10">
+      <article className="relative flex w-[82vw] max-w-132 flex-col whitespace-normal rounded-2xl bg-white shadow hover-lift sm:w-132">
+        <div className="flex-1 rounded-t-2xl px-5 pb-6 pt-5 sm:px-6">
+          <p className="line-clamp-6 text-sm leading-relaxed text-gray-600 sm:text-base">
+            {item.testimonial_text || ""}
+          </p>
+        </div>
+        <div className="flex h-20 flex-col justify-center rounded-b-2xl bg-[#F0F0F0] pl-5 pr-28 sm:pl-6 sm:pr-32">
+          <h3 className="truncate text-base font-semibold text-gray-900 sm:text-lg">{name}</h3>
+          {item.age && (
+            <p className="mt-0.5 text-sm text-gray-600">
+              {item.age} {t.yearSuffix}
+            </p>
+          )}
+        </div>
         <Image
           src={resolveUploadUrl(item.photo)}
-          className="size-25 object-cover rounded-full border-8 border-white absolute right-5 bottom-4"
+          className="absolute bottom-4 right-4 size-20 rounded-full border-[6px] border-white object-cover sm:right-5 sm:size-24 sm:border-8"
           alt={name}
           width={100}
           height={100}
           sizes="100px"
         />
-      </div>
-      <div className="h-20 bg-[#F0F0F0] rounded-b-2xl px-5 flex justify-center flex-col">
-        <h3 className="text-gray-900 font-semibold text-lg">{name}</h3>
-        {item.age && (
-          <p className="text-gray-600 mt-1 text-sm">
-            {item.age} {t.yearSuffix}
-          </p>
-        )}
-      </div>
-    </article>
+      </article>
+    </div>
   );
 };
 
@@ -75,13 +80,13 @@ async function TestimonialSection({ t }: { t: HomeTranslations["testimonials"] }
 
   return (
     <div className="py-12 bg-[#D3E0FB]">
-      <div className="max-w-7xl mx-auto px-6 lg:px-0">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <h2 className={`${HOME_SECTION_TITLE_CLASS} text-center mb-10 title-reveal`}>
           {t.title}
         </h2>
       </div>
-      <div className="overflow-hidden relative mt-20">
-        <div className="flex gap-12 whitespace-nowrap animate-marquee-left">
+      <div className="relative mt-10 overflow-hidden lg:mt-14">
+        <div className={`flex items-stretch py-2 ${displayItems.length > 0 ? "w-max animate-marquee-left" : ""}`}>
           {displayItems.length > 0 ? (
             displayItems.map((item, index) => (
               <TestimonialCard key={`${item.id}-${index}`} item={item} t={t} />

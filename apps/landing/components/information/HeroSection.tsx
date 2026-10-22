@@ -22,7 +22,7 @@ function HeroSection({ t, language }: HeroSectionProps) {
   return (
     <div className="relative lg:h-[800px] h-auto w-full bg-[url('/images/bg-class.png')] bg-cover bg-center">
       {" "}
-      <div className="relative max-w-7xl z-10 flex flex-col lg:flex-row pt-32 lg:pt-48 pb-16 px-6 lg:px-0 mx-auto lg:justify-between items-start">
+      <div className="relative max-w-7xl z-10 flex flex-col lg:flex-row pt-32 lg:pt-48 pb-16 px-6 lg:px-8 mx-auto lg:justify-between items-start">
         <div className="max-w-xl">
           <div className="bg-primary-20 border-2 border-primary-50 inline-block px-2 py-1.5 rounded-full text-primary-50 font-bold text-sm mb-6">
             <div className="flex space-x-2">

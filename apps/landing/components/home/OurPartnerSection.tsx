@@ -20,14 +20,14 @@ const partners = [
 const partnerItems = duplicateForMarquee(partners);
 
 const PartnerItem = ({ name, src }: Partner) => (
-  <div className="flex items-center flex-none">
+  <div className="flex items-center flex-none pr-8 sm:pr-12">
     <Image
       src={src}
       alt={name}
       width={280}
       height={160}
       sizes="80px"
-      className="h-15 w-40 object-contain opacity-80 hover:opacity-100 transition"
+      className="h-12 w-32 sm:h-15 sm:w-40 object-contain opacity-80 hover:opacity-100 transition"
     />
   </div>
 );
@@ -35,14 +35,14 @@ const PartnerItem = ({ name, src }: Partner) => (
 export const OurPartnerSection = ({ t }: { t: HomeTranslations["partners"] }) => {
   return (
     <div className="py-32 mt-20">
-      <div className="max-w-7xl mx-auto px-6 lg:px-0">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <h2 className={`${HOME_SECTION_TITLE_CLASS} text-center mb-10 title-reveal`}>
           {t.title}
         </h2>
       </div>
 
       <div className="overflow-hidden relative mt-20">
-        <div className="flex gap-12 whitespace-nowrap animate-marquee-left">
+        <div className="flex w-max whitespace-nowrap animate-marquee-left">
           {partnerItems.map((item, index) => (
             <PartnerItem
               key={`${item.name}-${index}`}

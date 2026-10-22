@@ -44,7 +44,7 @@ export default async function MerchandisePage({ searchParams }: MerchandisePageP
 
   return (
     <div className="bg-[#FBFCFF]">
-      <section className="relative overflow-hidden px-6 pb-20 pt-40 lg:px-0">
+      <section className="relative overflow-hidden px-6 pb-20 pt-40 lg:px-8">
         <div className="absolute left-[-80px] top-24 h-64 w-64 rounded-full bg-primary-10 blur-3xl" />
         <div className="absolute right-[-80px] top-52 h-72 w-72 rounded-full bg-[#F4D8FF] opacity-80 blur-3xl" />
 

@@ -30,7 +30,7 @@ async function OurTeamList({ t, language = defaultLanguage }: { t: HomeTranslati
       <div className="absolute left-0 top-16 h-56 w-56 rounded-full bg-primary-10 blur-3xl" />
       <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-[#F4D8FF] opacity-70 blur-3xl" />
 
-      <div className="relative mx-auto max-w-7xl px-6 lg:px-0">
+      <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
             <h2 className={`${HOME_SECTION_TITLE_CLASS} title-reveal`}>

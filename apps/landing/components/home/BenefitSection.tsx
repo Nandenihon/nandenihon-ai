@@ -45,7 +45,7 @@ function BenefitSection({ t }: { t: HomeTranslations["benefits"] }) {
 
   return (
     <div className="py-12 bg-[#FFFBFD]">
-      <div className="max-w-7xl mx-auto px-6 lg:px-0">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <h2 className={`${HOME_SECTION_TITLE_CLASS} text-center mb-10 title-reveal`}>
           {t.title}
         </h2>
