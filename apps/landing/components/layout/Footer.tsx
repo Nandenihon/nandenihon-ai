@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React from "react";
 import FormInput from "../ui/FormInput";
+import { CONTACT, CONTACT_LINKS } from "@/lib/contact";
 
 function withLanguage(href: string, language: Language) {
   return language === "id" ? href : `${href}?lang=${language}`;
@@ -24,7 +25,7 @@ function NewFooter() {
     { title: t.nav.home, href: "/" },
     { title: t.nav.about, href: "/about" },
     { title: t.nav.class, href: "/class" },
-    { title: t.nav.article, href: "/article/" },
+    { title: t.nav.article, href: "/article" },
     { title: t.nav.contact, href: "/contact" },
   ];
 
@@ -60,20 +61,18 @@ function NewFooter() {
                 {t.footer.contactTitle}
               </h3>
               <div className="mt-6 space-y-4">
-                <div className="flex items-center gap-2 social-pop">
+                <a href={CONTACT_LINKS.email} className="flex items-center gap-2 social-pop hover:text-primary-base">
                   <Mail className="w-6 h-6 text-primary-base" />
-                  <p className="text-lg font-semibold">
-                    Nandenihon6@gmail.com
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 social-pop">
+                  <span className="text-lg font-semibold">{CONTACT.email}</span>
+                </a>
+                <a href={CONTACT_LINKS.whatsapp} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 social-pop hover:text-primary-base">
                   <Phone className="w-6 h-6 text-primary-base" />
-                  <p className="text-lg font-semibold">+62 812-9923-6462</p>
-                </div>
-                <div className="flex items-center gap-2 social-pop">
+                  <span className="text-lg font-semibold">{CONTACT.phoneDisplay}</span>
+                </a>
+                <a href={CONTACT_LINKS.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 social-pop hover:text-primary-base">
                   <Instagram className="w-6 h-6 text-primary-base" />
-                  <p className="text-lg font-semibold">@nandenihon</p>
-                </div>
+                  <span className="text-lg font-semibold">@{CONTACT.instagramHandle}</span>
+                </a>
               </div>
             </div>
           </div>
@@ -91,7 +90,7 @@ function NewFooter() {
       </div>
       <div className="py-4 text-center bg-primary-base">
         <p className="lg:text-lg text-base font-bold text-white">
-          {t.footer.copyright}
+          © {new Date().getFullYear()} Nande Nihon. {t.footer.rightsReserved}
         </p>
       </div>
     </footer>

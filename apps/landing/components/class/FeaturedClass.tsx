@@ -1,6 +1,6 @@
 import { resolveUploadImageUrl } from "@/lib/images";
 import MainSection from "./MainSection";
-import ClassItem, { type ClassItemProps } from "./ClassItem";
+import ClassItem, { type ClassItemProps, type RegistrationState } from "./ClassItem";
 import { queryMySQL, type RowDataPacket } from "@repo/database";
 import type { Class } from "@repo/types";
 import type { LandingTranslations } from "@/lib/i18n";
@@ -22,10 +22,25 @@ function formatDate(value: Date | string): string {
   );
 }
 
+/** Registration is open only for active classes inside their registration window. */
+function getRegistrationState(item: Class, now = Date.now()): RegistrationState {
+  if (item.status !== "active") return "closed";
+  const start = new Date(item.register_start).getTime();
+  const end = new Date(item.register_end).getTime();
+  if (Number.isFinite(start) && now < start) return "upcoming";
+  if (Number.isFinite(end) && now > end) return "closed";
+  return "open";
+}
+
 async function getClasses(): Promise<ClassItemProps[]> {
   try {
+    // Draft and finished classes are internal; only active and closed ones are public.
     const rows = await queryMySQL<RowDataPacket[]>(
-      "SELECT id, class_name, level, description, register_start, register_end, register_fee, status, image_banner FROM `class` ORDER BY id DESC LIMIT 6"
+      `SELECT id, class_name, level, description, register_start, register_end, register_fee, status, image_banner
+       FROM \`class\`
+       WHERE status IN ('active', 'closed')
+       ORDER BY FIELD(status, 'active', 'closed'), register_start DESC, id DESC
+       LIMIT 6`
     );
 
     return (rows as Class[]).map((item) => ({
@@ -35,7 +50,7 @@ async function getClasses(): Promise<ClassItemProps[]> {
       image: resolveUploadImageUrl(item.image_banner, CLASS_IMAGE_FALLBACK),
       price: formatCurrency(item.register_fee),
       description: item.description,
-      slot: item.status === "active",
+      registration: getRegistrationState(item),
       registrationStart: formatDate(item.register_start),
       registrationEnd: formatDate(item.register_end),
     }));

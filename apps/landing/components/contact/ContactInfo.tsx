@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { LandingTranslations } from "@/lib/i18n";
+import { CONTACT, CONTACT_LINKS } from "@/lib/contact";
 
 type ContactInfoProps = {
   t: LandingTranslations["contactPage"];
@@ -42,9 +43,9 @@ export default function ContactInfo({ t }: ContactInfoProps) {
               </svg>
             </div>
 
-            <p className="min-w-0 flex-1 break-words text-[16px] font-semibold leading-[24px] text-white sm:text-[18px] sm:leading-[28px] lg:text-[20px] lg:leading-[32px]">
-              Nandenihon6@gmail.com
-            </p>
+            <a href={CONTACT_LINKS.email} className="min-w-0 flex-1 break-words text-[16px] font-semibold leading-[24px] text-white underline-offset-4 hover:underline sm:text-[18px] sm:leading-[28px] lg:text-[20px] lg:leading-[32px]">
+              {CONTACT.email}
+            </a>
           </div>
 
           {/* WHATSAPP */}
@@ -70,9 +71,9 @@ export default function ContactInfo({ t }: ContactInfoProps) {
               </svg>
             </div>
 
-            <p className="min-w-0 flex-1 break-words text-[16px] font-semibold leading-[24px] text-white sm:text-[18px] sm:leading-[28px] lg:text-[20px] lg:leading-[32px]">
-              +62 812-9923-6462
-            </p>
+            <a href={CONTACT_LINKS.whatsapp} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 break-words text-[16px] font-semibold leading-[24px] text-white underline-offset-4 hover:underline sm:text-[18px] sm:leading-[28px] lg:text-[20px] lg:leading-[32px]">
+              {CONTACT.phoneDisplay}
+            </a>
           </div>
 
           {/* INSTAGRAM */}
@@ -101,9 +102,9 @@ export default function ContactInfo({ t }: ContactInfoProps) {
               </svg>
             </div>
 
-            <p className="min-w-0 flex-1 break-words text-[16px] font-semibold leading-[24px] text-white sm:text-[18px] sm:leading-[28px] lg:text-[20px] lg:leading-[32px]">
-              @nandenihon
-            </p>
+            <a href={CONTACT_LINKS.instagram} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 break-words text-[16px] font-semibold leading-[24px] text-white underline-offset-4 hover:underline sm:text-[18px] sm:leading-[28px] lg:text-[20px] lg:leading-[32px]">
+              @{CONTACT.instagramHandle}
+            </a>
           </div>
         </div>
       </div>

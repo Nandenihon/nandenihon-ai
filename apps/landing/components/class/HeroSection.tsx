@@ -17,8 +17,8 @@ function HeroSection({ t }: HeroSectionProps) {
               <StarTag /> <span>{t.badge}</span>
             </div>
           </div>
-          <h1 className="lg:text-5xl text-4xl font-bold lg:eading-[68px] leading-[58px]">
-            {t.titleStart}
+          <h1 className="lg:text-5xl text-4xl font-bold lg:leading-[68px] leading-[58px]">
+            {t.titleStart}{" "}
             <span className="bg-[radial-gradient(50%_50%_at_50%_50%,_#0338AE_59.62%,_#347CEF_82.21%)] bg-clip-text text-transparent">
               {t.titleHighlight}
             </span>

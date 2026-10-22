@@ -17,6 +17,11 @@ function withLanguage(href: string, language: Language) {
   return language === "id" ? href : `${href}?lang=${language}`;
 }
 
+/** Home matches exactly; other sections also match their sub-pages (e.g. /article/some-slug). */
+function isPathActive(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export default function NewNavbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
@@ -46,7 +51,7 @@ export default function NewNavbar() {
     { name: t.home, href: "/" },
     { name: t.about, href: "/about" },
     { name: t.class, href: "/class" },
-    { name: t.article, href: "/article/" },
+    { name: t.article, href: "/article" },
     {
       name: t.information,
       href: "/information",
@@ -160,8 +165,8 @@ export default function NewNavbar() {
             {navLinks.map((link) => {
               const hasChildren = "children" in link && link.children;
               const isActive = hasChildren
-                ? link.children.some((child) => pathname.startsWith(child.href))
-                : pathname === link.href;
+                ? link.children.some((child) => isPathActive(pathname, child.href))
+                : isPathActive(pathname, link.href);
 
               if (hasChildren) {
                 return (
@@ -190,7 +195,7 @@ export default function NewNavbar() {
                         role="menu"
                       >
                         {link.children.map((child) => {
-                          const childActive = pathname.startsWith(child.href);
+                          const childActive = isPathActive(pathname, child.href);
 
                           return (
                             <Link
@@ -280,7 +285,7 @@ export default function NewNavbar() {
                             key={child.href}
                             href={withLanguage(child.href, language)}
                             onClick={() => setIsOpen(false)}
-                            className={`text-gray-600 hover:text-primary-base font-medium text-base ${pathname.startsWith(child.href)
+                            className={`text-gray-600 hover:text-primary-base font-medium text-base ${isPathActive(pathname, child.href)
                               ? "text-primary-base font-bold underline"
                               : ""
                               }`}
@@ -298,7 +303,7 @@ export default function NewNavbar() {
                     <Link
                       href={withLanguage(link.href, language)}
                       onClick={() => setIsOpen(false)}
-                      className={`text-gray-700 hover:text-primary-base font-medium text-lg flex items-center gap-2 ${pathname === link.href
+                      className={`text-gray-700 hover:text-primary-base font-medium text-lg flex items-center gap-2 ${isPathActive(pathname, link.href)
                         ? "text-primary-base font-bold underline"
                         : ""
                         }`}

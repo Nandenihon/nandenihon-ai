@@ -1,7 +1,7 @@
 "use client";
 
 import { HOME_SECTION_TITLE_CLASS } from "@/components/home/shared";
-import type { HomeTranslations } from "@/lib/i18n";
+import { defaultLanguage, type HomeTranslations, type Language } from "@/lib/i18n";
 import type { ArticleView } from "@/lib/news";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -12,9 +12,12 @@ const MAX_PUBLICATIONS = 6;
 interface PublicationSectionProps {
   articles: ArticleView[];
   t: HomeTranslations["publications"];
+  language?: Language;
 }
 
-const PublicationSection = ({ articles, t }: PublicationSectionProps) => {
+const PublicationSection = ({ articles, t, language = defaultLanguage }: PublicationSectionProps) => {
+  // Keep the chosen language when visitors open the article list or an article.
+  const withLanguage = (href: string) => (language === defaultLanguage ? href : `${href}?lang=${language}`);
   const [selectedCategory, setSelectedCategory] = useState<string>(
     t.allCategories,
   );
@@ -44,7 +47,7 @@ const PublicationSection = ({ articles, t }: PublicationSectionProps) => {
             {t.title}
           </h2>
           <Link
-            href="/article"
+            href={withLanguage("/article")}
             prefetch={false}
             className="text-primary-base lg:text-lg  text-base font-bold"
           >
@@ -68,7 +71,7 @@ const PublicationSection = ({ articles, t }: PublicationSectionProps) => {
             publications.map((article) => (
               <CardNews
                 key={article.id}
-                slug={article.slug}
+                slug={withLanguage(article.slug)}
                 title={article.title}
                 image={article.image}
                 category={article.category}

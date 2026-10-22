@@ -1,4 +1,6 @@
 import { LOCAL_IMAGE_FALLBACK } from "@/components/home/shared";
+import { whatsappLink } from "@/lib/contact";
+import { getLanguage, landingTranslations } from "@/lib/i18n";
 import { resolveUploadImageUrl } from "@/lib/images";
 import { listMerchandiseItems } from "@repo/database";
 import type { MerchandiseItem } from "@repo/database";
@@ -9,7 +11,7 @@ import Image from "next/image";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Merchandise | Nande Nihon",
+  title: "Merchandise",
   description: "Daftar merchandise resmi Nande Nihon.",
 };
 
@@ -31,7 +33,13 @@ const getMerchandiseItems = unstable_cache(async (): Promise<MerchandiseItem[]> 
   }
 }, ["merchandise-page-items"], { revalidate: 300, tags: ["merchandise"] });
 
-export default async function MerchandisePage() {
+type MerchandisePageProps = {
+  searchParams?: Promise<{ lang?: string | string[] }>;
+};
+
+export default async function MerchandisePage({ searchParams }: MerchandisePageProps) {
+  const params = await searchParams;
+  const t = landingTranslations[getLanguage(params?.lang)].merchandisePage;
   const items = await getMerchandiseItems();
 
   return (
@@ -43,19 +51,19 @@ export default async function MerchandisePage() {
         <div className="relative mx-auto max-w-7xl">
           <div className="mx-auto mb-12 max-w-3xl text-center">
             <p className="mb-4 text-sm font-bold uppercase tracking-[0.24em] text-primary-base">
-              Nande Nihon Store
+              {t.eyebrow}
             </p>
             <h1 className="text-4xl font-bold leading-tight text-neutral-90 lg:text-5xl">
-              Merchandise
+              {t.title}
             </h1>
             <p className="mt-5 text-base leading-relaxed text-neutral-60 lg:text-lg">
-              Pilihan barang merchandise Nande Nihon untuk menemani perjalanan belajar bahasa Jepangmu.
+              {t.description}
             </p>
           </div>
 
           {items.length === 0 ? (
             <div className="rounded-[28px] border border-dashed border-primary-30 bg-white px-6 py-14 text-center text-neutral-50">
-              Belum ada merchandise tersedia.
+              {t.empty}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -88,12 +96,12 @@ export default async function MerchandisePage() {
                       </p>
                     )}
                     <a
-                      href={`https://wa.me/6281299236462?text=${encodeURIComponent(`Halo Nande Nihon, saya tertarik dengan merchandise ${item.title}.`)}`}
+                      href={whatsappLink(`${t.whatsappMessage} "${item.title}".`)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-primary-base px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-80"
                     >
-                      Tanya via WhatsApp
+                      {t.askButton}
                     </a>
                   </div>
                 </article>

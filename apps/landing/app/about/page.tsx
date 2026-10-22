@@ -3,7 +3,13 @@ import Image from "next/image";
 import { queryMySQL, type RowDataPacket } from "@repo/database";
 import { TeamCard } from "@/components/shared/TeamCard";
 import { resolveUploadImageUrl } from "@/lib/images";
+import type { Metadata } from "next";
 import { getLanguage, landingTranslations } from "@/lib/i18n";
+
+export const metadata: Metadata = {
+  title: "Tentang Kami",
+  description: "Kenali Nande Nihon, komunitas belajar bahasa Jepang, beserta founder dan tim di baliknya.",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -128,7 +134,7 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
                   role={member.division || t.fallbackFounderRole}
                   description={member.motto || t.fallbackMotto}
                   imageSrc={resolveUploadImageUrl(member.photo)}
-                  instagramUrl={member.instagram || "#"}
+                  instagram={member.instagram}
                 />
               ))
             ) : (
@@ -152,7 +158,7 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
                   role={member.division || t.fallbackAdminRole}
                   description={member.motto || t.fallbackMotto}
                   imageSrc={resolveUploadImageUrl(member.photo)}
-                  instagramUrl={member.instagram || "#"}
+                  instagram={member.instagram}
                 />
               ))
             ) : (

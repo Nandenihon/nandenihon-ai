@@ -6,7 +6,7 @@ import { unstable_cache } from "next/cache";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Gallery Kegiatan | Nande Nihon",
+  title: "Galeri Kegiatan",
   description: "Dokumentasi kegiatan dan momen belajar bersama Nande Nihon.",
 };
 
