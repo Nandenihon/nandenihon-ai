@@ -49,7 +49,8 @@ export interface CreateCounselingInput {
 }
 
 const VALID_EDUCATION_LEVELS = ["SD", "SMP/SLTP", "SMA/SMK/SLTA", "D3", "S1", "S2", "S3"] as const;
-const VALID_TOPICS = ["Pendidikan", "Karir", "Keluarga", "Relationship"] as const;
+// "Karir" stays as the stored spelling so existing registrations and filters keep working.
+const VALID_TOPICS = ["Pendidikan", "Karir", "Pribadi", "Sosial", "Keluarga", "Relationship"] as const;
 
 export type EducationLevel = (typeof VALID_EDUCATION_LEVELS)[number];
 export type CounselingTopic = (typeof VALID_TOPICS)[number];

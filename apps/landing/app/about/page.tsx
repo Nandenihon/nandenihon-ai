@@ -40,21 +40,44 @@ type AboutPageProps = {
   searchParams?: Promise<{ lang?: string | string[] }>;
 };
 
+type AboutTranslations = (typeof landingTranslations)[keyof typeof landingTranslations]["about"];
+type TeamGroup = { key: string; title: string; members: TeamMember[] };
+
+// Known divisions, in display order. Anything else keeps its own name and follows alphabetically;
+// members without a division come last.
+const KNOWN_DIVISIONS = [
+  { key: "founder", pattern: /founder/i },
+  { key: "admin", pattern: /admin|data/i },
+  { key: "research", pattern: /research|riset|journal|jurnal/i },
+  { key: "media", pattern: /media|communication|komunikasi/i },
+] as const;
+
+function groupTeamMembers(members: TeamMember[], t: AboutTranslations): TeamGroup[] {
+  const groups = new Map<string, TeamGroup>();
+  for (const member of members) {
+    const division = member.division?.trim() || "";
+    const known = division ? KNOWN_DIVISIONS.find((d) => d.pattern.test(division)) : undefined;
+    const key = known?.key ?? (division ? `custom:${division.toLowerCase()}` : "other");
+    const title =
+      known?.key === "founder" ? t.foundersTitle
+      : known ? t.divisionTitles[known.key as keyof typeof t.divisionTitles]
+      : division || t.divisionTitles.other;
+    if (!groups.has(key)) groups.set(key, { key, title, members: [] });
+    groups.get(key)!.members.push(member);
+  }
+  const rank = (key: string) => {
+    const index = KNOWN_DIVISIONS.findIndex((d) => d.key === key);
+    return index >= 0 ? index : key === "other" ? 99 : 50;
+  };
+  return [...groups.values()].sort((a, b) => rank(a.key) - rank(b.key) || a.title.localeCompare(b.title));
+}
+
 export default async function AboutPage({ searchParams }: AboutPageProps) {
   const params = await searchParams;
   const language = getLanguage(params?.lang);
   const t = landingTranslations[language].about;
   const teamMembers = await getTeamData();
-
-  const founders = teamMembers.filter(
-    (member) => member.division?.toLowerCase().includes("founder"),
-  );
-
-  const adminData = teamMembers.filter(
-    (member) =>
-      member.division?.toLowerCase().includes("admin") ||
-      member.division?.toLowerCase().includes("data"),
-  );
+  const teamGroups = groupTeamMembers(teamMembers, t);
 
   return (
     <div className="relative pb-24 font-sans overflow-x-hidden">
@@ -121,53 +144,29 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 lg:px-8 mt-32 relative z-10">
-        <div className="mb-20">
-          <h2 className="font-bold text-[28px] lg:text-[36px] text-center mb-10 text-[#1A1A1A]">
-            {t.foundersTitle}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
-            {founders.length > 0 ? (
-              founders.map((member) => (
-                <TeamCard
-                  key={member.id}
-                  name={member.full_name || t.fallbackName}
-                  role={member.division || t.fallbackFounderRole}
-                  description={member.motto || t.fallbackMotto}
-                  imageSrc={resolveUploadImageUrl(member.photo)}
-                  instagram={member.instagram}
-                />
-              ))
-            ) : (
-              <p className="text-center col-span-full text-gray-400 font-medium italic">
-                {t.foundersEmpty}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="mb-20">
-          <h2 className="font-bold text-[28px] lg:text-[36px] text-center mb-10 text-[#1A1A1A]">
-            {t.adminTitle}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
-            {adminData.length > 0 ? (
-              adminData.map((member) => (
-                <TeamCard
-                  key={member.id}
-                  name={member.full_name || t.fallbackName}
-                  role={member.division || t.fallbackAdminRole}
-                  description={member.motto || t.fallbackMotto}
-                  imageSrc={resolveUploadImageUrl(member.photo)}
-                  instagram={member.instagram}
-                />
-              ))
-            ) : (
-              <p className="text-center col-span-full text-gray-400 font-medium italic">
-                {t.adminEmpty}
-              </p>
-            )}
-          </div>
-        </div>
+        {teamGroups.length === 0 ? (
+          <p className="text-center text-gray-400 font-medium italic">{t.teamEmpty}</p>
+        ) : (
+          teamGroups.map((group, index) => (
+            <section key={group.key} className="mb-20" aria-labelledby={`team-group-${index}`}>
+              <h2 id={`team-group-${index}`} className="font-bold text-[28px] lg:text-[36px] text-center mb-10 text-[#1A1A1A]">
+                {group.title}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+                {group.members.map((member) => (
+                  <TeamCard
+                    key={member.id}
+                    name={member.full_name || t.fallbackName}
+                    role={member.division || t.fallbackRole}
+                    description={member.motto || t.fallbackMotto}
+                    imageSrc={resolveUploadImageUrl(member.photo)}
+                    instagram={member.instagram}
+                  />
+                ))}
+              </div>
+            </section>
+          ))
+        )}
       </div>
     </div>
   );

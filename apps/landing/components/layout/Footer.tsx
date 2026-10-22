@@ -44,12 +44,12 @@ function NewFooter() {
                 />
               </div>
               <h3 className="mt-2 text-xl font-bold">{t.footer.tagline}</h3>
-              <div className="mt-10 py-2 space-x-4 border-t-2 border-primary-base">
+              <div className="mt-10 py-2 flex flex-wrap gap-x-4 gap-y-2 border-t-2 border-primary-base">
                 {links.map((link) => (
                   <Link
                     key={link.title}
                     href={withLanguage(link.href, language)}
-                    className="sm:text-lg text-base text-gray-900 nav-link-hover"
+                    className="whitespace-nowrap sm:text-lg text-base text-gray-900 nav-link-hover"
                   >
                     {link.title}
                   </Link>
@@ -76,13 +76,13 @@ function NewFooter() {
               </div>
             </div>
           </div>
-          <div className="mt-15 lg:w-150 flex items-end gap-5 mx-auto">
+          <div className="mt-15 lg:w-150 flex items-end gap-3 sm:gap-5 mx-auto">
             <FormInput
               icon={<Mail className="w-5 h-5 text-primary-base" />}
               label={t.footer.subscribeLabel}
               placeholder={t.footer.subscribePlaceholder}
             />
-            <button className="btn bg-white border border-primary-base text-primary-base">
+            <button type="button" className="btn shrink-0 whitespace-nowrap bg-white border border-primary-base text-primary-base">
               {t.footer.subscribeButton}
             </button>
           </div>

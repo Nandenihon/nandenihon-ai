@@ -3,11 +3,15 @@
 import { useState } from "react";
 import { DatePicker, DateTimePicker } from "@repo/ui";
 import { datetimeLocalToJakartaUtc } from "@repo/utils/jakarta-time";
+import type { LandingTranslations } from "@/lib/i18n";
+
+type FormTranslations = LandingTranslations["konselingPage"]["form"];
 
 const TODAY_ISO = new Date().toISOString().split("T")[0];
 
 const EDUCATION_OPTIONS = ["SD", "SMP/SLTP", "SMA/SMK/SLTA", "D3", "S1", "S2", "S3"] as const;
-const TOPIC_OPTIONS = ["Pendidikan", "Karir", "Keluarga", "Relationship"] as const;
+// Stored values (kept in Indonesian; "Karir" matches existing registrations). Labels come from translations.
+const TOPIC_OPTIONS = ["Pendidikan", "Karir", "Pribadi", "Sosial", "Keluarga", "Relationship"] as const;
 
 interface SuccessData {
   id: number;
@@ -17,8 +21,8 @@ interface SuccessData {
   consultation_time: string;
 }
 
-function SuccessModal({ data, onClose }: { data: SuccessData; onClose: () => void }) {
-  const formattedTime = new Date(data.consultation_time).toLocaleString("id-ID", {
+function SuccessModal({ data, onClose, t }: { data: SuccessData; onClose: () => void; t: FormTranslations }) {
+  const formattedTime = new Date(data.consultation_time).toLocaleString(t.locale, {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -56,39 +60,40 @@ function SuccessModal({ data, onClose }: { data: SuccessData; onClose: () => voi
         </div>
 
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Pendaftaran Berhasil! 🎉
+          {t.success.title} 🎉
         </h2>
         <p className="text-gray-500 text-sm mb-6">
-          Terima kasih, <span className="font-semibold text-gray-700">{data.full_name}</span>!<br />
-          Tim konseling kami akan segera menghubungimu.
+          {t.success.thanks.replace("{name}", data.full_name)}
+          <br />
+          {t.success.followUp}
         </p>
 
         <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 text-left space-y-3 mb-6">
           <div className="flex items-start gap-3">
             <span className="text-blue-400 mt-0.5">📧</span>
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Email</p>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{t.success.email}</p>
               <p className="text-sm text-gray-700 font-semibold">{data.email}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <span className="text-blue-400 mt-0.5">💬</span>
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Tema Konseling</p>
-              <p className="text-sm text-gray-700 font-semibold">{data.topic}</p>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{t.success.topic}</p>
+              <p className="text-sm text-gray-700 font-semibold">{t.topicLabels[data.topic as keyof typeof t.topicLabels] ?? data.topic}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <span className="text-blue-400 mt-0.5">📅</span>
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Waktu Konsultasi</p>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{t.success.time}</p>
               <p className="text-sm text-gray-700 font-semibold">{formattedTime}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <span className="text-blue-400 mt-0.5">🔖</span>
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Nomor Pendaftaran</p>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{t.success.number}</p>
               <p className="text-sm text-gray-700 font-semibold">#{String(data.id).padStart(5, "0")}</p>
             </div>
           </div>
@@ -98,14 +103,14 @@ function SuccessModal({ data, onClose }: { data: SuccessData; onClose: () => voi
           onClick={onClose}
           className="w-full rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 transition-colors"
         >
-          Tutup
+          {t.success.close}
         </button>
       </div>
     </div>
   );
 }
 
-export default function KonselingForm() {
+export default function KonselingForm({ t }: { t: FormTranslations }) {
   const [nama, setNama] = useState("");
   const [email, setEmail] = useState("");
   const [nomorHP, setNomorHP] = useState("");
@@ -161,7 +166,7 @@ export default function KonselingForm() {
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setErrorMsg(json.error || "Terjadi kesalahan. Silakan coba lagi.");
+        setErrorMsg(json.error || t.genericError);
         return;
       }
 
@@ -178,7 +183,7 @@ export default function KonselingForm() {
       setCerita("");
       setWaktu("");
     } catch {
-      setErrorMsg("Gagal mengirim data. Periksa koneksi internet kamu dan coba lagi.");
+      setErrorMsg(t.networkError);
     } finally {
       setIsSubmitting(false);
     }
@@ -192,7 +197,7 @@ export default function KonselingForm() {
     <>
       {/* Success Modal */}
       {successData && (
-        <SuccessModal data={successData} onClose={() => setSuccessData(null)} />
+        <SuccessModal data={successData} onClose={() => setSuccessData(null)} t={t} />
       )}
 
       <section
@@ -205,25 +210,25 @@ export default function KonselingForm() {
             className="w-full max-w-[720px] rounded-[16px] p-8"
             style={{ backgroundColor: "#FFFFFF99", backdropFilter: "blur(3px)" }}
           >
-            <h1 className="text-center text-[32px] font-bold">Formulir Konseling</h1>
+            <h1 className="text-center text-2xl sm:text-[32px] font-bold text-balance [word-break:auto-phrase]">{t.title}</h1>
           </div>
 
           <div className="h-[40px]" />
 
           {/* Form Card */}
           <div
-            className="w-full max-w-[720px] rounded-[16px] p-8"
+            className="w-full max-w-[720px] rounded-[16px] p-5 sm:p-8"
             style={{ backgroundColor: "#FFFFFF99", backdropFilter: "blur(3px)" }}
           >
             <form className="space-y-5" onSubmit={handleSubmit}>
               {/* Nama */}
               <div>
-                <label className={labelClass}>Nama Lengkap</label>
+                <label className={labelClass}>{t.fullName}</label>
                 <input
                   type="text"
                   value={nama}
                   onChange={(e) => setNama(e.target.value)}
-                  placeholder="Isi Nama Lengkapmu"
+                  placeholder={t.fullNamePlaceholder}
                   className={inputClass}
                   required
                 />
@@ -231,12 +236,12 @@ export default function KonselingForm() {
 
               {/* Email */}
               <div>
-                <label className={labelClass}>Email</label>
+                <label className={labelClass}>{t.email}</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Masukkan email kamu"
+                  placeholder={t.emailPlaceholder}
                   className={inputClass}
                   required
                 />
@@ -244,12 +249,12 @@ export default function KonselingForm() {
 
               {/* Nomor HP */}
               <div>
-                <label className={labelClass}>Nomor Handphone</label>
+                <label className={labelClass}>{t.phone}</label>
                 <input
                   type="tel"
                   value={nomorHP}
                   onChange={(e) => setNomorHP(e.target.value)}
-                  placeholder="Tulis nomor handphone kamu"
+                  placeholder={t.phonePlaceholder}
                   className={inputClass}
                   required
                 />
@@ -258,23 +263,23 @@ export default function KonselingForm() {
               {/* Tempat & Tanggal Lahir — side by side */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Tempat Lahir</label>
+                  <label className={labelClass}>{t.birthPlace}</label>
                   <input
                     type="text"
                     value={tempatLahir}
                     onChange={(e) => setTempatLahir(e.target.value)}
-                    placeholder="Tempat lahir kamu"
+                    placeholder={t.birthPlacePlaceholder}
                     className={inputClass}
                     required
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Tanggal Lahir</label>
+                  <label className={labelClass}>{t.birthDate}</label>
                   <DatePicker
                     value={tanggalLahir}
                     onChange={setTanggalLahir}
                     max={TODAY_ISO}
-                    placeholder="Pilih tanggal lahir"
+                    placeholder={t.birthDatePlaceholder}
                     required
                   />
                 </div>
@@ -282,12 +287,12 @@ export default function KonselingForm() {
 
               {/* Domisili */}
               <div>
-                <label className={labelClass}>Domisili</label>
+                <label className={labelClass}>{t.domicile}</label>
                 <input
                   type="text"
                   value={domisili}
                   onChange={(e) => setDomisili(e.target.value)}
-                  placeholder="Kamu tinggal di mana"
+                  placeholder={t.domicilePlaceholder}
                   className={inputClass}
                   required
                 />
@@ -295,7 +300,7 @@ export default function KonselingForm() {
 
               {/* Pendidikan Terakhir — dropdown */}
               <div>
-                <label className={labelClass}>Pendidikan Terakhir</label>
+                <label className={labelClass}>{t.education}</label>
                 <select
                   value={pendidikan}
                   onChange={(e) => setPendidikan(e.target.value)}
@@ -303,7 +308,7 @@ export default function KonselingForm() {
                   required
                 >
                   <option value="" disabled>
-                    Pilih pendidikan terakhir kamu
+                    {t.educationPlaceholder}
                   </option>
                   {EDUCATION_OPTIONS.map((opt) => (
                     <option key={opt} value={opt}>
@@ -315,7 +320,7 @@ export default function KonselingForm() {
 
               {/* Tema */}
               <div>
-                <label className={labelClass}>Tema Konseling</label>
+                <label className={labelClass}>{t.topic}</label>
                 <select
                   value={tema}
                   onChange={(e) => setTema(e.target.value)}
@@ -323,11 +328,11 @@ export default function KonselingForm() {
                   required
                 >
                   <option value="" disabled>
-                    Pilih tema konseling
+                    {t.topicPlaceholder}
                   </option>
                   {TOPIC_OPTIONS.map((opt) => (
                     <option key={opt} value={opt}>
-                      {opt}
+                      {t.topicLabels[opt]}
                     </option>
                   ))}
                 </select>
@@ -335,12 +340,12 @@ export default function KonselingForm() {
 
               {/* Cerita */}
               <div>
-                <label className={labelClass}>Ceritakan Diri dan Tentang Kamu</label>
+                <label className={labelClass}>{t.story}</label>
                 <textarea
                   rows={5}
                   value={cerita}
                   onChange={(e) => setCerita(e.target.value)}
-                  placeholder="Apa yang ingin kamu sampaikan"
+                  placeholder={t.storyPlaceholder}
                   className={inputClass}
                   required
                 />
@@ -348,12 +353,12 @@ export default function KonselingForm() {
 
               {/* Waktu */}
               <div>
-                <label className={labelClass}>Waktu Konsultasi</label>
+                <label className={labelClass}>{t.time}</label>
                 <DateTimePicker
                   value={waktu}
                   onChange={setWaktu}
                   min={TODAY_ISO}
-                  placeholder="Pilih tanggal & waktu"
+                  placeholder={t.timePlaceholder}
                   required
                 />
               </div>
@@ -407,10 +412,10 @@ export default function KonselingForm() {
                         d="M4 12a8 8 0 018-8v8H4z"
                       />
                     </svg>
-                    Mengirim...
+                    {t.submitting}
                   </span>
                 ) : (
-                  "Daftar Konseling"
+                  t.submit
                 )}
               </button>
             </form>
