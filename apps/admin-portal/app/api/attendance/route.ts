@@ -1,127 +1,81 @@
 import { NextRequest, NextResponse } from "next/server";
-import { queryMySQL, type RowDataPacket, type ResultSetHeader } from "@repo/database";
-import { verifyToken, COOKIE_NAME } from "@/app/lib/auth";
+import { isAttendanceStatus, listClassAttendance, saveClassAttendance } from "@repo/database";
+import { CLASS_MANAGER_ROLES, requireEnrollmentActor } from "@/app/lib/enrollment-auth";
+import { canManageAttendance, validateAttendanceDate } from "@/app/lib/attendance";
 
-async function getSession(request: NextRequest) {
-    const token = request.cookies.get(COOKIE_NAME)?.value;
-    if (!token) return null;
-    return await verifyToken(token);
-}
+const SAVE_ERRORS: Record<string, [string, number]> = {
+    CLASS_NOT_FOUND: ["Kelas tidak ditemukan", 404],
+    CLASS_NOT_RECORDABLE: ["Absensi hanya bisa diisi untuk kelas yang dipublikasikan atau ditutup", 409],
+    NOT_CLASS_MEMBER: ["Ada siswa yang bukan anggota aktif kelas ini. Muat ulang daftar siswa.", 409],
+};
 
 /**
- * GET /api/attendance
- * Get student attendance list for a class on a specific date.
+ * GET /api/attendance?classId=&date=YYYY-MM-DD
+ * Active members of an enrollment class with their attendance on that date.
  */
 export async function GET(request: NextRequest) {
-    const session = await getSession(request);
-    if (!session) {
-        return NextResponse.json({ error: "Tidak terautentikasi" }, { status: 401 });
-    }
+    const actor = await requireEnrollmentActor(request, CLASS_MANAGER_ROLES);
+    if (!actor) return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
+
+    const classId = Number(request.nextUrl.searchParams.get("classId"));
+    const date = String(request.nextUrl.searchParams.get("date") ?? "");
+    if (!Number.isInteger(classId) || classId < 1) return NextResponse.json({ error: "Pilih kelas terlebih dahulu" }, { status: 400 });
+    const dateError = validateAttendanceDate(date);
+    if (dateError) return NextResponse.json({ error: dateError }, { status: 400 });
+    if (!await canManageAttendance(actor, classId)) return NextResponse.json({ error: "Anda bukan pengajar kelas ini" }, { status: 403 });
 
     try {
-        const { searchParams } = new URL(request.url);
-        const classId = searchParams.get("classId");
-        const date = searchParams.get("date"); // YYYY-MM-DD
-
-        if (!classId || !date) {
-            return NextResponse.json({ error: "classId dan date wajib disertakan" }, { status: 400 });
-        }
-
-        // Fetch class details to know its level
-        const classRes = await queryMySQL<RowDataPacket[]>(
-            "SELECT * FROM `class` WHERE id = ? LIMIT 1",
-            [classId]
-        );
-        if (classRes.length === 0) {
-            return NextResponse.json({ error: "Kelas tidak ditemukan" }, { status: 404 });
-        }
-
-        const classItem = classRes[0];
-        const classLevel = classItem.level;
-
-        // Fetch students of matching level
-        let studentsQuery = "SELECT id, full_name, email, level FROM students";
-        const queryParams: unknown[] = [];
-        if (classLevel && classLevel !== "All") {
-            studentsQuery += " WHERE level = ?";
-            queryParams.push(classLevel);
-        }
-
-        const students = await queryMySQL<RowDataPacket[]>(studentsQuery, queryParams);
-
-        // Fetch existing attendance records for the class and date
-        const attendanceRecords = await queryMySQL<RowDataPacket[]>(
-            "SELECT student_id, status, notes FROM class_attendance WHERE class_id = ? AND attendance_date = ?",
-            [classId, date]
-        );
-
-        const attendanceMap = new Map<number, { status: string; notes: string | null }>();
-        attendanceRecords.forEach((rec) => {
-            attendanceMap.set(Number(rec.student_id), {
-                status: rec.status,
-                notes: rec.notes
-            });
+        const rows = await listClassAttendance(classId, date);
+        return NextResponse.json({
+            data: rows.map((row) => ({
+                userId: Number(row.user_id),
+                name: String(row.student_name),
+                email: String(row.email),
+                status: row.status ?? null,
+                notes: row.notes ?? "",
+                recordedBy: row.recorded_by_name ?? null,
+            })),
         });
-
-        // Merge student info and attendance status
-        const studentAttendanceList = students.map((std) => {
-            const att = attendanceMap.get(Number(std.id));
-            return {
-                studentId: std.id,
-                full_name: std.full_name,
-                email: std.email,
-                level: std.level,
-                status: att ? att.status : null, // null means not recorded yet
-                notes: att ? att.notes : ""
-            };
-        });
-
-        return NextResponse.json({ data: studentAttendanceList });
-
     } catch (error) {
-        console.error("Error fetching attendance list:", error);
+        console.error("Error fetching attendance:", error);
         return NextResponse.json({ error: "Gagal mengambil data absensi" }, { status: 500 });
     }
 }
 
 /**
  * POST /api/attendance
- * Save attendance records for a class on a specific date.
+ * Body: { classId, date, attendance: [{ userId, status, notes }] }
  */
 export async function POST(request: NextRequest) {
-    const session = await getSession(request);
-    if (!session) {
-        return NextResponse.json({ error: "Tidak terautentikasi" }, { status: 401 });
-    }
+    const actor = await requireEnrollmentActor(request, CLASS_MANAGER_ROLES);
+    if (!actor) return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
 
-    if (!["super_admin", "admin_2"].includes(session.role)) {
-        return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
+    const body = await request.json().catch(() => null);
+    const classId = Number(body?.classId);
+    const date = String(body?.date ?? "");
+    if (!Number.isInteger(classId) || classId < 1 || !Array.isArray(body?.attendance)) {
+        return NextResponse.json({ error: "Parameter tidak valid" }, { status: 400 });
     }
+    const dateError = validateAttendanceDate(date);
+    if (dateError) return NextResponse.json({ error: dateError }, { status: 400 });
+
+    const entries: { userId: number; status: "present" | "late" | "excused" | "absent"; notes: string }[] = [];
+    for (const item of body.attendance) {
+        const userId = Number(item?.userId);
+        if (!Number.isInteger(userId) || userId < 1 || !isAttendanceStatus(item?.status)) {
+            return NextResponse.json({ error: "Status kehadiran tidak valid" }, { status: 400 });
+        }
+        entries.push({ userId, status: item.status, notes: String(item.notes ?? "").slice(0, 500) });
+    }
+    if (entries.length === 0) return NextResponse.json({ error: "Belum ada kehadiran yang diisi" }, { status: 400 });
+    if (!await canManageAttendance(actor, classId)) return NextResponse.json({ error: "Anda bukan pengajar kelas ini" }, { status: 403 });
 
     try {
-        const body = await request.json();
-        const { classId, date, attendance } = body; // attendance is an array of { studentId, status, notes }
-
-        if (!classId || !date || !Array.isArray(attendance)) {
-            return NextResponse.json({ error: "Parameter tidak valid" }, { status: 400 });
-        }
-
-        // Upsert each record
-        for (const item of attendance) {
-            const { studentId, status, notes } = item;
-            if (!studentId || !status) continue;
-
-            await queryMySQL(
-                `INSERT INTO class_attendance (class_id, student_id, attendance_date, status, notes)
-                 VALUES (?, ?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE status = VALUES(status), notes = VALUES(notes)`,
-                [classId, studentId, date, status, notes || null]
-            );
-        }
-
-        return NextResponse.json({ message: "Absensi berhasil disimpan" });
-
+        const result = await saveClassAttendance({ classId, date, recordedBy: actor.id, entries });
+        return NextResponse.json({ message: `Absensi ${result.saved} siswa berhasil disimpan` });
     } catch (error) {
+        const mapped = SAVE_ERRORS[error instanceof Error ? error.message : ""];
+        if (mapped) return NextResponse.json({ error: mapped[0] }, { status: mapped[1] });
         console.error("Error saving attendance:", error);
         return NextResponse.json({ error: "Gagal menyimpan absensi" }, { status: 500 });
     }

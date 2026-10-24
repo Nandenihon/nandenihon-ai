@@ -6,6 +6,7 @@ import {
     getAttendanceSummary,
     getDailyQuizLeaderboard,
     getSchedulePreview,
+    getStudentAttendanceSafe,
     getStudentDashboardSafe,
     getStudentGrades,
 } from "./dashboard-data";
@@ -92,13 +93,14 @@ export default async function StudentDashboardPage() {
         return <PreStudentHome firstName={firstName} />;
     }
 
-    const [dashboard, recentGrades, leaderboard, myClasses] = await Promise.all([
+    const [dashboard, recentGrades, leaderboard, myClasses, attendanceData] = await Promise.all([
         getStudentDashboardSafe(studentId),
         getStudentGrades(studentId, 3),
         getDailyQuizLeaderboard(3),
         getMyClasses(studentId),
+        getStudentAttendanceSafe(studentId),
     ]);
-    const attendance = getAttendanceSummary(dashboard);
+    const attendance = getAttendanceSummary(attendanceData);
     const schedule = getSchedulePreview(dashboard);
     const activeCourse = dashboard.enrolledCourses.find((course) => course.enrollmentStatus !== "completed") ?? dashboard.enrolledCourses[0];
     const primaryClass = myClasses[0];
@@ -151,7 +153,7 @@ export default async function StudentDashboardPage() {
 
             <section className="grid gap-4 sm:grid-cols-3">
                 <MetricCard icon="学" label="Progres belajar" value={`${dashboard.overallProgressPercent}%`} detail={`${dashboard.enrolledCourses.length} kursus terdaftar`} accent="bg-primary-10 text-primary-base" />
-                <MetricCard icon="✓" label="Kehadiran" value={`${attendance.percent}%`} detail={`${attendance.present} dari ${attendance.total} sesi`} accent="bg-success-10 text-success-100" />
+                <MetricCard icon="✓" label="Kehadiran" value={attendance.total ? `${attendance.percent}%` : "–"} detail={attendance.total ? `Hadir ${attendance.attended} dari ${attendance.total} pertemuan` : "Belum ada absensi tercatat"} accent="bg-success-10 text-success-100" />
                 <MetricCard icon="★" label="Rata-rata nilai" value={recentGrades.length ? String(average) : "–"} detail={recentGrades.length ? `${recentGrades.length} penilaian terbaru` : "Belum ada penilaian"} accent="bg-warning-10 text-warning-100" />
             </section>
 

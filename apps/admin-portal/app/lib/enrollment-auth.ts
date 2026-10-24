@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { teacherCanManageClass } from "@repo/database";
 import { COOKIE_NAME, verifyToken } from "./auth";
 
 export async function requireEnrollmentActor(request: NextRequest, roles: string[]) {
@@ -9,3 +10,8 @@ export async function requireEnrollmentActor(request: NextRequest, roles: string
 
 export const CLASS_MANAGER_ROLES = ["super_admin", "lecture", "admin_2"];
 export const REVIEWER_ROLES = ["super_admin", "admin_2"];
+
+/** Assignment work (grading, corrections) is limited to the class's teachers, plus super_admin/admin. */
+export async function canReviewClassWork(actor: { id: number; role: string }, classId: number) {
+    return ["super_admin", "admin"].includes(actor.role) || teacherCanManageClass(actor.id, classId);
+}

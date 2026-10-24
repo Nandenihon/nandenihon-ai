@@ -1,16 +1,34 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { recordSubmission } from "@repo/database";
+import { assertCanSubmit, recordSubmission } from "@repo/database";
 import { uploadFileToR2 } from "@repo/utils/r2-upload";
 import { COOKIE_NAME, verifyToken } from "@/app/lib/auth";
 
 const MAX_PDF_SIZE = Number(process.env.ASSIGNMENT_PDF_MAX_BYTES || 10 * 1024 * 1024);
+const SUBMISSION_ERRORS: Record<string, string> = {
+    ASSIGNMENT_NOT_OPEN: "Tugas sudah ditutup", NOT_CLASS_MEMBER: "Anda bukan anggota aktif kelas ini",
+    RESUBMISSION_DISABLED: "Pengumpulan ulang tidak diizinkan",
+};
 type Context = { params: Promise<{ id: string }> };
+
+function submissionError(error: unknown) {
+    const message = error instanceof Error ? error.message : "";
+    const mapped = SUBMISSION_ERRORS[message];
+    if (!mapped) console.error("Assignment submission failed:", error);
+    return NextResponse.json({ error: mapped || "Gagal mengunggah tugas" }, { status: mapped ? 409 : 500 });
+}
 
 export async function POST(request: NextRequest, context: Context) {
     const token = request.cookies.get(COOKIE_NAME)?.value;
     const session = token ? await verifyToken(token) : null;
     if (!session || session.role !== "student" || session.id < 1) return NextResponse.json({ error: "Membership student diperlukan" }, { status: 403 });
+    const assignmentId = Number((await context.params).id);
+    if (!Number.isInteger(assignmentId) || assignmentId < 1) return NextResponse.json({ error: "Tugas tidak ditemukan" }, { status: 404 });
+    try {
+        await assertCanSubmit(assignmentId, session.id);
+    } catch (error) {
+        return submissionError(error);
+    }
     const form = await request.formData();
     const file = form.get("file");
     if (!(file instanceof File) || file.size === 0) return NextResponse.json({ error: "Pilih file PDF" }, { status: 400 });
@@ -19,7 +37,6 @@ export async function POST(request: NextRequest, context: Context) {
     const buffer = Buffer.from(await file.arrayBuffer());
     if (buffer.subarray(0, 5).toString("ascii") !== "%PDF-") return NextResponse.json({ error: "Isi file bukan PDF yang valid" }, { status: 400 });
     try {
-        const assignmentId = Number((await context.params).id);
         const upload = await uploadFileToR2({
             buffer, contentType: "application/pdf", folder: "assignment-submissions",
             originalFilename: file.name, filenamePrefix: `${assignmentId}-${session.id}`,
@@ -31,11 +48,6 @@ export async function POST(request: NextRequest, context: Context) {
         });
         return NextResponse.json({ message: "Tugas berhasil dikumpulkan", data }, { status: 201 });
     } catch (error) {
-        const message = error instanceof Error ? error.message : "";
-        const mapped: Record<string, string> = {
-            ASSIGNMENT_NOT_OPEN: "Tugas sudah ditutup", NOT_CLASS_MEMBER: "Anda bukan anggota aktif kelas ini",
-            RESUBMISSION_DISABLED: "Pengumpulan ulang tidak diizinkan",
-        };
-        return NextResponse.json({ error: mapped[message] || "Gagal mengunggah tugas" }, { status: 409 });
+        return submissionError(error);
     }
 }

@@ -56,6 +56,7 @@ async function ensureAssignmentTablesUncached() {
             CONSTRAINT fk_submissions_assignment FOREIGN KEY (assignment_id) REFERENCES assignments(id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
+    await ensureSubmissionCorrectionColumns();
     await queryMySQL(`
         CREATE TABLE IF NOT EXISTS grades (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -86,6 +87,21 @@ async function ensureAssignmentTablesUncached() {
             INDEX idx_notifications_candidate (pre_student_id, read_at, created_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
+}
+
+/** Teacher-annotated copy of a submission PDF ("koreksi"), shown to the student next to the grade. */
+async function ensureSubmissionCorrectionColumns() {
+    const columns = await queryMySQL<RowDataPacket[]>("SHOW COLUMNS FROM submissions");
+    const names = new Set(columns.map((column) => String(column.Field)));
+    if (!names.has("correction_file_key")) {
+        await queryMySQL("ALTER TABLE submissions ADD COLUMN correction_file_key VARCHAR(1000) NULL AFTER status");
+    }
+    if (!names.has("correction_uploaded_at")) {
+        await queryMySQL("ALTER TABLE submissions ADD COLUMN correction_uploaded_at DATETIME NULL AFTER correction_file_key");
+    }
+    if (!names.has("correction_by")) {
+        await queryMySQL("ALTER TABLE submissions ADD COLUMN correction_by BIGINT UNSIGNED NULL AFTER correction_uploaded_at");
+    }
 }
 
 export async function teacherCanManageClass(actorId: number, classId: number) {
@@ -193,7 +209,7 @@ export async function listAssignmentsForStudent(userId: number) {
     return queryMySQL<RowDataPacket[]>(
         `SELECT a.*, c.name AS class_name, c.code AS class_code,
                 latest.id AS submission_id, latest.status AS submission_status,
-                g.score, g.feedback
+                latest.correction_uploaded_at, g.score, g.feedback
          FROM assignments a
          JOIN enrollment_classes c ON c.id = a.class_id
          JOIN class_memberships m ON m.class_id = a.class_id AND m.user_id = ? AND m.status = 'active'
@@ -207,23 +223,33 @@ export async function listAssignmentsForStudent(userId: number) {
     );
 }
 
+/**
+ * Checks that a student may submit to an assignment. Call it before uploading the file so
+ * rejected submissions don't leave orphan objects in storage; recordSubmission re-checks it.
+ */
+export async function assertCanSubmit(assignmentId: number, studentId: number) {
+    await ensureAssignmentTables();
+    const assignment = await findAssignment(assignmentId);
+    if (!assignment || assignment.status !== "published") throw new Error("ASSIGNMENT_NOT_OPEN");
+    if (!(await studentHasActiveMembership(studentId, Number(assignment.class_id)))) throw new Error("NOT_CLASS_MEMBER");
+    const versions = await queryMySQL<RowDataPacket[]>(
+        "SELECT MAX(version) AS version FROM submissions WHERE assignment_id = ? AND student_id = ?",
+        [assignmentId, studentId]
+    );
+    const previousVersion = Number(versions[0]?.version || 0);
+    if (previousVersion && !assignment.allow_resubmission) throw new Error("RESUBMISSION_DISABLED");
+    return { assignment, previousVersion };
+}
+
 export async function recordSubmission(input: {
     assignmentId: number; studentId: number; fileKey: string; originalFilename: string;
     mimeType: string; size: number; checksum: string;
 }) {
-    await ensureAssignmentTables();
-    const assignment = await findAssignment(input.assignmentId);
-    if (!assignment || assignment.status !== "published") throw new Error("ASSIGNMENT_NOT_OPEN");
-    if (!(await studentHasActiveMembership(input.studentId, Number(assignment.class_id)))) throw new Error("NOT_CLASS_MEMBER");
-    const versions = await queryMySQL<RowDataPacket[]>(
-        "SELECT MAX(version) AS version FROM submissions WHERE assignment_id = ? AND student_id = ?",
-        [input.assignmentId, input.studentId]
-    );
-    const previousVersion = Number(versions[0]?.version || 0);
-    if (previousVersion && !assignment.allow_resubmission) throw new Error("RESUBMISSION_DISABLED");
+    const { assignment, previousVersion } = await assertCanSubmit(input.assignmentId, input.studentId);
     const version = previousVersion + 1;
     const isLate = Date.now() > new Date(assignment.deadline_at).getTime();
-    const status = previousVersion ? "resubmitted" : isLate ? "late" : "submitted";
+    // Lateness wins over resubmission so a late resubmission stays visible to the teacher.
+    const status = isLate ? "late" : previousVersion ? "resubmitted" : "submitted";
     const result = await queryMySQL<ResultSetHeader>(
         `INSERT INTO submissions
          (assignment_id, student_id, version, file_key, original_filename, mime_type, size, checksum, submitted_at, status)
@@ -245,7 +271,7 @@ export async function listAssignmentSubmissions(assignmentId: number) {
     return queryMySQL<RowDataPacket[]>(
         `SELECT m.user_id AS student_id, u.username AS student_name, u.email,
                 s.id AS submission_id, s.version, s.original_filename, s.size, s.submitted_at,
-                s.status, g.score, g.feedback, g.graded_at
+                s.status, s.correction_uploaded_at, g.score, g.feedback, g.graded_at
          FROM class_memberships m JOIN users u ON u.id = m.user_id
          LEFT JOIN submissions s ON s.id = (
              SELECT s2.id FROM submissions s2 WHERE s2.assignment_id = ? AND s2.student_id = m.user_id
@@ -255,6 +281,49 @@ export async function listAssignmentSubmissions(assignmentId: number) {
          WHERE m.class_id = ? AND m.status = 'active' ORDER BY u.username`,
         [assignmentId, assignment.class_id]
     );
+}
+
+/** One submission with its assignment, student and grade, for the teacher's correction screen. */
+export async function findSubmissionForReview(submissionId: number) {
+    await ensureAssignmentTables();
+    const rows = await queryMySQL<RowDataPacket[]>(
+        `SELECT s.id, s.assignment_id, s.student_id, s.version, s.original_filename, s.submitted_at, s.status,
+                s.file_key, s.correction_file_key, s.correction_uploaded_at,
+                a.class_id, a.title AS assignment_title, a.max_score, c.code AS class_code,
+                u.username AS student_name, g.score, g.feedback
+         FROM submissions s
+         JOIN assignments a ON a.id = s.assignment_id
+         JOIN enrollment_classes c ON c.id = a.class_id
+         LEFT JOIN users u ON u.id = s.student_id
+         LEFT JOIN grades g ON g.submission_id = s.id
+         WHERE s.id = ? LIMIT 1`,
+        [submissionId]
+    );
+    return rows[0] ?? null;
+}
+
+/** Stores (or replaces) the corrected PDF for a submission and notifies the student. */
+export async function saveSubmissionCorrection(input: { submissionId: number; fileKey: string; actorId: number }) {
+    await ensureAssignmentTables();
+    const submission = await findSubmissionForReview(input.submissionId);
+    if (!submission) throw new Error("SUBMISSION_NOT_FOUND");
+    await queryMySQL(
+        `UPDATE submissions SET correction_file_key = ?, correction_uploaded_at = UTC_TIMESTAMP(), correction_by = ?
+         WHERE id = ?`,
+        [input.fileKey, input.actorId, input.submissionId]
+    );
+    await queryMySQL(
+        `INSERT INTO audit_logs (actor_id, action, entity_type, entity_id, before_data, after_data)
+         VALUES (?, 'submission_corrected', 'submission', ?, ?, ?)`,
+        [input.actorId, input.submissionId,
+            JSON.stringify({ correctionFileKey: submission.correction_file_key ?? null }),
+            JSON.stringify({ correctionFileKey: input.fileKey })]
+    );
+    await queryMySQL(
+        "INSERT INTO notification_outbox (event_type, recipient_user_id, payload) VALUES ('submission_corrected', ?, ?)",
+        [submission.student_id, JSON.stringify({ submissionId: input.submissionId, assignmentId: submission.assignment_id })]
+    );
+    return { submissionId: input.submissionId };
 }
 
 export async function gradeSubmission(input: {

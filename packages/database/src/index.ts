@@ -150,13 +150,27 @@ export {
     findAssignment,
     listAssignmentsForTeacher,
     listAssignmentsForStudent,
+    assertCanSubmit,
     recordSubmission,
     listAssignmentSubmissions,
     gradeSubmission,
+    findSubmissionForReview,
+    saveSubmissionCorrection,
     getAcademicReport,
     processNotificationOutbox,
     listNotifications,
 } from "./assignment-mysql";
+
+export {
+    ATTENDANCE_STATUSES,
+    ensureAttendanceTables,
+    isAttendanceStatus,
+    listClassAttendance,
+    saveClassAttendance,
+    getStudentAttendance,
+    getClassAttendanceExport,
+    type AttendanceStatus,
+} from "./attendance-mysql";
 
 export {
     ensureAdmissionTestTables,

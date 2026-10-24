@@ -268,8 +268,8 @@ const ALL_NAV_IDS = navItems.map((item) => item.id);
 
 export const roleAllowedItems: Record<string, string[]> = {
     super_admin: ALL_NAV_IDS,
-    // Lecture: Siswa, Pra-Siswa, Kelas, Soal & Ujian, Tugas
-    lecture: ["dashboard", "students", "pre-students", "classes", "enrollment-classes", "questions", "assignments"],
+    // Lecture: Siswa, Pra-Siswa, Kelas, Soal & Ujian, Tugas, Absensi Kelas (own classes only)
+    lecture: ["dashboard", "students", "pre-students", "classes", "enrollment-classes", "questions", "assignments", "attendance"],
     // Medkom: Galeri, Testimoni, Tim, Merchandise
     medkom: ["dashboard", "gallery", "testimonials", "team", "merchandise"],
     // Riset & Jurnal: Berita & Artikel
