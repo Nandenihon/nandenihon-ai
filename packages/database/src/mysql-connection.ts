@@ -196,11 +196,11 @@ function isLocalMysqlHost(host: string): boolean {
 }
 
 function shouldUseSshStream(config: MySQLConfig): boolean {
-    return hasSshConfig(config) && (isVercelRuntime() || process.env.MYSQL_CONNECTION_MODE === "ssh-stream");
+    return isLocalRuntime() && hasSshConfig(config) && process.env.MYSQL_CONNECTION_MODE === "ssh-stream";
 }
 
 function shouldUseDirectConnection(config: MySQLConfig): boolean {
-    return !isLocalRuntime() || process.env.MYSQL_CONNECTION_MODE === "direct" || !hasSshConfig(config);
+    return process.env.MYSQL_CONNECTION_MODE === "direct" || !hasSshConfig(config);
 }
 
 function getSshConnectConfig(config: MySQLConfig) {
