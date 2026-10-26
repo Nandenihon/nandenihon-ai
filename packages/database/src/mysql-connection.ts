@@ -123,17 +123,34 @@ function getProductionMysqlConfig(): MySQLConfig["mysql"] {
 }
 
 function getConfig(): MySQLConfig {
-    if (!isLocalRuntime()) {
-        return {
-            mysql: getProductionMysqlConfig(),
-        };
-    }
-
     const sshHost = process.env.SSH_HOST;
     const sshPort = parseInt(process.env.SSH_PORT || "22", 10);
     const sshUsername = process.env.SSH_USERNAME;
     const sshPassword = process.env.SSH_PASSWORD;
     const sshPrivateKey = process.env.SSH_PRIVATE_KEY;
+
+    if (!isLocalRuntime()) {
+        if (!sshHost || !sshUsername || (!sshPassword && !sshPrivateKey)) {
+            throw new Error(
+                "Please define SSH_HOST, SSH_USERNAME, and SSH_PRIVATE_KEY environment variables on Vercel"
+            );
+        }
+
+        return {
+            // MySQL stays bound to loopback on the VPS; SSH forwards this target privately.
+            mysql: {
+                ...getProductionMysqlConfig(),
+                host: "127.0.0.1",
+            },
+            ssh: {
+                host: sshHost,
+                port: sshPort,
+                username: sshUsername,
+                password: sshPassword,
+                privateKey: sshPrivateKey,
+            },
+        };
+    }
 
     const mysqlHost = process.env.MYSQL_HOST || "127.0.0.1";
     const mysqlPort = parseInt(process.env.MYSQL_PORT || "3306", 10);
@@ -179,7 +196,7 @@ function isLocalMysqlHost(host: string): boolean {
 }
 
 function shouldUseSshStream(config: MySQLConfig): boolean {
-    return isLocalRuntime() && hasSshConfig(config) && process.env.MYSQL_CONNECTION_MODE === "ssh-stream";
+    return hasSshConfig(config) && (isVercelRuntime() || process.env.MYSQL_CONNECTION_MODE === "ssh-stream");
 }
 
 function shouldUseDirectConnection(config: MySQLConfig): boolean {
