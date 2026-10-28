@@ -17,7 +17,10 @@ const notoSans = Noto_Sans({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://nandenihon.com"),
-  title: "Nande Nihon",
+  title: {
+    default: "Nande Nihon",
+    template: "%s | Nande Nihon",
+  },
   description: "Platform Belajar Bahasa Jepang",
   alternates: {
     canonical: "./",
@@ -37,7 +40,7 @@ interface NewAppLayoutProps {
 
 function AppLayout({ children }: NewAppLayoutProps) {
   return (
-    <html lang="en" className={notoSans.variable}>
+    <html lang="id" className={notoSans.variable}>
       <body className="min-h-screen bg-white relative">
         {/* Google tag (gtag.js) */}
         <Script

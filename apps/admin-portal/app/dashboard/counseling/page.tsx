@@ -34,6 +34,8 @@ function formatDateTime(date: Date | string | null): string {
 const topicColors: Record<string, string> = {
     Pendidikan: "bg-primary-10 text-primary-base",
     Karir: "bg-warning-10 text-warning-100",
+    Pribadi: "bg-info-10 text-info-base",
+    Sosial: "bg-error-10 text-error-base",
     Keluarga: "bg-success-10 text-success-base",
     Relationship: "bg-secondary-10 text-secondary-80",
 };

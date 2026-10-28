@@ -8,7 +8,7 @@ type TopicSectionProps = {
 
 function TopicSection({ t }: TopicSectionProps) {
   return (
-    <section className="py-20 px-6 lg:px-0 max-w-7xl mx-auto text-center">
+    <section className="py-20 px-6 lg:px-8 max-w-7xl mx-auto text-center">
       <div className="inline-block bg-primary-20 border border-primary-50 text-primary-50 font-semibold text-sm px-4 py-1.5 rounded-full mb-4">
         {t.badge}
       </div>
@@ -19,7 +19,7 @@ function TopicSection({ t }: TopicSectionProps) {
         {t.description}
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 gap-y-24 mt-20">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 gap-y-24 mt-20">
         {t.items.map((topic) => (
           <div
             key={topic.title}

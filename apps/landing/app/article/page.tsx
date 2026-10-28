@@ -6,7 +6,13 @@ import MostPopularArticles from "@/components/article/MostPopularArticles";
 import ArticleSelection from "@/components/article/ArticleSelection";
 import { getLanguage, landingTranslations } from "@/lib/i18n";
 import { mapNewsSummaryToArticle } from "@/lib/news";
+import type { Metadata } from "next";
 import { listNewsSummary } from "@repo/database";
+
+export const metadata: Metadata = {
+  title: "Artikel",
+  description: "Artikel seputar bahasa, budaya, dan kehidupan di Jepang dari Nande Nihon.",
+};
 
 async function getArticlePageData() {
   // Use listNewsSummary — no LONGTEXT content field needed for list pages.

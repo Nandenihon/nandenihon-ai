@@ -17,6 +17,11 @@ function withLanguage(href: string, language: Language) {
   return language === "id" ? href : `${href}?lang=${language}`;
 }
 
+/** Home matches exactly; other sections also match their sub-pages (e.g. /article/some-slug). */
+function isPathActive(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export default function NewNavbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
@@ -46,7 +51,7 @@ export default function NewNavbar() {
     { name: t.home, href: "/" },
     { name: t.about, href: "/about" },
     { name: t.class, href: "/class" },
-    { name: t.article, href: "/article/" },
+    { name: t.article, href: "/article" },
     {
       name: t.information,
       href: "/information",
@@ -139,8 +144,9 @@ export default function NewNavbar() {
 
   return (
     <>
-      <nav className="w-full fixed top-10 right-0 left-0 z-50 px-6 lg:px-10 flex justify-center">
-        <div className="bg-white/50 backdrop-blur-lg border border-white/20 shadow-sm/5 rounded-full px-6 py-5 flex items-center justify-between w-full max-w-7xl">
+      <nav className="w-full fixed top-4 sm:top-6 lg:top-10 right-0 left-0 z-50 px-4 sm:px-6 lg:px-10 flex justify-center">
+        {/* Mostly opaque glass: at 50% the blurred page text behind the bar showed through as grey smudges. */}
+        <div className="bg-white/85 backdrop-blur-xl border border-white/70 shadow-[0_8px_30px_rgba(38,70,130,0.10)] rounded-full px-5 py-4 sm:px-6 sm:py-5 flex items-center justify-between w-full max-w-7xl">
           <Link
             href={withLanguage("/", language)}
             className="flex items-center gap-2"
@@ -160,8 +166,8 @@ export default function NewNavbar() {
             {navLinks.map((link) => {
               const hasChildren = "children" in link && link.children;
               const isActive = hasChildren
-                ? link.children.some((child) => pathname.startsWith(child.href))
-                : pathname === link.href;
+                ? link.children.some((child) => isPathActive(pathname, child.href))
+                : isPathActive(pathname, link.href);
 
               if (hasChildren) {
                 return (
@@ -190,7 +196,7 @@ export default function NewNavbar() {
                         role="menu"
                       >
                         {link.children.map((child) => {
-                          const childActive = pathname.startsWith(child.href);
+                          const childActive = isPathActive(pathname, child.href);
 
                           return (
                             <Link
@@ -247,7 +253,13 @@ export default function NewNavbar() {
               </a>
             </div>
           </div>
-          <button onClick={() => setIsOpen(true)} className="lg:hidden block">
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="lg:hidden block rounded-full p-1.5 text-gray-800 hover:bg-primary-10"
+            aria-label="Buka menu"
+            aria-expanded={isOpen}
+          >
             <MenuIcon />
           </button>
         </div>
@@ -257,8 +269,10 @@ export default function NewNavbar() {
         <div className="fixed inset-0 z-60 bg-black/30 backdrop-blur-sm flex justify-end">
           <div className="bg-white/90 backdrop-blur-md w-full h-screen p-6 flex flex-col items-end animate-in slide-in-from-right duration-300">
             <button
+              type="button"
               onClick={() => setIsOpen(false)}
               className="p-2 mb-8 text-black"
+              aria-label="Tutup menu"
             >
               <X size={32} />
             </button>
@@ -280,7 +294,7 @@ export default function NewNavbar() {
                             key={child.href}
                             href={withLanguage(child.href, language)}
                             onClick={() => setIsOpen(false)}
-                            className={`text-gray-600 hover:text-primary-base font-medium text-base ${pathname.startsWith(child.href)
+                            className={`text-gray-600 hover:text-primary-base font-medium text-base ${isPathActive(pathname, child.href)
                               ? "text-primary-base font-bold underline"
                               : ""
                               }`}
@@ -298,7 +312,7 @@ export default function NewNavbar() {
                     <Link
                       href={withLanguage(link.href, language)}
                       onClick={() => setIsOpen(false)}
-                      className={`text-gray-700 hover:text-primary-base font-medium text-lg flex items-center gap-2 ${pathname === link.href
+                      className={`text-gray-700 hover:text-primary-base font-medium text-lg flex items-center gap-2 ${isPathActive(pathname, link.href)
                         ? "text-primary-base font-bold underline"
                         : ""
                         }`}

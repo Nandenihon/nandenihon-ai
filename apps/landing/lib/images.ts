@@ -127,3 +127,18 @@ export function resolveUploadImageUrl(
 
   return `${UPLOAD_PATH_PREFIX}${source.replace(/^\/+/, "")}`;
 }
+
+// WordPress stores media links as nandenihon.com/blog/wp-content/... (the old proxy path, now 403).
+const WORDPRESS_PROXIED_MEDIA_URL_PATTERN = /https?:\/\/(?:www\.)?nandenihon\.com\/blog\/wp-content\/uploads\//gi;
+const WORDPRESS_RELATIVE_MEDIA_PATTERN = /(["'\s,(])\/blog\/wp-content\/uploads\//g;
+
+/**
+ * Rewrites media URLs inside WordPress article HTML (img src, srcset, links) to blog.nandenihon.com,
+ * where the files are actually served.
+ */
+export function normalizeWordPressContent(html: string | null | undefined) {
+  if (!html) return html ?? "";
+  return html
+    .replace(WORDPRESS_PROXIED_MEDIA_URL_PATTERN, `${WORDPRESS_MEDIA_BASE_URL}${WORDPRESS_MEDIA_PATH_PREFIX}`)
+    .replace(WORDPRESS_RELATIVE_MEDIA_PATTERN, `$1${WORDPRESS_MEDIA_BASE_URL}${WORDPRESS_MEDIA_PATH_PREFIX}`);
+}

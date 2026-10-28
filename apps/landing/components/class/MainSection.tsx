@@ -7,7 +7,7 @@ interface Props {
 }
 const MainSection = ({ title, description, children }: Props) => {
   return (
-    <div className="py-15 max-w-7xl mx-auto px-6 lg:px-0 ">
+    <div className="py-15 max-w-7xl mx-auto px-6 lg:px-8 ">
       <div className="flex items-center space-x-6 w-full">
         <div className="flex-1">
           <h3 className="lg:text-2xl text-xl  font-bold lg:text-nowrap">

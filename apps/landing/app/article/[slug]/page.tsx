@@ -4,7 +4,9 @@ export const revalidate = 3600;
 
 import { findNewsBySlug, listNewsSummary } from "@repo/database";
 import { mapNewsToArticle, mapNewsSummaryToArticle } from "@/lib/news";
+import type { Metadata } from "next";
 import Image from "next/image";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/article/Breadcrumb";
 import ArticleSidebar from "@/components/article/ArticleSidebar";
@@ -14,6 +16,33 @@ import { CategoryTag } from "@repo/ui";
  * Pre-build all known article slugs at build time.
  * Next.js will statically generate each page and serve instantly from CDN.
  */
+// Shared by generateMetadata and the page so each request reads the article once.
+const getArticleBySlug = cache(async (slug: string) => {
+  const news = await findNewsBySlug(slug);
+  return news ? mapNewsToArticle(news) : null;
+});
+
+export async function generateMetadata(props: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await props.params;
+  const article = await getArticleBySlug(slug);
+  if (!article) return { title: "Artikel tidak ditemukan" };
+  const description = article.description?.slice(0, 160) || undefined;
+  return {
+    title: article.title,
+    description,
+    alternates: { canonical: `/article/${slug}` },
+    openGraph: {
+      type: "article",
+      title: article.title,
+      description,
+      url: `/article/${slug}`,
+      images: article.image ? [{ url: article.image }] : undefined,
+    },
+  };
+}
+
 export async function generateStaticParams() {
   try {
     const result = await listNewsSummary({ limit: 100 });
@@ -145,12 +174,10 @@ export default async function ArticleDetailPage(props: {
   const slug = params.slug;
 
   // Fetch the article and related articles in parallel — no sequential waterfall
-  const [news, summaryList] = await Promise.all([
-    findNewsBySlug(slug),
+  const [article, summaryList] = await Promise.all([
+    getArticleBySlug(slug),
     listNewsSummary({ limit: 12 }), // lightweight: no LONGTEXT content field
   ]);
-
-  const article = news ? mapNewsToArticle(news) : null;
 
   if (!article) {
     notFound();
