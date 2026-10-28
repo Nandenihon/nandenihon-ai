@@ -1,6 +1,12 @@
 import ContactForm from "@/components/contact/ContactForm";
 import ContactInfo from "@/components/contact/ContactInfo";
+import type { Metadata } from "next";
 import { getLanguage, landingTranslations } from "@/lib/i18n";
+
+export const metadata: Metadata = {
+  title: "Kontak",
+  description: "Hubungi Nande Nihon untuk pertanyaan seputar kelas, pendaftaran, dan kerja sama.",
+};
 
 type ContactPageProps = {
   searchParams?: Promise<{ lang?: string | string[] }>;

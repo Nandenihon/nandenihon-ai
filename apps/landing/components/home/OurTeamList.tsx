@@ -1,6 +1,6 @@
 import GalleryGrid, { type GalleryPhoto } from "@/components/gallery/GalleryGrid";
 import { HOME_SECTION_TITLE_CLASS } from "@/components/home/shared";
-import type { HomeTranslations } from "@/lib/i18n";
+import { defaultLanguage, type HomeTranslations, type Language } from "@/lib/i18n";
 import { listGalleryItems } from "@repo/database";
 import { unstable_cache } from "next/cache";
 import Link from "next/link";
@@ -22,7 +22,7 @@ const getGalleryPreview = unstable_cache(async (): Promise<GalleryPhoto[]> => {
   }
 }, ["home-gallery-preview"], { revalidate: 300, tags: ["gallery"] });
 
-async function OurTeamList({ t }: { t: HomeTranslations["gallery"] }) {
+async function OurTeamList({ t, language = defaultLanguage }: { t: HomeTranslations["gallery"]; language?: Language }) {
   const galleryItems = await getGalleryPreview();
 
   return (
@@ -30,7 +30,7 @@ async function OurTeamList({ t }: { t: HomeTranslations["gallery"] }) {
       <div className="absolute left-0 top-16 h-56 w-56 rounded-full bg-primary-10 blur-3xl" />
       <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-[#F4D8FF] opacity-70 blur-3xl" />
 
-      <div className="relative mx-auto max-w-7xl px-6 lg:px-0">
+      <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
             <h2 className={`${HOME_SECTION_TITLE_CLASS} title-reveal`}>
@@ -41,7 +41,7 @@ async function OurTeamList({ t }: { t: HomeTranslations["gallery"] }) {
             </p>
           </div>
           <Link
-            href="/gallery"
+            href={language === defaultLanguage ? "/gallery" : `/gallery?lang=${language}`}
             prefetch={false}
             className="inline-flex items-center justify-center rounded-full border-2 border-primary-base bg-white px-6 py-3 text-sm font-bold text-primary-base transition-all hover:-translate-y-0.5 hover:bg-primary-10 hover:shadow-[0_12px_24px_rgba(37,99,235,0.16)] active:translate-y-0"
           >

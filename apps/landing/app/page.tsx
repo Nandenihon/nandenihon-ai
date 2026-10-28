@@ -22,7 +22,7 @@ import Link from "next/link";
 export const revalidate = 300;
 
 const BackgroundPattern = () => (
-  <>
+  <div className="pointer-events-none absolute inset-x-0 top-0 h-[1100px] overflow-hidden" aria-hidden="true">
     <div className="absolute top-0 w-328 -mt-50 z-0 hidden lg:block">
       <Image
         src="/images/pattern-hero.png"
@@ -45,7 +45,7 @@ const BackgroundPattern = () => (
         aria-hidden="true"
       />
     </div>
-  </>
+  </div>
 );
 
 function withLanguage(href: string, language: Language) {
@@ -64,7 +64,7 @@ const HeroSection = ({
   t: HomeTranslations["hero"];
   language: Language;
 }) => (
-  <div className="relative max-w-7xl mx-auto z-10 flex flex-col lg:flex-row items-center justify-between px-6 lg:px-0 pt-48">
+  <div className="relative max-w-7xl mx-auto z-10 flex flex-col lg:flex-row items-center justify-between px-6 lg:px-8 pt-48">
     <div className="w-full lg:w-1/2">
       <h1 className="font-bold text-[36px] lg:text-[48px] leading-tight lg:leading-17">
         {t.title}
@@ -134,9 +134,9 @@ async function HomeContent({ searchParams }: HomeContentProps) {
 
       <div className="reveal"><OurPartnerSection t={t.partners} /></div>
       <div className="reveal"><BenefitSection t={t.benefits} /></div>
-      <div className="reveal"><PublicationSection articles={publicationArticles} t={t.publications} /></div>
+      <div className="reveal"><PublicationSection articles={publicationArticles} t={t.publications} language={language} /></div>
       <div className="reveal"><TestimonialSection t={t.testimonials} /></div>
-      <div className="reveal"><OurTeamList t={t.gallery} /></div>
+      <div className="reveal"><OurTeamList t={t.gallery} language={language} /></div>
       <div className="reveal"><CtaSection t={t.cta} language={language} /></div>
     </div>
   );

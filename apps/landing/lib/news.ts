@@ -1,4 +1,4 @@
-import { resolveUploadImageUrl } from "@/lib/images";
+import { normalizeWordPressContent, resolveUploadImageUrl } from "@/lib/images";
 import type { NewsItem, NewsItemSummary } from "@repo/database";
 
 export type ArticleView = {
@@ -44,7 +44,7 @@ export function mapNewsToArticle(news: NewsItem): ArticleView {
     image: resolveUploadImageUrl(news.featuredImageUrl, "") || undefined,
     category: news.categoryName || "Artikel",
     description: stripHtml(news.excerpt) || stripHtml(news.content).slice(0, 180),
-    content: news.content,
+    content: normalizeWordPressContent(news.content),
     isHtml: true,
   };
 }

@@ -2,7 +2,13 @@ import FeaturedClass from "@/components/class/FeaturedClass";
 import FeaturedWebinar from "@/components/class/FeaturedWebinar";
 import HeroSection from "@/components/class/HeroSection";
 import CtaSection from "@/components/home/CtaSection";
+import type { Metadata } from "next";
 import { getLanguage, landingTranslations } from "@/lib/i18n";
+
+export const metadata: Metadata = {
+  title: "Kelas & Webinar",
+  description: "Kelas intensif bahasa Jepang dan webinar dari Nande Nihon. Daftar dan amankan slot kamu.",
+};
 
 export const dynamic = "force-dynamic";
 
